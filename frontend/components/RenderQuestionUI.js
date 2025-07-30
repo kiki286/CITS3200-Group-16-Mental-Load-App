@@ -1,0 +1,493 @@
+//CITS3200 project group 23 2024
+//Function that renders questionUI
+
+//Imports
+import React, { useContext, useState, useEffect, useRef } from "react";
+import Slider from "@react-native-community/slider";
+import RNPickerSelect from "react-native-picker-select";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+    Image
+} from "react-native";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import COLORS from "../constants/colors";
+import FONTS from "../constants/fonts";
+import GroupedMatrixComponent from "./GroupedMatrixComponent";
+import { Loading } from "./Messages";
+
+//Parameters used to render UI
+const RenderQuestionUI = ({
+  questionDetails,
+  questionID,
+  sliderValues,
+  setSliderValues,
+  handleTextInputChange,
+  selectedOptions,
+  handleOptionPress,
+  wordColorMap,
+  colorIndex,
+  colors_list,
+  inputValues,
+  AllornotAll,
+}) => {
+  // State to track the loading status of images
+  const [imageLoading, setImageLoading] = useState(true);
+  // For removing html tags from text
+  const stripHtmlTags = (text) => {
+    const withBreaks = text
+      .replace(/<br\s*\/?>/gi, "\n") // Replace <br> with newline
+      .replace(/<\/div>|<\/p>/gi, "\n") // Replace closing divs and paragraphs with newline
+      .replace(/<div.*?>|<p.*?>/gi, "") // Remove opening div and paragraph tags
+
+      .replace(/&nbsp;/gi, "") // Remove &nbsp;
+      .replace(/<br\s*\/?>/gi, "\n") // Replace <br> with newline
+      .replace(/<\/div>|<\/p>/gi, "\n") // Replace closing divs and paragraphs with newline
+      .replace(/<div.*?>|<p.*?>/gi, "") // Remove opening div and paragraph tags
+
+      .replace(/&nbsp;/gi, ""); // Remove &nbsp;
+
+    // Remove any other HTML tags
+    const plainText = withBreaks.replace(/<[^>]+>/g, "");
+    // Remove any other HTML tags
+
+    // Remove extra newlines (optional)
+    return plainText.replace(/\n{2,}/g, "\n\n").trim();
+  };
+
+  // Function that changes color of words in wordColorMap
+  const highlightTextWithColors = (text, wordColorMap) => {
+    const regex = new RegExp(`(${Object.keys(wordColorMap).join("|")})`, "gi");
+    return text.split(regex).map((part, index) => {
+      const lowerCasePart = part.toLowerCase();
+      if (wordColorMap[lowerCasePart]) {
+        return (
+          <Text key={index} style={{ color: wordColorMap[lowerCasePart] }}>
+            {part}
+          </Text>
+        );
+      } else {
+        return <Text key={index}>{part}</Text>;
+      }
+    });
+  };
+
+  // Function to handle image load completion
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
+
+  // Returns nothing if there are no more questions
+  if (!questionDetails) return null;
+
+  // Defines the QuestionType
+  const QuestionType = questionDetails["QuestionType"];
+
+  // Creates questionUI variable to store UI
+  let questionsUI = null;
+
+  
+  // Checks if question is slider type
+  if (QuestionType === "Slider") {
+    questionsUI = (
+      <View key={questionID} style={styles.questionContainer}>
+        <Text style={styles.questionText}>
+          {highlightTextWithColors(
+            stripHtmlTags(questionDetails["QuestionDescription"]),
+            wordColorMap
+          )}
+        </Text>
+        {questionDetails["SubQuestions"].map((subQuestion, index) => {
+          const currentValue =
+            sliderValues[`${questionID}_${index + 1}`] ||
+            questionDetails["MinValue"];
+        
+          return (
+            <View key={index} style={styles.subQuestionContainer}>
+              <Text style={[styles.subQuestionText, { fontSize: 20 }]}>
+                {stripHtmlTags(subQuestion["Display"])}
+              </Text>
+              <Slider
+                style={{ width: "100%", height: 60 }}
+                minimumValue={questionDetails["MinValue"]}
+                maximumValue={questionDetails["MaxValue"]}
+                step={
+                  questionDetails["NumDecimals"]
+                    ? Math.pow(10, -questionDetails["NumDecimals"])
+                    : 1
+                }
+                value={currentValue} // Set the initial value here
+                onValueChange={(value) => {
+                  setSliderValues((prev) => ({
+                    ...prev,
+                    [`${questionID}_${index + 1}`]: value,
+                  }));
+                }}
+                thumbTintColor={COLORS.white}
+                minimumTrackTintColor={COLORS.blue}
+                maximumTrackTintColor={COLORS.light_grey}
+              />
+              <Text style={[styles.sliderText, { textAlign: 'center' }]}>
+                {currentValue} {/* Show current slider value */}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    );
+
+    // Checks if question is Text Entry type
+  } else if (QuestionType === "TE") {
+    // For "ChildrenAges" questions, use AllornotAll to control the number of text inputs
+    if (questionDetails["DataExportTag"] === "ChildrenAges" && AllornotAll > 0) {
+      questionsUI = (
+        <View key={questionID} style={styles.optionsContainer}>
+          <Text style={styles.questionText}>
+            {stripHtmlTags(questionDetails["QuestionText"])}
+          </Text>
+          <View style={[styles.optionsContainer, { flexDirection: "row", flexWrap: "wrap" }]}>
+            {questionDetails["Choices"].slice(0, AllornotAll).map((option, index) => (
+              <View
+                key={index}
+                style={{
+                  width: "50%",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 10,
+                }}
+              >
+                <Text
+                  style={{
+                    color: COLORS.white,
+                    fontFamily: FONTS.survey_font_bold,
+                    fontSize: 17,
+                    marginRight: 10,  // Adds some space between text and input
+                  }}
+                >
+                  {option["Display"]}
+                </Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={inputValues[questionID]?.[index] || ""}
+                  onChangeText={(text) => handleTextInputChange(questionID, index, text, "MULTI")}
+                  placeholder={`Age of child ${index + 1}`} // Placeholder for child's age
+                />
+              </View>
+            ))}
+          </View>
+        </View>
+      );
+    } else {
+      // For non-ChildrenAges questions, display choices normally
+      AllornotAll = questionDetails["Choices"].length;  // Controls the number of options displayed for non-ChildrenAges questions
+      questionsUI = (
+        <View key={questionID} style={styles.optionsContainer}>
+          <Text style={styles.questionText}>
+            {stripHtmlTags(questionDetails["QuestionText"])}
+          </Text>
+          <View
+            style={[
+              styles.optionsContainer,
+              { flexDirection: "row", flexWrap: "wrap" },
+            ]}
+          >
+            {questionDetails["Choices"].slice(0, AllornotAll).map((option, index) => (
+              <View
+                key={index}
+                style={{
+                  width: "50%",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 10,
+                }}
+              >
+                <Text
+                  style={{
+                    color: COLORS.white,
+                    fontFamily: FONTS.survey_font_bold,
+                    fontSize: 17,
+                  }}
+                >
+                  {option["Display"]}
+                </Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={inputValues[questionID]?.[index] || ""}
+                  onChangeText={(text) =>
+                    handleTextInputChange(questionID, index, text)
+                  }
+                />
+              </View>
+            ))}
+          </View>
+        </View>
+      );
+    }
+  } else if (QuestionType === "Matrix" && questionDetails["SubQuestions"]) {
+    questionsUI = questionDetails["ChoiceGroups"] ? (
+      <GroupedMatrixComponent
+        questionDetails={questionDetails}
+        selectedOptions={selectedOptions}
+        handleOptionPress={handleOptionPress}
+        wordColorMap={wordColorMap}
+        stripHtmlTags={stripHtmlTags}
+        highlightTextWithColors={highlightTextWithColors}
+        colors_list={colors_list}
+        styles={styles}
+        sliderValues={sliderValues}
+        setSliderValues={setSliderValues}
+      />
+    ) : (
+      <View>
+        <Text style={styles.questionText}>
+          {highlightTextWithColors(
+            stripHtmlTags(questionDetails["QuestionText"]),
+            wordColorMap
+          )}
+        </Text>
+        {questionDetails["SubQuestions"].map((subquestion, subIndex) => (
+          <View key={subIndex} style={styles.questionContainer}>
+            <Text style={styles.subQuestionText}>
+              {highlightTextWithColors(
+                stripHtmlTags(subquestion["Display"]),
+                wordColorMap
+              )}
+            </Text>
+            <View style={styles.optionsContainer}>
+              {questionDetails["Choices"].map((option, optionIndex) => (
+                <TouchableOpacity
+                  key={optionIndex}
+                  style={[
+                    styles.optionButton,
+                    selectedOptions[subIndex] === optionIndex && {
+                      borderColor: colors_list[subIndex % colors_list.length],
+                    },
+                  ]}
+                  onPress={() => handleOptionPress(subIndex, optionIndex)}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      selectedOptions[subIndex] === optionIndex &&
+                        styles.selectedText,
+                    ]}
+                  >
+                    {option["Display"]}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        ))}
+      </View>
+    );
+
+    // Checks if question is Choices type
+  } else if (questionDetails["Choices"] && QuestionType !== "Matrix") {
+    const allowMultipleSelection = questionDetails["Selector"] == "MACOL";
+    questionsUI = (
+      <View key={questionID} style={styles.questionContainer}>
+        <Text style={styles.questionText}>
+          {highlightTextWithColors(
+            stripHtmlTags(questionDetails["QuestionText"]),
+            wordColorMap
+          )}
+        </Text>
+        <View style={styles.optionsContainer}>
+          {questionDetails["Choices"].map((option, index) => {
+            const requiresTextInput = option?.TextEntry === true;
+            const imageLocation = option.ImageLocation !== "";
+            return (
+              <View key={index}>
+                {requiresTextInput ? (
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder={option["Display"]}
+                    placeholderTextColor="white"
+                    onChangeText={(text) =>{
+                      if (!allowMultipleSelection) {
+                        handleTextInputChange(questionID, index, text, "RESET");
+                      } else {
+                        handleTextInputChange(questionID, index, text, "SINGLE");
+                      }
+                    }}
+                  />
+                ) : (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.optionButton,
+                      imageLocation ? { backgroundColor: COLORS.white } : {}, // Set background to white if imageLocation exists
+                      allowMultipleSelection &&
+                      Array.isArray(selectedOptions[0]) &&
+                      selectedOptions[0].length > 0
+                        ? selectedOptions[0].includes(`${index}`) && {
+                            borderColor: colors_list[colorIndex],
+                          }
+                        : selectedOptions[0] === index && {
+                            borderColor: colors_list[colorIndex],
+                          },
+
+                      allowMultipleSelection &&
+                      Array.isArray(selectedOptions[0]) &&
+                      selectedOptions[0].length > 0
+                        ? selectedOptions[0].includes(`${index}`) && {
+                            borderColor: colors_list[colorIndex],
+                          }
+                        : selectedOptions[0] === index && {
+                            borderColor: colors_list[colorIndex],
+                          },
+                    ]}
+                    onPress={() =>
+                      handleOptionPress(0, index, allowMultipleSelection)
+                    }
+                  >
+                    {imageLocation && (
+                      <View>
+                      {imageLoading && (
+                        <Loading />
+                      )}
+                      <Image
+                        source={{ uri: `https://yul1.qualtrics.com/API/v3/ControlPanel/Graphic.php?IM=${option.ImageLocation}` }}
+                        style={{
+                          width: '100%',
+                          maxWidth: 100,
+                          maxHeight: 500,
+                          height: undefined,
+                          aspectRatio: 0.5,
+                        }}
+                        resizeMode="contain"
+                        onLoad={handleImageLoad}
+                      />
+                    </View>
+                    )}
+                    <Text
+                      style={[
+                        styles.optionText,
+                        allowMultipleSelection &&
+                        Array.isArray(selectedOptions[0]) &&
+                        selectedOptions[0].length > 0
+                          ? selectedOptions[0].includes(`${index}`) &&
+                            styles.selectedText
+                          : selectedOptions[0] === index && styles.selectedText,
+                      ]}
+                    >
+                      {option["Display"]}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    );
+  } else if (QuestionType === "DB") {
+    questionsUI = (
+      <View>
+        <Text style={styles.questionText}>
+          {stripHtmlTags(questionDetails["QuestionText"])}
+        </Text>
+      </View>
+    );
+  }
+
+  return questionsUI;
+};
+
+//Styling for the questionUI
+const styles = StyleSheet.create({
+  button: {
+    padding: 10, // Adjust the padding as needed
+    backgroundColor: "#007BFF", // Customize the background color
+    borderRadius: 5, // Optional: Rounded corners
+    alignItems: "center", // Center the text horizontally
+  },
+  buttonText: {
+    color: COLORS.black, // Text color
+    fontSize: 16, // Font size
+  },
+  container: {
+    paddingBottom: 40,
+  },
+  questionBox: {
+    padding: 16,
+    borderWidth: 2,
+    borderColor: COLORS.white,
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  questionText: {
+    fontSize: 20,
+    fontFamily: FONTS.survey_font_bold,
+    color: COLORS.white,
+    paddingBottom: 20,
+  },
+  subQuestionText: {
+    fontSize: 20,
+    fontFamily: FONTS.survey_font_bold,
+    paddingHorizontal: 0,
+    paddingBottom: 10,
+    color: COLORS.white,
+  },
+  questionContainer: {
+    marginBottom: 16,
+  },
+  optionsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  optionButton: {
+    padding: 4,
+    margin: 2,
+    borderWidth: 2,
+    borderRadius: 20,
+    minHeight: 70,
+    minWidth: 110,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.light_grey4,
+  },
+  optionText: {
+    fontSize: 17,
+    fontFamily: FONTS.survey_font_bold,
+    color: COLORS.white,
+  },
+  selectedText: {
+    fontSize: 17,
+    fontFamily: FONTS.survey_font_bold,
+    color: COLORS.white,
+  },
+  sliderText: {
+    fontSize: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    fontFamily: FONTS.survey_font_bold,
+    color: COLORS.white,
+  },
+  textInput: {
+    padding: 4,
+    margin: 2,
+    borderWidth: 2,
+    borderRadius: 20,
+    minHeight: 70,
+    minWidth: 110,
+    borderColor: "gray",
+    textAlign: "center",
+    justifyContent: "center",
+    alignItems: "center",
+    color: COLORS.almost_white,
+    fontSize: 17,
+    fontFamily: FONTS.survey_font_bold,
+    fontColor: COLORS.almost_white,
+  },
+});
+
+export default RenderQuestionUI;

@@ -1,15 +1,3 @@
-# CITS3200-Mental-Load-App  
-
-An app to measure and view mental load  
-
-## How to start using hosted server
-The package.json file contains the packages used. 
-
-1. Clone the repo and cd into the frontend directory  
-2. Install libraries by running `npm install`  
-3. Build and run the app by running `npx expo start`  
-
-## To run the webserver locally instead of globally:
 Before doing anything, you need to set the .env_example file to contain your keys, and rename it to .env. **NEVER COMMIT THIS FILE ONCE YOU HAVE FILLED IT IN!**
 
 To set up the flask server, you need to create a pyenv:
@@ -31,3 +19,4 @@ Setting up firebase:
 4. Change flask server address in frontend/services/SurveyFetcher to your local flask server address
 5. Create a new web application and and set up authentication through email and password
 6. Change config.js file in /frontend/firebase to your application configurations found in (Project Settings -> scroll to bottom)
+   Important note: Don't be scared by the stuff in config.js for firebase - this stuff is _not secret_ https://firebase.google.com/support/guides/security-checklist#:~:text=To%20store%20Firebase%20API%20keys,just%20embed%20them%20in%20code.
