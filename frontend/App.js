@@ -13,7 +13,7 @@ import Demographics from "./screens/Demographics";
 import TermsConditions from "./screens/TermsConditions";
 import { useFonts } from 'expo-font';
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./firebase/Config";
+import { auth } from "./firebase/config";
 import COLORS from "./constants/colors";
 
 const welcome_stack = createStackNavigator();

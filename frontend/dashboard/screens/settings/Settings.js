@@ -9,7 +9,7 @@ import FONTS from '../../../constants/fonts'
 import { LinearGradient } from 'expo-linear-gradient';
 import { clearResponsesFile } from '../../../services/StorageHandler'
 import { signOut } from 'firebase/auth'
-import { auth } from '../../../firebase/Config'
+import { auth } from '../../../firebase/config'
 
 const Settings = ({ navigation }) => {
   

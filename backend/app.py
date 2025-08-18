@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # Add this import
 import requests
 from datetime import datetime
 from dotenv import load_dotenv
@@ -26,6 +27,8 @@ post_headers = { #Used by POST requests
     }
 
 app = Flask(__name__)
+CORS(app)
+
 
 # Get the directory of the current script
 script_dir = os.path.dirname(os.path.abspath(__file__))

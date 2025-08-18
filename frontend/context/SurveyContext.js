@@ -4,7 +4,7 @@
 import React, { createContext, useState, useEffect } from "react";
 import { fetchSurveyData } from "../services/SurveyFetcher";
 import { ResponseSender } from "../services/ResponseSender";
-import { auth } from "../firebase/Config";
+import { auth } from "../firebase/config";
 
 // Create the context
 export const SurveyContext = createContext();

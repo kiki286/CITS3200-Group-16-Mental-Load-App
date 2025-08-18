@@ -2,7 +2,7 @@
 //Functions to handle sign in, sign up
 
 import React, { useState } from "react";
-import { auth } from "../firebase/Config";
+import { auth } from "../firebase/config";
 import { getDemographicsSubmitted } from '../services/StorageHandler';
 import {
   signInWithEmailAndPassword,

@@ -14,7 +14,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { signOut } from 'firebase/auth'
-import { auth } from '../firebase/Config'
+import { auth } from '../firebase/config'
 import { getDemographicsSubmitted } from '../services/StorageHandler';
 
 const Dashboard = ({ navigation }) => {

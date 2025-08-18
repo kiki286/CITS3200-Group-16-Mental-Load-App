@@ -11,11 +11,8 @@ export const fetchSurveyData = async (surveyType) => {
   if (user) {
     try {
       const idToken = await user.getIdToken();
-      //use http://10.0.2.2:5000 if using an emulator on the same device otherwise
-      //use http://127.0.0.1:5000 or
-      //use http://192.168.0.127:5000
-      //Use https://jameb.pythonanywhere.com if not running flask
-      const response = await fetch("https://jameb.pythonanywhere.com/get-survey", {
+      
+      const response = await fetch("https://kiki286.pythonanywhere.com/get-survey", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${idToken}`,
@@ -24,15 +21,23 @@ export const fetchSurveyData = async (surveyType) => {
         },
       });
 
+      console.log("Response received:");
+      console.log("Status:", response.status);
+      console.log("StatusText:", response.statusText);
+      console.log("Headers:", JSON.stringify([...response.headers.entries()]));
+
       if (response.ok) {
         const data = await response.json();
         return data;
       } else {
-        console.error("Failed to fetch survey:", response.statusText);
-        throw new Error(response.statusText);
+        const errorText = await response.text();
+        console.error("Error response body:", errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
     } catch (error) {
-      console.error("Error fetching survey:", error);
+      console.error("Detailed error:", error);
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
       throw error;
     }
   } else {

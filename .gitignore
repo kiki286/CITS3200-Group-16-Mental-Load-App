@@ -2,6 +2,7 @@
 /backend/proxyserv
 /backend/__pycache__
 backend/.env
+backend/secrets/credentials.json
 
 
 /frontend/node_modules
