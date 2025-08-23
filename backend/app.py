@@ -34,7 +34,7 @@ CORS(app)
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Define the relative path to the directory containing the credentials file
-secrets_dir = os.path.join(script_dir, 'secrets')
+secrets_dir = os.path.join(script_dir, 'etc/secrets')
 
 # List all files in the directory
 files = os.listdir(secrets_dir)
