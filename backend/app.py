@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # Add this import
+from flask_cors import CORS 
 import requests
 from datetime import datetime
 from dotenv import load_dotenv
@@ -29,15 +29,8 @@ post_headers = { #Used by POST requests
 app = Flask(__name__)
 CORS(app)
 
-
-# Get the directory of the current script
-script_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Define the relative path to the directory containing the credentials file
-secrets_dir = os.path.join(script_dir, 'etc/secrets')
-
 # List all files in the directory
-files = os.listdir(secrets_dir)
+files = os.listdir("/etc/secrets/")
 
 # Find the credentials file based on a pattern (e.g., the file contains 'firebase-adminsdk')
 cred_file = next((f for f in files if 'firebase-adminsdk' in f), None)
@@ -46,7 +39,7 @@ if cred_file is None:
     raise FileNotFoundError("Credentials file not found in the secrets directory.")
 
 # Combine the directory with the file name
-cred_path = os.path.join(secrets_dir, cred_file)
+cred_path = os.path.join("/etc/secrets/", cred_file)
 
 # Load the credentials
 cred = credentials.Certificate(cred_path)
