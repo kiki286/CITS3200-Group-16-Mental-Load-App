@@ -1,19 +1,50 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
-import Slider from "@react-native-community/slider";
-import RNPickerSelect from "react-native-picker-select";
 import {
   View,
   Text,
   StyleSheet,
   Image,
   TextInput,
-  TouchableOpacity,
-  ScrollView,
   Platform
 } from "react-native";
+import TouchablePlatform from './TouchablePlatform';
 
 import COLORS from "../constants/colors";
 import FONTS from "../constants/fonts";
+
+// A small dependency-free slider built with React Native primitives so the
+// component works on web and native without @react-native-community/slider.
+const StepSlider = ({ minimumValue = 0, maximumValue = 1, step = 1, value = 0, onValueChange }) => {
+  const steps = [];
+  for (let i = minimumValue; i <= maximumValue; i += step) {
+    steps.push(i);
+  }
+
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+      {steps.map((s) => (
+        <TouchablePlatform
+          key={s}
+          onPress={() => onValueChange && onValueChange(s)}
+          style={{ alignItems: "center", flex: 1 }}
+        >
+          <View
+            style={{
+              width: s === value ? 16 : 8,
+              height: s === value ? 16 : 8,
+              borderRadius: 16 / 2,
+              backgroundColor: s === value ? COLORS.green : COLORS.dark_blue,
+              marginVertical: 12,
+            }}
+          />
+        </TouchablePlatform>
+      ))}
+    </View>
+  );
+};
+
+// Use the StepSlider component for all platforms (it is pure RN primitives)
+const SliderComponent = StepSlider;
 
 export default function GroupedMatrixComponent({
   questionDetails,
@@ -115,8 +146,7 @@ export default function GroupedMatrixComponent({
         <View style={matrixStyles.sliderTrackContainer}>
           {/* Circles on the ends */}
           {/* <View style={[matrixStyles.circleMarker, matrixStyles.leftCircle]} /> */}
-          <Slider
-            style={matrixStyles.slider}
+          <SliderComponent
             minimumValue={0}
             maximumValue={questionDetails["Choices"].length - 1}
             step={1}
@@ -133,19 +163,7 @@ export default function GroupedMatrixComponent({
                 ...prev,
                 [`${questionDetails["QuestionID"]}_${subIndex}`]: value,
               }));
-              handleOptionPress(subIndex, value); // Pretend that the slider is a button so we can make use of this
-            }}
-            thumbTintColor="#FFFFFF" // White thumb
-            minimumTrackTintColor={COLORS.dark_blue}
-            maximumTrackTintColor={COLORS.dark_blue}
-            tapToSeek="true"
-            StepMarker={StepMarker}
-            thumbStyle={{
-              width: 30,
-              height: 30,
-              borderRadius: 30 / 2,
-              borderColor: "#007AFF",
-              borderWidth: 2,
+              handleOptionPress(subIndex, value); // Treat the step tap like a selection
             }}
           />
           {/* <View style={[matrixStyles.circleMarker, matrixStyles.rightCircle]} />*/}
@@ -196,7 +214,7 @@ export default function GroupedMatrixComponent({
 
               {/* Renders the +/- button */}
 
-              <TouchableOpacity
+              <TouchablePlatform
                 key={`${groupKey}_button`}
                 onPress={() => {
                   setToggleGroups((prevToggleGroups) => ({
@@ -219,7 +237,7 @@ export default function GroupedMatrixComponent({
                     }}
                   />
                 </Text>
-              </TouchableOpacity>
+              </TouchablePlatform>
             </View>
 
             {toggleGroups[groupKey] && subQuestions}

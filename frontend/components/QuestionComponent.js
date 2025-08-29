@@ -3,17 +3,15 @@
 
 //Imports
 import React, { useContext, useState, useEffect, useRef } from "react";
-import Slider from "@react-native-community/slider";
-import RNPickerSelect from "react-native-picker-select";
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   ScrollView,
   Animated,
 } from "react-native";
+import TouchablePlatform from './TouchablePlatform';
 import { SurveyContext } from "../context/SurveyContext";
 import { Loading, Error } from "./Messages";
 import {
@@ -27,7 +25,6 @@ import Button from "./Buttons/Button_Light_Blue";
 import { Ionicons } from "@expo/vector-icons";
 import RenderQuestionUI from "./RenderQuestionUI";
 import { updateCurrentUser } from "firebase/auth";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 //Component which displays each question
 const QuestionComponent = ({ demoSubmit, backNavigate }) => {
@@ -417,7 +414,7 @@ const QuestionComponent = ({ demoSubmit, backNavigate }) => {
           />
           {questionDetails ? (
             <View style={{ paddingBottom: 20, paddingTop: 10 }}>
-              <TouchableOpacity onPress={handleNextQuestion}>
+              <TouchablePlatform onPress={handleNextQuestion}>
                 <Ionicons
                   name="arrow-forward-circle-outline"
                   size={80}
@@ -428,7 +425,7 @@ const QuestionComponent = ({ demoSubmit, backNavigate }) => {
                     backgroundColor: COLORS.black,
                   }}
                 />
-              </TouchableOpacity>
+              </TouchablePlatform>
             </View>
           ) : (
             <View style={{ paddingBottom: 20, paddingTop: 10 }}>

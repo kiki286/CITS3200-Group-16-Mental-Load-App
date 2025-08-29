@@ -1,15 +1,13 @@
 //CITS3200 project group 23 2024 2024
 //Profile tab part of the dashboard tabs
 
-import { View, Text, TextInput, Alert, Switch, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Alert, Switch, StyleSheet, Platform } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { getAuth, updateProfile } from 'firebase/auth';
 import COLORS from '../../../constants/colors';
 import FONTS from '../../../constants/fonts';
 import Button from '../../../components/Buttons/Button';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Notifications from 'expo-notifications';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Profile = ({ navigation }) => {
     // State management
@@ -41,12 +39,22 @@ const Profile = ({ navigation }) => {
 
         // If notifications are being enabled, schedule them
         if (newValue) {
-            await scheduleNotification(notificationTime);
+            if (Platform.OS !== 'web') {
+                await scheduleNotification(notificationTime);
+            } else {
+                console.warn('Notifications scheduling is not available in web builds.');
+            }
         } else {
             await cancelNotification();
         }
 
-        await AsyncStorage.setItem('notificationsEnabled', JSON.stringify(newValue));
+        // Persist the setting: localStorage on web, AsyncStorage on native
+        if (Platform.OS === 'web') {
+            localStorage.setItem('notificationsEnabled', JSON.stringify(newValue));
+        } else {
+            const AsyncStorage = require('@react-native-async-storage/async-storage');
+            await AsyncStorage.setItem('notificationsEnabled', JSON.stringify(newValue));
+        }
     };
 
     const scheduleNotification = async (time) => {
@@ -86,9 +94,19 @@ const Profile = ({ navigation }) => {
         }
 
         const loadNotificationSettings = async () => {
-            const notificationsStatus = await AsyncStorage.getItem('notificationsEnabled');
-            if (notificationsStatus !== null) {
-                setNotificationsEnabled(JSON.parse(notificationsStatus));
+            try {
+                let notificationsStatus = null;
+                if (Platform.OS === 'web') {
+                    notificationsStatus = localStorage.getItem('notificationsEnabled');
+                } else {
+                    const AsyncStorage = require('@react-native-async-storage/async-storage');
+                    notificationsStatus = await AsyncStorage.getItem('notificationsEnabled');
+                }
+                if (notificationsStatus !== null) {
+                    setNotificationsEnabled(JSON.parse(notificationsStatus));
+                }
+            } catch (e) {
+                console.warn('Failed to load notification settings', e);
             }
         };
 

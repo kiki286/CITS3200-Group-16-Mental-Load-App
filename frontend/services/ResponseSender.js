@@ -23,7 +23,7 @@ export const ResponseSender = async (surveyResponseData, surveyType) => {
       //http://192.168.0.127 or use
       //http://10.0.2.2:5000 for emulators
       //Use https://jameb.pythonanywhere.com if not running flask
-      const response = await fetch("https://kiki286.pythonanywhere.com/submit-survey", {
+      const response = await fetch("https://mental-load-app.onrender.com//submit-survey", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${idToken}`,

@@ -12,7 +12,7 @@ export const fetchSurveyData = async (surveyType) => {
     try {
       const idToken = await user.getIdToken();
       
-      const response = await fetch("https://kiki286.pythonanywhere.com/get-survey", {
+      const response = await fetch("https://mental-load-app.onrender.com/get-survey", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${idToken}`,

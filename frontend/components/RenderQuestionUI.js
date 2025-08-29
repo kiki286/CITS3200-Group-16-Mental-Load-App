@@ -3,22 +3,48 @@
 
 //Imports
 import React, { useContext, useState, useEffect, useRef } from "react";
-import Slider from "@react-native-community/slider";
-import RNPickerSelect from "react-native-picker-select";
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   ScrollView,
     Image
 } from "react-native";
+import TouchablePlatform from './TouchablePlatform';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import COLORS from "../constants/colors";
 import FONTS from "../constants/fonts";
 import GroupedMatrixComponent from "./GroupedMatrixComponent";
 import { Loading } from "./Messages";
+
+// Lightweight cross-platform step slider implemented with RN primitives so it
+// works on web and native without extra native dependencies.
+const StepSlider = ({ minimumValue = 0, maximumValue = 1, step = 1, value = 0, onValueChange }) => {
+  const steps = [];
+  for (let i = minimumValue; i <= maximumValue; i += step) {
+    steps.push(i);
+  }
+  return (
+    <View style={{ width: "100%" }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        {steps.map((s) => (
+          <TouchablePlatform key={s} style={{ flex: 1, alignItems: "center" }} onPress={() => onValueChange && onValueChange(s)}>
+            <View style={{
+              width: s === value ? 18 : 8,
+              height: s === value ? 18 : 8,
+              borderRadius: 18 / 2,
+              backgroundColor: s === value ? COLORS.blue : COLORS.light_grey,
+              marginVertical: 12,
+            }} />
+          </TouchablePlatform>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+const SliderComponent = StepSlider;
 
 //Parameters used to render UI
 const RenderQuestionUI = ({
@@ -111,8 +137,7 @@ const RenderQuestionUI = ({
               <Text style={[styles.subQuestionText, { fontSize: 20 }]}>
                 {stripHtmlTags(subQuestion["Display"])}
               </Text>
-              <Slider
-                style={{ width: "100%", height: 60 }}
+              <SliderComponent
                 minimumValue={questionDetails["MinValue"]}
                 maximumValue={questionDetails["MaxValue"]}
                 step={
@@ -127,9 +152,6 @@ const RenderQuestionUI = ({
                     [`${questionID}_${index + 1}`]: value,
                   }));
                 }}
-                thumbTintColor={COLORS.white}
-                minimumTrackTintColor={COLORS.blue}
-                maximumTrackTintColor={COLORS.light_grey}
               />
               <Text style={[styles.sliderText, { textAlign: 'center' }]}>
                 {currentValue} {/* Show current slider value */}
@@ -259,7 +281,7 @@ const RenderQuestionUI = ({
             </Text>
             <View style={styles.optionsContainer}>
               {questionDetails["Choices"].map((option, optionIndex) => (
-                <TouchableOpacity
+                <TouchablePlatform
                   key={optionIndex}
                   style={[
                     styles.optionButton,
@@ -278,7 +300,7 @@ const RenderQuestionUI = ({
                   >
                     {option["Display"]}
                   </Text>
-                </TouchableOpacity>
+                </TouchablePlatform>
               ))}
             </View>
           </View>
@@ -298,7 +320,7 @@ const RenderQuestionUI = ({
           )}
         </Text>
         <View style={styles.optionsContainer}>
-          {questionDetails["Choices"].map((option, index) => {
+            {questionDetails["Choices"].map((option, index) => {
             const requiresTextInput = option?.TextEntry === true;
             const imageLocation = option.ImageLocation !== "";
             return (
@@ -317,7 +339,7 @@ const RenderQuestionUI = ({
                     }}
                   />
                 ) : (
-                  <TouchableOpacity
+                  <TouchablePlatform
                     key={index}
                     style={[
                       styles.optionButton,
@@ -378,7 +400,7 @@ const RenderQuestionUI = ({
                     >
                       {option["Display"]}
                     </Text>
-                  </TouchableOpacity>
+                  </TouchablePlatform>
                 )}
               </View>
             );

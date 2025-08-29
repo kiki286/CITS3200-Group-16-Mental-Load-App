@@ -1,15 +1,13 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
-import Slider from "@react-native-community/slider";
-import RNPickerSelect from "react-native-picker-select";
 import {
   View,
   Text,
   StyleSheet,
   Image,
   TextInput,
-  TouchableOpacity,
   ScrollView,
 } from "react-native";
+import TouchablePlatform from './TouchablePlatform';
 
 import COLORS from "../constants/colors";
 import FONTS from "../constants/fonts";
@@ -77,7 +75,7 @@ export default function MatrixComponent({
               return (
                 <View style={matrixStyles.optionButtonContainer}>
                   {/* Rendering buttons for choices for each subquestion */}
-                  <TouchableOpacity
+                  <TouchablePlatform
                     key={optionIndex}
                     style={[
                       // checks if it is the first, middle and last option and displays round or rectangle
@@ -101,7 +99,7 @@ export default function MatrixComponent({
                       {/* only displays text if middle, last or first option*/}
                       {displayRound ? option["Display"] : null}
                     </Text>
-                  </TouchableOpacity>
+                  </TouchablePlatform>
                 </View>
               );
             })}
@@ -134,7 +132,7 @@ export default function MatrixComponent({
 
               {/* Renders the +/- button */}
 
-              <TouchableOpacity
+              <TouchablePlatform
                 key={`${groupKey}_button`}
                 onPress={() => {
                   setToggleGroups((prevToggleGroups) => ({
@@ -157,7 +155,7 @@ export default function MatrixComponent({
                     }}
                   />
                 </Text>
-              </TouchableOpacity>
+              </TouchablePlatform>
             </View>
 
             {toggleGroups[groupKey] && subQuestions}

@@ -6,7 +6,6 @@ import {
   Text,
   Image,
   TextInput,
-  TouchableOpacity,
   ScrollView,
   Alert,
 } from "react-native";
@@ -18,8 +17,9 @@ import Button from "../components/Buttons/Button";
 import COLORS from "../constants/colors";
 import { useSignIn } from "../hooks/useAuth";
 import FONTS from "../constants/fonts";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import TouchablePlatform from '../components/TouchablePlatform';
 
 const SignInScreen = ({ navigation }) => {
   const { handleSignIn, email, password, errorMessage, setErrorMessage, setEmail, setPassword } =
@@ -34,9 +34,18 @@ const SignInScreen = ({ navigation }) => {
   useEffect(() => {
     const loadLoginData = async () => {
       try {
-        const savedEmail = await AsyncStorage.getItem('email');
-        const savedRememberMe = await AsyncStorage.getItem('rememberMe');
-        
+        let savedEmail = null;
+        let savedRememberMe = null;
+        if (Platform.OS === 'web') {
+          savedEmail = localStorage.getItem('email');
+          savedRememberMe = localStorage.getItem('rememberMe');
+        } else {
+          // require here to avoid bundling native-only module on web
+          const AsyncStorage = require('@react-native-async-storage/async-storage');
+          savedEmail = await AsyncStorage.getItem('email');
+          savedRememberMe = await AsyncStorage.getItem('rememberMe');
+        }
+
         if (savedRememberMe === 'true') {
           setEmail(savedEmail || '');
           setRememberMe(true);
@@ -52,11 +61,23 @@ const SignInScreen = ({ navigation }) => {
   //stores email and remember me states to device
   const storeLoginInfo = async () => {
     if (rememberMe) {
-      await AsyncStorage.setItem('email', email);
-      await AsyncStorage.setItem('rememberMe', 'true');
+      if (Platform.OS === 'web') {
+        localStorage.setItem('email', email);
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        const AsyncStorage = require('@react-native-async-storage/async-storage');
+        await AsyncStorage.setItem('email', email);
+        await AsyncStorage.setItem('rememberMe', 'true');
+      }
     } else {
-      await AsyncStorage.removeItem('email');
-      await AsyncStorage.setItem('rememberMe', 'false');
+      if (Platform.OS === 'web') {
+        localStorage.removeItem('email');
+        localStorage.setItem('rememberMe', 'false');
+      } else {
+        const AsyncStorage = require('@react-native-async-storage/async-storage');
+        await AsyncStorage.removeItem('email');
+        await AsyncStorage.setItem('rememberMe', 'false');
+      }
     }
   }
   
@@ -152,7 +173,7 @@ const SignInScreen = ({ navigation }) => {
               secureTextEntry={hidePassword}
               style={{ width: "80%", color: COLORS.white }}
             />
-            <TouchableOpacity
+            <TouchablePlatform
               onPress={() => setHidePassword(!hidePassword)}
               style={{ position: "absolute", right: 12 }}
             >
@@ -161,7 +182,7 @@ const SignInScreen = ({ navigation }) => {
                 size={24}
                 color={COLORS.white}
               />
-            </TouchableOpacity>
+            </TouchablePlatform>
           </View>
         </View>
 

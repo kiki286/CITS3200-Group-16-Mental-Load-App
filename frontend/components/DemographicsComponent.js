@@ -6,9 +6,10 @@ import React, { useContext, useState, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
+  Animated,
 } from "react-native";
+import TouchablePlatform from './TouchablePlatform';
 import { SurveyContext } from "../context/SurveyContext";
 import { Loading, Error } from "./Messages";
 import { setDemographicsSubmit, readResponsesFromFile, clearResponsesFile } from "../services/StorageHandler";
@@ -49,6 +50,8 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
   
   // Ref to the scrollview component
   const scrollViewRef = useRef();
+  // Navigation hook must be called at top level of component (hooks rule)
+  const navigation = useNavigation();
   
   // List of colours to loop through for each question
   const colors_list = [COLORS.yellow, COLORS.pink, COLORS.blue,];
@@ -67,8 +70,7 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
   }
 
   const noConsent = () => {
-    const navigation = useNavigation();
-    navigation.navigate("Login")
+  navigation.navigate("Login");
   }
   
   // Reset selectedOptions when allQuestionDetails changes
@@ -318,8 +320,29 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
     getNextQuestion();
     // Calls function to change the color value for next question
     ColorButtonInc();
-    // Sets the scroll back to the top
-    scrollViewRef.current.scrollTo({ y: 0, animated: false });
+    // Sets the scroll back to the top (cross-platform fallback)
+    try {
+      // React Native ScrollView (mobile / web through react-native-web)
+      if (scrollViewRef.current && typeof scrollViewRef.current.scrollTo === 'function') {
+        // try object signature first
+        try {
+          scrollViewRef.current.scrollTo({ y: 0, animated: false });
+        } catch (e) {
+          // try numeric signature
+          try {
+            scrollViewRef.current.scrollTo(0);
+          } catch (e) {
+            // noop
+          }
+        }
+      } else if (scrollViewRef.current && scrollViewRef.current.scrollTop !== undefined) {
+        // DOM element (web) fallback
+        scrollViewRef.current.scrollTop = 0;
+      }
+    } catch (e) {
+      // ignore any scroll errors
+      console.warn('scrollTo fallback failed', e);
+    }
   };
   
   // Handles the submit survey button
@@ -360,7 +383,7 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
           />
           {questionDetails ? (
             <View style={{paddingBottom: 20, paddingTop: 10, alignItems: 'center'}}>
-              <TouchableOpacity onPress={handleNextQuestion}>
+                <TouchablePlatform onPress={handleNextQuestion}>
                 <Ionicons 
                   name="arrow-forward-circle-outline" 
                   size={80} 
@@ -368,7 +391,7 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
                   style={{
                     backgroundColor: COLORS.black,
                 }}/>
-              </TouchableOpacity>
+                </TouchablePlatform>
             </View>
           ) : (
             <View style={{paddingBottom: 20, paddingTop: 10,}}>
