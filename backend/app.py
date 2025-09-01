@@ -7,6 +7,7 @@ import os
 import firebase_admin
 from firebase_admin import credentials, auth
 from functools import wraps
+from pathlib import Path
 
 # Pull envs from .env file (must be named exactly ".env") - from the raw repo, fill in and rename the file ".env_example"
 load_dotenv()
@@ -29,6 +30,7 @@ post_headers = { #Used by POST requests
 app = Flask(__name__)
 CORS(app)
 
+""" I believe all this can be removed as is hard coded for linux environments
 # List all files in the directory
 files = os.listdir("/etc/secrets/")
 
@@ -44,6 +46,21 @@ cred_path = os.path.join("/etc/secrets/", cred_file)
 # Load the credentials
 cred = credentials.Certificate(cred_path)
 
+firebase_admin.initialize_app(cred)
+"""
+
+env_cred = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+if env_cred:
+    cred_path = Path(env_cred)
+    if not cred_path.is_absolute():
+        cred_path = Path(__file__).parent / env_cred
+        
+if not cred_path or not cred_path.exists():
+    raise FileNotFoundError(
+        f"Firebase credentials file not found at {cred_path}"
+        f"Set GOOGLE_APPLICATION_CREDENTIALS to the path of your Firebase credentials file."
+    )
+cred = credentials.Certificate(str(cred_path))
 firebase_admin.initialize_app(cred)
 
 def verify_firebase_token(f):
