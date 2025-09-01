@@ -2,6 +2,7 @@
 //Stores Firebase public key
 
 import { initializeApp } from "firebase/app";
+import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging"; // For web push notifications
 import { getAuth } from "firebase/auth"; // Use getAuth for web
 
 const firebaseConfig = {
@@ -16,5 +17,30 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+export async function requestNotificationPermission(vapidPublicKey) {
+  // To only try on supported browsers
+  const supported = await isSupported().catch(() => false);
+  if (!supported) return { ok: false, reason: "unsupported" };
+
+  // Register the service worker (to work in background)
+  const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+
+  //request user permission for notification
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") return { ok: false, reason: permission};
+
+  //get the token (tie to service worker) and save token
+  const messaging = getMessaging(app);
+  const token = await getToken(messaging, { vapidKey: "BMZtha7drzmkBZcNHAqVbJqYTOw3Jp6Gv5DEgDZJQ1n_RKxoJA9ibB63m-go7lzarvsK-lALjxDAF9vc7Rvo4nI",
+    serviceWorkerRegistration: reg});
+
+  return token ? {ok: true, token} : { ok: false, reason: "no-token" };
+}
+
+export function listenForMessages(callback) {
+  const messaging = getMessaging(app);
+  return onMessage(messaging, callback);
+}
 
 export const auth = getAuth(app);
