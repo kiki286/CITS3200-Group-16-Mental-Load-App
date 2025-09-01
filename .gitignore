@@ -3,7 +3,7 @@
 /backend/__pycache__
 backend/.env
 backend/secrets/credentials.json
-
+backend/secrets/.env
 
 /frontend/node_modules
 /frontend/android
