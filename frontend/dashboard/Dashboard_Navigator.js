@@ -4,7 +4,7 @@
 import { View, Text } from 'react-native';
 import { createStackNavigator } from "@react-navigation/stack";
 import React from 'react';
-import { Profile_Navigator, View_Navigator, Settings_Navigator, Home_Navigator } from './screens';
+import { Profile_Navigator, View_Navigator, Settings_Navigator, Home_Navigator, Admin_Navigator } from './screens';
 import Dashboard from './Dashboard';
 import Welcome from "../screens/Welcome";
 import About from './screens/settings/About';
@@ -51,6 +51,13 @@ const Dashboard_Navigator = () => {
       <dashboard_stack.Screen 
         name="Settings_Navigator" 
         component={Settings_Navigator}
+        options={{
+          headerShown:false
+        }}
+      />
+      <dashboard_stack.Screen 
+        name="Admin_Navigator" 
+        component={Admin_Navigator}
         options={{
           headerShown:false
         }}

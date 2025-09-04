@@ -23,7 +23,17 @@ export const ResponseSender = async (surveyResponseData, surveyType) => {
       //http://192.168.0.127 or use
       //http://10.0.2.2:5000 for emulators
       //Use https://jameb.pythonanywhere.com if not running flask
-      const response = await fetch("https://mental-load-app.onrender.com//submit-survey", {
+      
+      //Get backend URL from .env instead of hardcoding
+      //Makes it easier to switch between localhost, emulator, and production environment
+      const baseUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
+      if (!baseUrl) {
+        throw new Error("Missing EXPO_PUBLIC_BACKEND_URL. Define it in frontend/.env and restart the app.");
+      }
+      const url = `${baseUrl}/submit-survey`;
+      console.log("Submitting survey to:", url, "type:", surveyType);
+
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${idToken}`,
@@ -34,6 +44,12 @@ export const ResponseSender = async (surveyResponseData, surveyType) => {
       });
       console.log("Pure sent: ", JSON.stringify(surveyResponseData));
       if (response.ok) {
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+          const text = await response.text();
+          console.error("Non-JSON response body:", text.slice(0, 500));
+          throw new Error(`Expected JSON but received '${contentType}'`);
+        }
         const data = await response.json();
         data["success"] = true;
         return data;

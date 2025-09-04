@@ -1,8 +1,8 @@
-importScripts/* global importScripts, firebase */
+/* global importScripts, firebase */
 importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
 
-FirebaseError.iniallizeApp({
+firebase.initializeApp({
   apiKey: "AIzaSyCPSlll8sxCoziyHQ9a0AsucDnKupQBmKs",
   authDomain: "mental-load-app-production.firebaseapp.com",
   projectId: "mental-load-app-production",

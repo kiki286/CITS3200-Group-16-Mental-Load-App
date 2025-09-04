@@ -32,7 +32,8 @@ CORS(app)
 
 """ I believe all this can be removed as is hard coded for linux environments
 # List all files in the directory
-files = os.listdir("/etc/secrets/")
+secrets_dir = os.path.join(os.path.dirname(__file__), "secrets")
+files = os.listdir(secrets_dir)
 
 # Find the credentials file based on a pattern (e.g., the file contains 'firebase-adminsdk')
 cred_file = next((f for f in files if 'firebase-adminsdk' in f), None)
@@ -41,7 +42,7 @@ if cred_file is None:
     raise FileNotFoundError("Credentials file not found in the secrets directory.")
 
 # Combine the directory with the file name
-cred_path = os.path.join("/etc/secrets/", cred_file)
+cred_path = os.path.join(secrets_dir, cred_file)
 
 # Load the credentials
 cred = credentials.Certificate(cred_path)

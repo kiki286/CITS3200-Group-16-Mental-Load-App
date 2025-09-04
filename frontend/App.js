@@ -2,7 +2,7 @@
 //App entry point using stack navigator to handle navigations
 
 import React, { useEffect, useState } from "react";
-import { SafeAreaView, ActivityIndicator, View, Text, TouchableOpacity, Platform } from 'react-native';
+import { SafeAreaView, ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import Login from "./screens/Login";
@@ -13,10 +13,9 @@ import Demographics from "./screens/Demographics";
 import TermsConditions from "./screens/TermsConditions";
 import { useFonts } from 'expo-font';
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, requestNotificationPermission, listenForMessages } from "./firebase/config";
+import { auth } from "./firebase/config";
 import COLORS from "./constants/colors";
 
-const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY; //public key from frontend\.env
 const welcome_stack = createStackNavigator();
 console.disableYellowBox = true;
 
@@ -29,7 +28,6 @@ export default function App() {
   
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState(null);
-  const [pushEnabled, setPushEnabled] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -38,36 +36,6 @@ export default function App() {
     })
     return () => unsubscribe();
   }, [initializing]);
-
-  //If on web page, messages dispalyed on page not push notifications
-  useEffect(() => {
-    if(Platform.OS !== "web") return;
-    const unsubPromise = listenForMessages((payload)=>{
-      const n = payload?.notification || {};
-      console.log("Foreground notification:", n.title, n.body);
-
-    });
-    return () => { unsubPromise?.then(unsub => unsub && unsub()); };
-  }, []);
-
-  async function onEnableNotifications() {
-    if (Platform.OS !== "web") return; //only on web
-    //Permission for push notifications
-    const { ok, token } = await requestNotificationPermission(VAPID_PUBLIC_KEY);
-    if (!ok) {console.warn("Push not enabled:", reason); return}
-    //send token to backend to save against user
-    const idToken = await auth.currentUser.getIdToken();
-    await fetch("/api/push/subscribe", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${idToken}` //verify ID token
-      },
-      body: JSON.stringify({ token, platform: "web" }),
-    });
-    //update UI
-    setPushEnabled(true);
-  }
 
   if (!fontsLoaded) {
     // Display a loading spinner while fonts are being loaded
@@ -90,7 +58,7 @@ export default function App() {
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.black}}>
       <NavigationContainer>
         <welcome_stack.Navigator
-          initialRouteName={user ? 'Dashboard_Tabs' : 'Welcome'} // Navigate based on user state
+          initialRouteName={user ? 'Dashboard_Navigator' : 'Welcome'} // Navigate based on user state
         >
           <welcome_stack.Screen
             name="Welcome"
@@ -135,16 +103,7 @@ export default function App() {
             }}
           />
         </welcome_stack.Navigator>
-
       </NavigationContainer>
-      {Platform.OS === "web" && user && !pushEnabled && (
-        <View style={{ position: "absolute", bottom: 10, left: 0, right: 0, alignItems: 'center' }}>
-          <TouchableOpacity onPress={onEnableNotifications} 
-            style={{ backgroundColor: COLORS.light_green, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 999 }}>
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Enable Notifications</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </SafeAreaView>
   );
 };

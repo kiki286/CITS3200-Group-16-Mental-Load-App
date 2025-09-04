@@ -17,11 +17,9 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
 
 export async function requestNotificationPermission(vapidPublicKey) {
   // To only try on supported browsers
-  if (!("serviceWorker" in navigator)) return { ok: false, reason: "unsupported" };
   const supported = await isSupported().catch(() => false);
   if (!supported) return { ok: false, reason: "unsupported" };
 
@@ -34,7 +32,7 @@ export async function requestNotificationPermission(vapidPublicKey) {
 
   //get the token (tie to service worker) and save token
   const messaging = getMessaging(app);
-  const token = await getToken(messaging, { vapidKey: vapidPublicKey,
+  const token = await getToken(messaging, { vapidKey: "BMZtha7drzmkBZcNHAqVbJqYTOw3Jp6Gv5DEgDZJQ1n_RKxoJA9ibB63m-go7lzarvsK-lALjxDAF9vc7Rvo4nI",
     serviceWorkerRegistration: reg});
 
   return token ? {ok: true, token} : { ok: false, reason: "no-token" };
@@ -45,3 +43,4 @@ export function listenForMessages(callback) {
   return onMessage(messaging, callback);
 }
 
+export const auth = getAuth(app);
