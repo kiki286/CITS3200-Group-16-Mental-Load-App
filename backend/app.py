@@ -210,6 +210,33 @@ def notify_user():
     link = data.get("link") #for Url to open on click
     
     tokens_ref = db.collection("users").document(target_uid).collection("webPushTokens")
+    tokens = [doc.id for doc in tokens_ref.stream()]
+    
+    if not tokens:
+        return jsonify({"ok": False, "message": "No tokens found for user"}), 200
+    
+    sent, errors = 0, []
+    for t in tokens:
+        try:
+            messaging.send(messaging.Message(
+                token=t,
+                notification=messaging.Notification(
+                    title=title,
+                    body=body
+                ),
+                webpush=messaging.WebpushConfig(
+                    fcm_options=messaging.WebpushFCMOptions(link=link) if link else None
+                )
+            ))
+            sent += 1
+        except Exception as e:
+            msg = str(e)
+            errors.append(msg)
+            if "registration token is not registered" in msg.lower():
+                # Remove invalid token
+                db.collection("users").document(target_uid).collection("webPushTokens").document(t).delete()
+
+    return jsonify({"ok": sent > 0, "sent": sent, "errors": errors})
 
 if __name__ == '__main__':
     app.run(debug=True)
