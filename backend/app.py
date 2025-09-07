@@ -5,7 +5,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import os
 import firebase_admin
-from firebase_admin import credentials, auth
+from firebase_admin import credentials, auth, firestore, messaging
 from functools import wraps
 from pathlib import Path
 
@@ -62,6 +62,7 @@ if not cred_path or not cred_path.exists():
     )
 cred = credentials.Certificate(str(cred_path))
 firebase_admin.initialize_app(cred)
+db = firestore.client()  # Initialize Firestore client
 
 def verify_firebase_token(f):
     @wraps(f)
@@ -160,6 +161,55 @@ def get_survey():
 @app.route("/")
 def hello():
   return "Hello World!"
+
+# Push Notifications
+@app.route("/api/push/subscribe")
+@verify_firebase_token
+def push_subscribe():
+    data = request.get_json(force=True) or {}
+    token = data.get("token")
+    platform = data.get("platform", "web")
+    uid = request.user.get("uid")
+    if not token or not uid:
+        return jsonify({"error": "Missing token or user ID"}), 400
+    
+    # Store under users/{uid}/webPushTokens/{token}
+    db.collection("users").document(uid).collection("webPushTokens").document(token).set({
+        "token": token,
+        "platform": platform,
+        "updatedAt": firestore.SERVER_TIMESTAMP
+    })
+    return jsonify({"ok": True})
+
+# Disable notifications
+@app.route("/api/push/subscribe")
+@verify_firebase_token
+def push_unsubscribe():
+    data = request.get_json(force=True) or {}
+    token = data.get("token")
+    uid = request.user.get("uid")
+    if not token or not uid:
+        return jsonify({"error": "Missing token or user ID"}), 400
+
+    # Remove the token from the user's document
+    db.collection("users").document(uid).collection("webPushTokens").document(token).delete()
+    return jsonify({"ok": True})
+
+# Send notification to user (can add feature to call from admin tools)
+@app.route("/api/notify")
+@verify_firebase_token
+def notify_user():
+    """
+    Body: {userId (optional), title, body, link}
+    if userID not included then targets the caller (request.user['uid'])
+    """
+    data= request.get_json(force=True) or {}
+    target_uid = data.get("userId") or request.user.get("uid")
+    title = data.get("title", "Notification")
+    body = data.get("body", "")
+    link = data.get("link") #for Url to open on click
+    
+    tokens_ref = db.collection("users").document(target_uid).collection("webPushTokens")
 
 if __name__ == '__main__':
     app.run(debug=True)
