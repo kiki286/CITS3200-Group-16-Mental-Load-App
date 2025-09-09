@@ -9,6 +9,11 @@ The package.json file contains the packages used.
 2. Install libraries by running `npm install`  
 3. Build and run the app by running `npx expo start`  
 
+## How to set up firebase hosting for the first time
+1. Cd into the frontend directory and install firebase with `npm install -g firebase-tools`
+2. Login with your account using `firebase login`
+
+
 ## To run the webserver locally instead of globally:
 Before doing anything, you need to set the .env_example file to contain your keys, and rename it to .env. **NEVER COMMIT THIS FILE ONCE YOU HAVE FILLED IT IN!**
 

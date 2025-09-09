@@ -4,6 +4,7 @@
     "slug": "mental-load-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
+    "description": "Track & visualise mental load.",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
