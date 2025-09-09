@@ -22,8 +22,16 @@ console.disableYellowBox = true;
 export default function App() {
   
   const [fontsLoaded] = useFonts({
-    'Roboto-Medium': require('./assets/fonts/Roboto-Medium.ttf'), //Loads the font from assets/font
+    // App fonts
+    'Roboto-Medium': require('./assets/fonts/Roboto-Medium.ttf'),
     'Roboto-Bold': require('./assets/fonts/Roboto-Bold.ttf'),
+    // Icon fonts (copy these .ttf files into ./assets/fonts/ before building/deploying)
+    'AntDesign': require('./assets/fonts/AntDesign.ttf'),
+    'Entypo': require('./assets/fonts/Entypo.ttf'),
+    'Feather': require('./assets/fonts/Feather.ttf'),
+    'FontAwesome': require('./assets/fonts/FontAwesome.ttf'),
+    'MaterialIcons': require('./assets/fonts/MaterialIcons.ttf'),
+    'Ionicons': require('./assets/fonts/Ionicons.ttf'),
   });
   
   const [initializing, setInitializing] = useState(true);

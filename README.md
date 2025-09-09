@@ -12,6 +12,9 @@ The package.json file contains the packages used.
 ## How to set up firebase hosting for the first time
 1. Cd into the frontend directory and install firebase with `npm install -g firebase-tools`
 2. Login with your account using `firebase login`
+3. When updating frontend, export build with `npx expo export --platform web`
+4. Then redeploy with `firebase deploy --only hosting` 
+
 
 
 ## To run the webserver locally instead of globally:

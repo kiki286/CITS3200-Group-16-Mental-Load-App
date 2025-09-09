@@ -22,7 +22,7 @@ import { ResponseSender } from "../services/ResponseSender";
 import COLORS from "../constants/colors";
 import FONTS from "../constants/fonts";
 import Button from "./Buttons/Button_Light_Blue";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowForwardCircleOutline } from 'react-ionicons';
 import RenderQuestionUI from "./RenderQuestionUI";
 import { updateCurrentUser } from "firebase/auth";
 
@@ -415,10 +415,10 @@ const QuestionComponent = ({ demoSubmit, backNavigate }) => {
           {questionDetails ? (
             <View style={{ paddingBottom: 20, paddingTop: 10 }}>
               <TouchablePlatform onPress={handleNextQuestion}>
-                <Ionicons
-                  name="arrow-forward-circle-outline"
-                  size={80}
+                <ArrowForwardCircleOutline
                   color={COLORS.white}
+                  height="80px"
+                  width="80px"
                   style={{
                     top: 0,
                     alignSelf: "center",

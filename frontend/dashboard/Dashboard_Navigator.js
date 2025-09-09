@@ -10,7 +10,6 @@ import Welcome from "../screens/Welcome";
 import About from './screens/settings/About';
 import COLORS from '../constants/colors';
 import FONTS from '../constants/fonts';
-import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient';
 
 const dashboard_stack = createStackNavigator();
