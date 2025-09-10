@@ -24,14 +24,7 @@ export default function App() {
   const [fontsLoaded] = useFonts({
     // App fonts
     'Roboto-Medium': require('./assets/fonts/Roboto-Medium.ttf'),
-    'Roboto-Bold': require('./assets/fonts/Roboto-Bold.ttf'),
-    // Icon fonts (copy these .ttf files into ./assets/fonts/ before building/deploying)
-    'AntDesign': require('./assets/fonts/AntDesign.ttf'),
-    'Entypo': require('./assets/fonts/Entypo.ttf'),
-    'Feather': require('./assets/fonts/Feather.ttf'),
-    'FontAwesome': require('./assets/fonts/FontAwesome.ttf'),
-    'MaterialIcons': require('./assets/fonts/MaterialIcons.ttf'),
-    'Ionicons': require('./assets/fonts/Ionicons.ttf'),
+    'Roboto-Bold': require('./assets/fonts/Roboto-Bold.ttf')
   });
   
   const [initializing, setInitializing] = useState(true);

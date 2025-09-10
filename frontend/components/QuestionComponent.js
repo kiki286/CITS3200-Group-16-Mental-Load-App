@@ -413,7 +413,7 @@ const QuestionComponent = ({ demoSubmit, backNavigate }) => {
             inputValues={inputValues}
           />
           {questionDetails ? (
-            <View style={{ paddingBottom: 20, paddingTop: 10 }}>
+            <View style={{ paddingBottom: 20, paddingTop: 10, alignItems: 'center'}}>
               <TouchablePlatform onPress={handleNextQuestion}>
                 <ArrowForwardCircleOutline
                   color={COLORS.white}
