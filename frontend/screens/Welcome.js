@@ -6,7 +6,6 @@ import React from 'react'
 import { LinearGradient } from 'expo-linear-gradient';
 import COLORS from '../constants/colors';
 import Button from '../components/Buttons/Button'
-import { Ionicons } from '@expo/vector-icons'
 import FONTS from '../constants/fonts';
 
 

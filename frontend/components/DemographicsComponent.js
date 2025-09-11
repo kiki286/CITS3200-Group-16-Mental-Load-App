@@ -15,7 +15,7 @@ import { Loading, Error } from "./Messages";
 import { setDemographicsSubmit, readResponsesFromFile, clearResponsesFile } from "../services/StorageHandler";
 import Button from "./Buttons/Button_Light_Blue";
 import COLORS from "../constants/colors";
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowForwardCircleOutline } from 'react-ionicons';
 import RenderQuestionUI from './RenderQuestionUI';
 import { useNavigation } from "@react-navigation/native";
 
@@ -384,10 +384,10 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
           {questionDetails ? (
             <View style={{paddingBottom: 20, paddingTop: 10, alignItems: 'center'}}>
                 <TouchablePlatform onPress={handleNextQuestion}>
-                <Ionicons 
-                  name="arrow-forward-circle-outline" 
-                  size={80} 
-                  color={COLORS.white} 
+                <ArrowForwardCircleOutline
+                  color={COLORS.white}
+                  height="80px"
+                  width="80px"
                   style={{
                     backgroundColor: COLORS.black,
                 }}/>

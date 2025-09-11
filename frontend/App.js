@@ -22,8 +22,9 @@ console.disableYellowBox = true;
 export default function App() {
   
   const [fontsLoaded] = useFonts({
-    'Roboto-Medium': require('./assets/fonts/Roboto-Medium.ttf'), //Loads the font from assets/font
-    'Roboto-Bold': require('./assets/fonts/Roboto-Bold.ttf'),
+    // App fonts
+    'Roboto-Medium': require('./assets/fonts/Roboto-Medium.ttf'),
+    'Roboto-Bold': require('./assets/fonts/Roboto-Bold.ttf')
   });
   
   const [initializing, setInitializing] = useState(true);
