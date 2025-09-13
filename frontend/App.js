@@ -13,9 +13,11 @@ import Demographics from "./screens/Demographics";
 import TermsConditions from "./screens/TermsConditions";
 import { useFonts } from 'expo-font';
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, requestNotificationPermission, listenForMessages } from "./firebase/config";
+import { auth, requestNotificationPermission, listenForMessages} from "./firebase/config";
+import { getMessaging, getToken, isSupported } from "firebase/messaging"; // For web push notifications
 import COLORS from "./constants/colors";
 
+const API_BASE = process.env.EXPO_PUBLIC_API_BASE || "http://127.0.0.1:5000";
 const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY; //public key from frontend\.env
 const welcome_stack = createStackNavigator();
 console.disableYellowBox = true;
@@ -39,6 +41,39 @@ export default function App() {
     return () => unsubscribe();
   }, [initializing]);
 
+  // Auto-register SW and (if permission is already granted) sync token to backend on login
+  useEffect(() => {
+    if (Platform.OS !== "web" || !user) return;
+
+    (async () => {
+      const supported = await isSupported().catch(() => false);
+      if (!supported) return;
+
+      // Register (or re-use) the SW at the site root
+      const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+
+      // If permission is already granted, silently get/refresh the token
+      const messaging = getMessaging(); 
+      const newToken = await getToken(messaging, {
+        vapidKey: VAPID_PUBLIC_KEY,
+        serviceWorkerRegistration: reg,
+      }).catch(() => null);
+
+      if (!newToken) return;
+
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) return;
+
+      await fetch(`${API_BASE}/api/push/subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ token: newToken, platform: "web" }),
+      });
+
+      setPushEnabled(true);
+    })();
+  }, [user]);
+  
   //If on web page, messages dispalyed on page not push notifications
   useEffect(() => {
     if(Platform.OS !== "web") return;
@@ -53,11 +88,11 @@ export default function App() {
   async function onEnableNotifications() {
     if (Platform.OS !== "web") return; //only on web
     //Permission for push notifications
-    const { ok, token } = await requestNotificationPermission(VAPID_PUBLIC_KEY);
+    const { ok, token, reason } = await requestNotificationPermission(VAPID_PUBLIC_KEY);
     if (!ok) {console.warn("Push not enabled:", reason); return}
     //send token to backend to save against user
     const idToken = await auth.currentUser.getIdToken();
-    await fetch("/api/push/subscribe", {
+    await fetch(`${API_BASE}/api/push/subscribe`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

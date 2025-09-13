@@ -64,6 +64,7 @@ cred = credentials.Certificate(str(cred_path))
 firebase_admin.initialize_app(cred)
 db = firestore.client()  # Initialize Firestore client
 
+
 def verify_firebase_token(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -163,7 +164,7 @@ def hello():
   return "Hello World!"
 
 # Push Notifications
-@app.route("/api/push/subscribe")
+@app.route("/api/push/subscribe", methods=["POST"])
 @verify_firebase_token
 def push_subscribe():
     data = request.get_json(force=True) or {}
@@ -182,7 +183,7 @@ def push_subscribe():
     return jsonify({"ok": True})
 
 # Disable notifications
-@app.route("/api/push/subscribe")
+@app.route("/api/push/unsubscribe", methods=["POST"])
 @verify_firebase_token
 def push_unsubscribe():
     data = request.get_json(force=True) or {}
@@ -196,7 +197,7 @@ def push_unsubscribe():
     return jsonify({"ok": True})
 
 # Send notification to user (can add feature to call from admin tools)
-@app.route("/api/notify")
+@app.route("/api/notify", methods=["POST"])
 @verify_firebase_token
 def notify_user():
     """
@@ -218,16 +219,19 @@ def notify_user():
     sent, errors = 0, []
     for t in tokens:
         try:
-            messaging.send(messaging.Message(
+            # FCM data payload values must be strings.
+            msg = messaging.Message(
                 token=t,
-                notification=messaging.Notification(
-                    title=title,
-                    body=body
-                ),
+                data={
+                    "title": str(title),
+                    "body": str(body),
+                    **({"link": str(link)} if link else {}),
+                },
                 webpush=messaging.WebpushConfig(
-                    fcm_options=messaging.WebpushFCMOptions(link=link) if link else None
-                )
-            ))
+                    headers={"Urgency": "high"}
+                ),
+            )
+            messaging.send(msg)
             sent += 1
         except Exception as e:
             msg = str(e)
