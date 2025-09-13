@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import React, { useState, useEffect, useCallback } from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { Eye, EyeOff } from 'react-ionicons';
 import Checkbox from "expo-checkbox";
 import Button from "../components/Buttons/Button";
 import COLORS from "../constants/colors";
@@ -177,11 +177,11 @@ const SignInScreen = ({ navigation }) => {
               onPress={() => setHidePassword(!hidePassword)}
               style={{ position: "absolute", right: 12 }}
             >
-              <Ionicons
-                name={hidePassword == true ? "eye-off" : "eye"}
-                size={24}
-                color={COLORS.white}
-              />
+              {hidePassword ? (
+                <EyeOff color={COLORS.white} height="24px" width="24px" />
+              ) : (
+                <Eye color={COLORS.white} height="24px" width="24px" />
+              )}
             </TouchablePlatform>
           </View>
         </View>

@@ -12,7 +12,7 @@ import {
   Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { Eye, EyeOff } from 'react-ionicons';
 import Checkbox from "expo-checkbox";
 import COLORS from "../constants/colors";
 import Button_Green from "../components/Buttons/Button_Green";
@@ -184,11 +184,11 @@ const SignUp = ({ navigation }) => {
               onPress={() => setHidePassword(!hidePassword)}
               style={{ position: "absolute", right: 12 }}
             >
-              <Ionicons
-                name={hidePassword ? "eye-off" : "eye"}
-                size={24}
-                color={COLORS.white}
-              />
+              {hidePassword ? (
+                <EyeOff color={COLORS.white} height="24px" width="24px" />
+              ) : (
+                <Eye color={COLORS.white} height="24px" width="24px" />
+              )}
             </TouchableOpacity>
           </View>
         </View>
