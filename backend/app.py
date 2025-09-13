@@ -63,7 +63,14 @@ if not cred_path or not cred_path.exists():
 cred = credentials.Certificate(str(cred_path))
 firebase_admin.initialize_app(cred)
 db = firestore.client()  # Initialize Firestore client
+print("FIRESTORE PROJECT (server):", db.project)
 
+# Test Firestore read
+try:
+    db.collection("_health").document("write").set({"ts": firestore.SERVER_TIMESTAMP})
+    print("FIRESTORE WRITE: OK")
+except Exception as e:
+    print("FIRESTORE WRITE: FAIL ->", repr(e))
 
 def verify_firebase_token(f):
     @wraps(f)
