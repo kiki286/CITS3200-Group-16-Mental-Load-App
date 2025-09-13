@@ -78,12 +78,12 @@ export default function App() {
   //If on web page, messages dispalyed on page not push notifications
   useEffect(() => {
     if(Platform.OS !== "web") return;
-    const unsubPromise = listenForMessages((payload)=>{
+    const unsubscribe = listenForMessages((payload)=>{
       const n = payload?.notification || {};
       console.log("Foreground notification:", n.title, n.body);
 
     });
-    return () => { unsubPromise?.then(unsub => unsub && unsub()); };
+    return () => { unsubscribe && unsubscribe(); };
   }, []);
 
   async function onEnableNotifications() {
@@ -173,7 +173,7 @@ export default function App() {
         </welcome_stack.Navigator>
 
       </NavigationContainer>
-      {Platform.OS === "web" && user && !pushEnabled && (
+      {Platform.OS === "web" && !initializing && !!user && !pushEnabled && (
         <View style={{ position: "absolute", bottom: 10, left: 0, right: 0, alignItems: 'center' }}>
           <TouchableOpacity onPress={onEnableNotifications} 
             style={{ backgroundColor: COLORS.light_green, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 999 }}>
