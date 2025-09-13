@@ -23,8 +23,9 @@ export async function requestNotificationPermission(vapidPublicKey) {
   const supported = await isSupported().catch(() => false);
   if (!supported) return { ok: false, reason: "unsupported" };
 
-  // Register the service worker (to work in background)
-  const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+  // Register (no-op if already registered), then wait until ACTIVE
+  await navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/" });
+  const reg = await navigator.serviceWorker.ready;
 
   //request user permission for notification
   const permission = await Notification.requestPermission();

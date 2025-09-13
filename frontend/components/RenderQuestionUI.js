@@ -13,7 +13,6 @@ import {
   useWindowDimensions,
 } from "react-native";
 import TouchablePlatform from './TouchablePlatform';
-import Ionicons from "react-native-vector-icons/Ionicons";
 import COLORS from "../constants/colors";
 import FONTS from "../constants/fonts";
 import GroupedMatrixComponent from "./GroupedMatrixComponent";

@@ -6,13 +6,7 @@ import React, {useEffect} from 'react';
 import { Profile_Navigator, View_Navigator, Settings_Navigator, Home_Navigator } from './screens';
 import COLORS from '../constants/colors';
 import FONTS from '../constants/fonts';
-import { Ionicons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient';
-import Entypo from '@expo/vector-icons/Entypo';
-import Feather from '@expo/vector-icons/Feather';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { SettingsOutline, Home, StatsChart, PersonOutline, HelpCircleOutline, LogOutOutline } from 'react-ionicons'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase/config'
 import { getDemographicsSubmitted } from '../services/StorageHandler';
@@ -53,14 +47,14 @@ const Dashboard = ({ navigation }) => {
             style={styles.button}
             onPress={()=>navigation.navigate("Home_Navigator")}
           >
-            <Feather name="square" size={60} color="black" />
+            <Home color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Check-in</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.button}
             onPress={()=>navigation.navigate("View_Navigator")}
           >
-            <Entypo name="bar-graph" size={60} color="black" />
+            <StatsChart color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>View</Text>
           </TouchableOpacity>
         </View>
@@ -69,14 +63,14 @@ const Dashboard = ({ navigation }) => {
             style={styles.button}
             onPress={()=>navigation.navigate("Profile_Navigator")}
           >
-            <AntDesign name="user" size={60} color="black" />
+            <PersonOutline color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.button}
             onPress={()=>navigation.navigate("Settings_Navigator")}
           >
-            <Ionicons name="settings" size={60} color="black" />
+            <SettingsOutline color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Settings</Text>
           </TouchableOpacity>
         </View>
@@ -94,14 +88,14 @@ const Dashboard = ({ navigation }) => {
             style={styles.button}
             onPress={()=>navigation.navigate("About")}
           >
-            <FontAwesome name="question" size={60} color="black" />
+            <HelpCircleOutline color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>About</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.button}
             onPress={handleLogout}
           >
-            <MaterialIcons name="logout" size={60} color="black" />
+            <LogOutOutline color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Logout</Text>
           </TouchableOpacity>
         </View>

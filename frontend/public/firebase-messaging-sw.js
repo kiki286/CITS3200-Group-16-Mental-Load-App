@@ -1,6 +1,9 @@
-/* global importScripts, firebase */
-importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (evt) => evt.waitUntil(self.clients.claim()));
+
+/* firebase-messaging-sw.js (frontend/public) */
+importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js");
 
 firebase.initializeApp({
   apiKey: "AIzaSyCPSlll8sxCoziyHQ9a0AsucDnKupQBmKs",
@@ -9,7 +12,6 @@ firebase.initializeApp({
   storageBucket: "mental-load-app-production.firebasestorage.app",
   messagingSenderId: "464036946053",
   appId: "1:464036946053:web:79ec052e378670f5d8c9ec",
-  measurementId: "G-0FZW5NHWJX"
 });
 
 //Gives SW access to firebase cloud messaging features 
@@ -17,7 +19,7 @@ const messaging = firebase.messaging();
 
 //Background messages (app not focused/ or PWA on ios in background)
 messaging.onBackgroundMessage(({notification= {}, data ={} })=>{
-    const { title = "", body = "", image  } = notification;
+    const { title = "Notification", body = "", image  } = notification;
     const url = data.link || "/"; //link for notification click
     //Shows as system notification (same UI as OS notifications)
     self.registration.showNotification(title, {

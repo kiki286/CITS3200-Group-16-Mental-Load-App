@@ -9,18 +9,13 @@ The package.json file contains the packages used.
 2. Install libraries by running `npm install`  
 3. Build and run the app by running `npx expo start`  
 
-## Frontend environment setup
-In the '/frontend' folder, create a '.env' file and set the backend server URL.
+## How to set up firebase hosting for the first time
+1. Cd into the frontend directory and install firebase with `npm install -g firebase-tools`
+2. Login with your account using `firebase login`
+3. When updating frontend, export build with `npx expo export --platform web`
+4. Then redeploy with `firebase deploy --only hosting` 
 
-###For the hosted server,
-EXPO_PUBLIC_BACKEND_URL=https://mental-load-app.onrender.com
-###For local Flask server,
-EXPO_PUBLIC_BACKEND_URL=https://localhost:5000
-###For Android emulator,
-EXPO_PUBLIC_BACKEND_URL=http://10.0.2.2:5000
 
-This sets the backend server URL that the Expo app will use.
-Make sure the '.env' file is **not committed** to the repository.
 
 ## To run the webserver locally instead of globally:
 Before doing anything, you need to set the .env_example file to contain your keys, and rename it to .env. **NEVER COMMIT THIS FILE ONCE YOU HAVE FILLED IT IN!**
