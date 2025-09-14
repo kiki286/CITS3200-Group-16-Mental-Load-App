@@ -34,6 +34,14 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [pushEnabled, setPushEnabled] = useState(false);
 
+  // Check if notifications are already enabled (web only)
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    if (typeof Notification !== "undefined") {
+      setPushEnabled(Notification.permission === "granted");
+    }
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
@@ -49,11 +57,13 @@ export default function App() {
     (async () => {
       const supported = await isSupported().catch(() => false);
       if (!supported) return;
+      if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
 
-      // Register (or re-use) the SW at the site root
-      const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+      //  Ensure an ACTIVE service worker controls the page
+      await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+      const reg = await navigator.serviceWorker.ready;
 
-      // If permission is already granted, silently get/refresh the token
+      // silently get/refresh the token
       const messaging = getMessaging(); 
       const newToken = await getToken(messaging, {
         vapidKey: VAPID_PUBLIC_KEY,
@@ -172,7 +182,7 @@ export default function App() {
           />
         </welcome_stack.Navigator>
       </NavigationContainer>
-      {Platform.OS === "web" && !initializing && !!user && !pushEnabled && (
+      {Platform.OS === "web" && !initializing && !!user && !pushEnabled && typeof Notification !== "undefined" && Notification.permission !== "granted" && !pushEnabled &&(
         <View style={{ position: "absolute", bottom: 10, left: 0, right: 0, alignItems: 'center' }}>
           <TouchableOpacity onPress={onEnableNotifications} 
             style={{ backgroundColor: COLORS.light_green, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 999 }}>
