@@ -2,7 +2,7 @@
 //App entry point using stack navigator to handle navigations
 
 import React, { useEffect, useState } from "react";
-import { SafeAreaView, ActivityIndicator, View } from 'react-native';
+import { SafeAreaView, ActivityIndicator, View, Platform, TouchableOpacity, Text } from 'react-native';
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import Login from "./screens/Login";
@@ -17,7 +17,7 @@ import { auth, requestNotificationPermission, listenForMessages} from "./firebas
 import { getMessaging, getToken, isSupported } from "firebase/messaging"; // For web push notifications
 import COLORS from "./constants/colors";
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE || "http://127.0.0.1:5000";
+const API_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "http://127.0.0.1:5000";
 const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY; //public key from frontend\.env
 const welcome_stack = createStackNavigator();
 console.disableYellowBox = true;
@@ -32,6 +32,7 @@ export default function App() {
   
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState(null);
+  const [pushEnabled, setPushEnabled] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {

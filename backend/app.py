@@ -49,7 +49,7 @@ cred = credentials.Certificate(cred_path)
 
 firebase_admin.initialize_app(cred)
 """
-
+cred_path = None
 env_cred = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
 if env_cred:
     cred_path = Path(env_cred)

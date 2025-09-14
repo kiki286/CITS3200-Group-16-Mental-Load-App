@@ -1,8 +1,9 @@
 **Setup**
 
-change .env to format of .env.example
-change SurveyFetcher.js and ResponseSender.js to use address of Proxy server
-run `npx expo start`
+change .env to format: (for example)
+EXPO_PUBLIC_BACKEND_URL="https://mental-load-app.onrender.com"
+EXPO_PUBLIC_FIREBASE_VAPID_KEY="AIzaSyD2b4nY3k1b0X4G7v5H6J7K8L9M0N1O2P3"
+run `npx expo start --web`
 
 **Explanation**
 
