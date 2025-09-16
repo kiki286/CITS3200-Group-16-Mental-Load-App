@@ -119,7 +119,7 @@ const TermsConditions = () => {
           for crisis support, call Lifeline on 13 11 14.{"\n"}
           {"\n"}
           <Text style={{ fontWeight: "bold" }}>Contacts{"\n"}</Text>A summary of
-          project results will be available in late 2023. If you would like to
+          project results will be available in late 2025. If you would like to
           receive a summary or discuss any aspect of this study, please feel
           free to email emma.stephenson@uwa.edu.au Approval to conduct this
           research has been provided by the University of Western Australia, in

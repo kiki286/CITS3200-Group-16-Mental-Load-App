@@ -30,8 +30,9 @@ const About = ({ navigation }) => {
           </Text>
         </View>
         <View style={styles.info_container}>
-          <Text style={styles.text}>Mental Labour App developed 2024</Text>
-          <Text style={styles.text}>CITS3200 Group 23 project at University of Western Australia</Text>
+          <Text style={styles.text}>Mental Labour App developed in 2024</Text>
+          <Text style={styles.text}>Initially developed by CITS3200 Group 23 project at University of Western Australia in 2024.</Text>
+          <Text style={styles.text}>Continued development by CITS3200 Group 16 project at University of Western Australia in 2025.</Text>
           <Text style={styles.text}>App idea by Emma Stephenson, (UWA Business School)</Text>
         </View>
         <View style={styles.button_container}>
