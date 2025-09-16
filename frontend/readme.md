@@ -69,3 +69,40 @@ Sample Response:
   "Type": ...,
   "inPage": ..
 }`
+
+## Firebase Layout
+/users/{uid}                // Private profile, always exists
+   ├── fields:
+   │    displayName
+   │    avatarUrl
+   │    notificationTime
+   │    timezone
+   │    isPublic: true|false
+   │    latestScore (optional cache)
+   │    latestScoreUpdatedAt
+   │
+   └── surveyResults/{resultId}      // One doc per completed survey
+        ├── createdAt: timestamp
+        └── scores:
+             deciding:   { home: number, work: number }
+             planning:   { home: number, work: number }
+             monitoring: { home: number, work: number }
+             knowing:    { home: number, work: number }
+
+/publicProfiles/{uid}       // Optional public profile (only if user is searchable)
+   ├── displayName
+   ├── displayNameLower
+   ├── avatarUrl
+   ├── shareLatestScore: true|false
+   ├── latestScore
+   └── latestScoreUpdatedAt
+
+/friendRequests/{id}        // Pending/declined/accepted requests
+   ├── fromUid
+   ├── toUid
+   ├── status: "pending" | "accepted" | "declined"
+   └── createdAt
+
+/friendships/{id}           // Accepted two-way relationships
+   ├── members: [uidA, uidB]
+   └── since: timestamp
