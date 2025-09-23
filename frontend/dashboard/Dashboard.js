@@ -83,6 +83,15 @@ const Dashboard = ({ navigation }) => {
         <View style={styles.row}>
           <TouchableOpacity 
             style={styles.button}
+            onPress={()=>navigation.navigate("Admin_Navigator")}
+          >
+            <Feather name="shield" size={60} color="black" />
+            <Text style={styles.buttonText}>Admin</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.row}>
+          <TouchableOpacity 
+            style={styles.button}
             onPress={()=>navigation.navigate("About")}
           >
             <FontAwesome name="question" size={60} color="black" />

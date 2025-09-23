@@ -1,8 +1,8 @@
 **Setup**
 
 change .env to format: (for example)
-EXPO_PUBLIC_BACKEND_URL="https://mental-load-app.onrender.com"
-EXPO_PUBLIC_FIREBASE_VAPID_KEY="AIzaSyD2b4nY3k1b0X4G7v5H6J7K8L9M0N1O2P3"
+EXPO_PUBLIC_BACKEND_URL="http://127.0.0.1:5000"
+EXPO_PUBLIC_FIREBASE_VAPID_KEY="BMZtha7drzmkBZcNHAqVbJqYTOw3Jp6Gv5DEgDZJQ1n_RKxoJA9ibB63m-go7lzarvsK-lALjxDAF9vc7Rvo4nI"
 run `npx expo start --web`
 
 **Explanation**
