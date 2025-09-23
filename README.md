@@ -1,4 +1,4 @@
-# CITS3200-Mental-Load-App  
+
 
 An app to measure and view mental load  
 
@@ -28,8 +28,6 @@ To set up the flask server, you need to create a pyenv:
 4. Place your firebase credentials into the "secrets" folder
 5. Run `flask run` to run the app. You should get a Hello World message on http://localhost:5000/
 6. If you want to test on a phone (i.e. server can't be on localhost), run `flask run --host 0.0.0.0` to run it on your local network.
-
-      To connect to the server from the app itself, you will need to set the URLs in frontend/services/ResponseSender.js and frontend/services/SurveyFetcher.js to align with your running flask server.
 
 Setting up firebase:
 

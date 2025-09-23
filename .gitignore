@@ -3,11 +3,14 @@
 /backend/__pycache__
 backend/.env
 backend/secrets/credentials.json
-backend/secrets/.env
+
+/backend/.venv
+
 
 /frontend/node_modules
 /frontend/android
 /frontend/ios
+/frontend/.env
 
 backend/secrets/**-firebase-adminsdk-**.json
 

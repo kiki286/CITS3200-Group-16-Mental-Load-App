@@ -2,7 +2,7 @@
 //App entry point using stack navigator to handle navigations
 
 import React, { useEffect, useState } from "react";
-import { SafeAreaView, ActivityIndicator, View, Text, TouchableOpacity, Platform } from 'react-native';
+import { SafeAreaView, ActivityIndicator, View, Platform, TouchableOpacity, Text } from 'react-native';
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import Login from "./screens/Login";
@@ -17,7 +17,7 @@ import { auth, requestNotificationPermission, listenForMessages} from "./firebas
 import { getMessaging, getToken, isSupported } from "firebase/messaging"; // For web push notifications
 import COLORS from "./constants/colors";
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE || "http://127.0.0.1:5000";
+const API_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "http://127.0.0.1:5000";
 const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY; //public key from frontend\.env
 const welcome_stack = createStackNavigator();
 console.disableYellowBox = true;
@@ -34,6 +34,14 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [pushEnabled, setPushEnabled] = useState(false);
 
+  // Check if notifications are already enabled (web only)
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    if (typeof Notification !== "undefined") {
+      setPushEnabled(Notification.permission === "granted");
+    }
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
@@ -49,11 +57,13 @@ export default function App() {
     (async () => {
       const supported = await isSupported().catch(() => false);
       if (!supported) return;
+      if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
 
-      // Register (or re-use) the SW at the site root
-      const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+      //  Ensure an ACTIVE service worker controls the page
+      await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+      const reg = await navigator.serviceWorker.ready;
 
-      // If permission is already granted, silently get/refresh the token
+      // silently get/refresh the token
       const messaging = getMessaging(); 
       const newToken = await getToken(messaging, {
         vapidKey: VAPID_PUBLIC_KEY,
@@ -126,7 +136,7 @@ export default function App() {
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.black}}>
       <NavigationContainer>
         <welcome_stack.Navigator
-          initialRouteName={user ? 'Dashboard_Tabs' : 'Welcome'} // Navigate based on user state
+          initialRouteName={user ? 'Dashboard_Navigator' : 'Welcome'} // Navigate based on user state
         >
           <welcome_stack.Screen
             name="Welcome"
@@ -171,9 +181,8 @@ export default function App() {
             }}
           />
         </welcome_stack.Navigator>
-
       </NavigationContainer>
-      {Platform.OS === "web" && !initializing && !!user && !pushEnabled && (
+      {Platform.OS === "web" && !initializing && !!user && !pushEnabled && typeof Notification !== "undefined" && Notification.permission !== "granted" && !pushEnabled &&(
         <View style={{ position: "absolute", bottom: 10, left: 0, right: 0, alignItems: 'center' }}>
           <TouchableOpacity onPress={onEnableNotifications} 
             style={{ backgroundColor: COLORS.light_green, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 999 }}>

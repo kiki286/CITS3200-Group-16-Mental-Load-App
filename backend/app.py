@@ -32,7 +32,8 @@ CORS(app)
 
 """ I believe all this can be removed as is hard coded for linux environments
 # List all files in the directory
-files = os.listdir("/etc/secrets/")
+secrets_dir = os.path.join(os.path.dirname(__file__), "secrets")
+files = os.listdir(secrets_dir)
 
 # Find the credentials file based on a pattern (e.g., the file contains 'firebase-adminsdk')
 cred_file = next((f for f in files if 'firebase-adminsdk' in f), None)
@@ -41,14 +42,14 @@ if cred_file is None:
     raise FileNotFoundError("Credentials file not found in the secrets directory.")
 
 # Combine the directory with the file name
-cred_path = os.path.join("/etc/secrets/", cred_file)
+cred_path = os.path.join(secrets_dir, cred_file)
 
 # Load the credentials
 cred = credentials.Certificate(cred_path)
 
 firebase_admin.initialize_app(cred)
 """
-
+cred_path = None
 env_cred = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
 if env_cred:
     cred_path = Path(env_cred)
@@ -71,6 +72,28 @@ try:
     print("FIRESTORE WRITE: OK")
 except Exception as e:
     print("FIRESTORE WRITE: FAIL ->", repr(e))
+
+
+def load_survey_settings():
+    """Load survey IDs from Firestore (falls back to env vars)."""
+    global CHECKIN_SURVEY, DEMOGRAPHICS_SURVEY
+    try:
+        doc = db.collection('settings').document('surveys').get()
+        if doc.exists:
+            data = doc.to_dict()
+            if data.get('checkin_survey'):
+                CHECKIN_SURVEY = data.get('checkin_survey')
+            if data.get('demographics_survey'):
+                DEMOGRAPHICS_SURVEY = data.get('demographics_survey')
+            print('Loaded survey settings from Firestore:', {'checkin': CHECKIN_SURVEY, 'demographics': DEMOGRAPHICS_SURVEY})
+        else:
+            print('No survey settings document found in Firestore; using env values')
+    except Exception as e:
+        print('Failed to load survey settings from Firestore:', repr(e))
+
+
+# Attempt to load survey settings from Firestore at startup
+load_survey_settings()
 
 def verify_firebase_token(f):
     @wraps(f)
@@ -169,6 +192,51 @@ def get_survey():
 @app.route("/")
 def hello():
   return "Hello World!"
+
+
+# Admin endpoints to view/update survey IDs persisted in Firestore
+@app.route('/admin/surveys', methods=['GET'])
+@verify_firebase_token
+def admin_get_surveys():
+    """Return the currently-configured survey IDs."""
+    try:
+        doc = db.collection('settings').document('surveys').get()
+        if doc.exists:
+            data = doc.to_dict()
+        else:
+            data = {}
+        # Fallback to env values if fields missing
+        data.setdefault('checkin_survey', CHECKIN_SURVEY)
+        data.setdefault('demographics_survey', DEMOGRAPHICS_SURVEY)
+        return jsonify({'ok': True, 'surveys': data}), 200
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+
+@app.route('/admin/surveys', methods=['POST'])
+@verify_firebase_token
+def admin_set_surveys():
+    """Update survey IDs in Firestore and refresh in-memory values."""
+    body = request.get_json(force=True) or {}
+    checkin = body.get('checkinSurveyId')
+    demographics = body.get('demographicsSurveyId')
+    if not checkin and not demographics:
+        return jsonify({'ok': False, 'error': 'No survey fields provided'}), 400
+    update_doc = {}
+    if checkin:
+        update_doc['checkinSurveyId'] = checkin
+    if demographics:
+        update_doc['demographicsSurveyId'] = demographics
+    try:
+        db.collection('settings').document('surveys').set(update_doc, merge=True)
+        # Update in-memory globals so server uses new ids without restart
+        if checkin:
+            globals()['CHECKIN_SURVEY'] = checkin
+        if demographics:
+            globals()['DEMOGRAPHICS_SURVEY'] = demographics
+        return jsonify({'ok': True, 'surveys': {'checkin_survey': globals().get('CHECKIN_SURVEY'), 'demographics_survey': globals().get('DEMOGRAPHICS_SURVEY')}}), 200
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
 # Push Notifications
 @app.route("/api/push/subscribe", methods=["POST"])
