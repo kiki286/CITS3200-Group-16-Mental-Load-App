@@ -13,7 +13,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Eye, EyeOff } from 'react-ionicons';
 import Checkbox from "expo-checkbox";
-import Button from "../components/Buttons/Button";
+import Button from "../components/Buttons/Button_Light_Blue";
 import COLORS from "../constants/colors";
 import { useSignIn } from "../hooks/useAuth";
 import FONTS from "../constants/fonts";
@@ -95,7 +95,7 @@ const SignInScreen = ({ navigation }) => {
   });
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20, backgroundColor: COLORS.black, }}>
+    <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20, backgroundColor: COLORS.white, }}>
       <View style={{ flex: 1, marginHorizontal: 26 }}>
         <View style={{ marginVertical: 22 }}>
           <Text
@@ -103,14 +103,15 @@ const SignInScreen = ({ navigation }) => {
               fontSize: 30,
               fontFamily: FONTS.main_font,
               marginVertical: 10,
-              color: COLORS.white,
-            }}
-          >
-            Login
-          </Text>
-          <Text style={{ fontSize: 20, color: COLORS.white, fontFamily: FONTS.main_font, }}>
-            REFLECT ON MENTAL LABOUR
-          </Text>
+              marginTop: 40,
+              color: COLORS.black,}}>
+            Login</Text>
+          <Text
+            style={{
+              fontSize: 14,
+              color: COLORS.black,
+              fontFamily: FONTS.main_font,}}>
+            Welcome back!</Text>
         </View>
 
         <View style={{ marginBottom: 12 }}>
@@ -120,80 +121,71 @@ const SignInScreen = ({ navigation }) => {
               fontWeight: 400,
               marginVertical: 8,
               marginTop: 10,
-              color: COLORS.white,
-            }}
-          >Email</Text>
+              color: COLORS.black,}}>
+            Email</Text>
           <View
             style={{
               width: "100%",
               height: 48,
-              borderColor: COLORS.white,
+              borderColor: COLORS.black,
               borderWidth: 1,
               borderRadius: 8,
               alignItems: "center",
               flexDirection: "row",
-              paddingLeft: 20,
-            }}
-          >
+              paddingLeft: 20,}}>
             <TextInput
-              placeholder="Enter your email"
-              placeholderTextColor={COLORS.white}
+              placeholder="Enter your email address"
+              placeholderTextColor={COLORS.dark_grey}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
-              style={{ width: "80%", color: COLORS.white }}
-            />
+              style={{ width: "80%", color: COLORS.black}}/>
           </View>
+
           <Text
             style={{
               fontSize: 17,
               marginVertical: 8,
-              marginTop: 10,
+              marginTop: 30,
               fontWeight: "400",
-              color: COLORS.white,
-            }}
-          >Password</Text>
-          <View
-            style={{
+              color: COLORS.black,}}>
+            Password</Text>
+          
+          <View style={{
               width: "100%",
               height: 48,
-              borderColor: COLORS.white,
+              borderColor: COLORS.black,
               borderWidth: 1,
               borderRadius: 8,
               alignItems: "center",
               flexDirection: "row",
-              paddingLeft: 20,
-            }}
-          >
+              paddingLeft: 20,}}>
             <TextInput
               placeholder="Enter your password"
-              placeholderTextColor={COLORS.white}
+              placeholderTextColor={COLORS.dark_grey}
               value={password}
               onChangeText={setPassword}
               secureTextEntry={hidePassword}
-              style={{ width: "80%", color: COLORS.white }}
-            />
+              style={{ width: "80%", color: COLORS.black }}/>
             <TouchablePlatform
               onPress={() => setHidePassword(!hidePassword)}
-              style={{ position: "absolute", right: 12 }}
-            >
+              style={{ position: "absolute", right: 12 }}>
               {hidePassword ? (
-                <EyeOff color={COLORS.white} height="24px" width="24px" />
+                <EyeOff color={COLORS.black} height="24px" width="24px" />
               ) : (
-                <Eye color={COLORS.white} height="24px" width="24px" />
+                <Eye color={COLORS.black} height="24px" width="24px" />
               )}
             </TouchablePlatform>
           </View>
         </View>
 
-        <View style={{ flexDirection: "row", marginVertical: 6, }}>
+        <View style={{ flexDirection: "row", marginVertical: 10, }}>
           <Checkbox
             style={{ marginRight: 8 }}
             value={rememberMe}
             onValueChange={setRememberMe}
-            color={rememberMe ? COLORS.dark_grey : COLORS.almost_white}
-          />
-          <Text style={{ color: COLORS.white, }}>Remember Me</Text>
+            color={rememberMe ? COLORS.dark_grey : COLORS.light_grey}/>
+          <Text style={{ color: COLORS.black, }}>Remember Me</Text>
         </View>
 
         <Button
@@ -201,19 +193,23 @@ const SignInScreen = ({ navigation }) => {
           style={{ marginTop: 28, marginBottom: 4 }}
           onPress={() => {
             handleSignIn(navigation);
-          }}
-        />
+          }}/>
         
-        <Button
-          title="Sign Up"
-          style={{
-            marginTop: 18,
-            marginBottom: 4,
-          }}
-          onPress={()=>{
-            navigation.navigate("Signup");
-          }}
-        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 150 }}>
+          <Text style={{
+            fontSize: 14,
+            color: COLORS.black,
+            fontFamily: FONTS.main_font,}}>
+          Don't have an account yet?{' '}</Text>
+          <TouchablePlatform onPress={() => navigation.navigate("Signup")}>
+            <Text style={{
+              fontSize: 14,
+              color: COLORS.light_blue3,
+              fontFamily: FONTS.main_font,
+              textDecorationLine: 'underline',}}>
+            Sign up here!</Text>
+          </TouchablePlatform>
+        </View>
       </View>
     </ScrollView>
   );
