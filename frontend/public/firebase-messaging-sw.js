@@ -19,7 +19,9 @@ const messaging = firebase.messaging();
 
 //Background messages (app not focused/ or PWA on ios in background)
 messaging.onBackgroundMessage(({notification= {}, data ={} })=>{
-    const { title = "Notification", body = "", image  } = notification;
+    const title  = notification.title ||  data.title || "Notification";
+    const body = notification.body || data.body || "";
+    const image = notification.image || data.image;
     const url = data.link || "/"; //link for notification click
     //Shows as system notification (same UI as OS notifications)
     self.registration.showNotification(title, {
@@ -32,12 +34,15 @@ messaging.onBackgroundMessage(({notification= {}, data ={} })=>{
 // Handles notification click events (open/focus on app)
 self.addEventListener("notificationclick", (event) => {
     event.notification.close();
-    const { url } = (event.notification.data && event.notification.data.url) || "/";
+    const url  = (event.notification.data && event.notification.data.url) || "/";
     // Focus on the existing window 
     event.waitUntil(
         clients.matchAll({type: "window", includeUncontrolled: true}).then(list =>{
             for (const c of list){
-                 if ("focus" in c) return c.focus();
+                 if ("focus" in c) {
+                     if ("navigate" in c && url) c.navigate(url);
+                     return c.focus();
+                 }
             }
             // Otherwise, open a new window
             return clients.openWindow(url);
