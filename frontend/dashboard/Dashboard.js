@@ -32,122 +32,146 @@ const Dashboard = ({ navigation }) => {
     } catch {
       console.error("Error signout out:", error);
     }
-  }
-  
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.roundedSquare}>
-      </View>
-        <Text style={styles.dashboardTitle}>
-          Dashboard
-        </Text>
+      {/* Title */}
+      <Text style={styles.dashboardTitle}>Dashboard</Text>
+
+      {/* 2-column grid */}
       <View style={styles.button_container}>
+        {/* Row 1: primary (blue) */}
         <View style={styles.row}>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={()=>navigation.navigate("Home_Navigator")}
+          <TouchableOpacity
+            style={[styles.button, styles.primaryButton]}
+            onPress={() => navigation.navigate('Home_Navigator')}
+            accessibilityLabel="Check-in"
           >
-            <Home color="black" height="60px" width="60px" />
+            <Home color={COLORS.black} height="60px" width="60px" />
             <Text style={styles.buttonText}>Check-in</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={()=>navigation.navigate("View_Navigator")}
+
+          <TouchableOpacity
+            style={[styles.button, styles.primaryButton]}
+            onPress={() => navigation.navigate('View_Navigator')}
+            accessibilityLabel="Stats"
           >
-            <StatsChart color="black" height="60px" width="60px" />
-            <Text style={styles.buttonText}>View</Text>
+            <StatsChart color={COLORS.black} height="60px" width="60px" />
+            <Text style={styles.buttonText}>Stats</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Row 2: neutral (grey) */}
         <View style={styles.row}>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={()=>navigation.navigate("Profile_Navigator")}
+          <TouchableOpacity
+            style={[styles.button, styles.neutralButton]}
+            onPress={() => navigation.navigate('Profile_Navigator')}
+            accessibilityLabel="Profile"
           >
-            <PersonOutline color="black" height="60px" width="60px" />
+            <PersonOutline color={COLORS.black} height="60px" width="60px" />
             <Text style={styles.buttonText}>Profile</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={()=>navigation.navigate("Settings_Navigator")}
+
+          <TouchableOpacity
+            style={[styles.button, styles.neutralButton]}
+            onPress={() => navigation.navigate('Settings_Navigator')}
+            accessibilityLabel="Settings"
           >
-            <SettingsOutline color="black" height="60px" width="60px" />
+            <SettingsOutline color={COLORS.black} height="60px" width="60px" />
             <Text style={styles.buttonText}>Settings</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Row 3: neutral (grey) */}
         <View style={styles.row}>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={()=>navigation.navigate("About")}
+          <TouchableOpacity
+            style={[styles.button, styles.neutralButton]}
+            onPress={() => navigation.navigate('About')}
+            accessibilityLabel="About"
           >
-            <HelpCircleOutline color="black" height="60px" width="60px" />
+            <HelpCircleOutline color={COLORS.black} height="60px" width="60px" />
             <Text style={styles.buttonText}>About</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.button}
+
+          <TouchableOpacity
+            style={[styles.button, styles.neutralButton]}
             onPress={handleLogout}
+            accessibilityLabel="Logout"
           >
-            <LogOutOutline color="black" height="60px" width="60px" />
+            <LogOutOutline color={COLORS.black} height="60px" width="60px" />
             <Text style={styles.buttonText}>Logout</Text>
           </TouchableOpacity>
         </View>
       </View>
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
-  roundedSquare: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    width: '100%', // Set width for the square
-    height: 300,
-    backgroundColor: COLORS.light_blue5, // Background color
-    borderRadius: 100, // Set the radius for rounded corners
-    marginTop: -50,
-    position: 'absolute',
-    top: -50, // Position the square at the top
-    left: 0, // Align to the left
-    right: 0, // Align to the right
-    zIndex: -1, // Ensure it is on top of other elements
-  },
+  // Match new design
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: COLORS.white,
     alignItems: 'center',
-    backgroundColor: COLORS.black,
+    justifyContent: 'flex-start',
+    paddingTop: 24,
+    paddingHorizontal: 24,
   },
+
+  dashboardTitle: {
+    color: COLORS.black,
+    fontSize: 30,                 
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+    fontFamily: FONTS.survey_font_bold,
+  },
+
   button_container: {
-    justifyContent: 'center',
+    width: '100%',
+    maxWidth: 420,             
     alignItems: 'center',
-    marginTop: 70,
+    justifyContent: 'center',
   },
+
   row: {
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginVertical: 10,
   },
+
+  // Base tile
   button: {
-    width: 140, // Set the width for square buttons
-    height: 180, // Set the height to be the same as the width for square buttons
-    backgroundColor: COLORS.white,
+    width: 140,
+    height: 180,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 15,
     marginHorizontal: 10,
+
+    shadowColor: COLORS.black,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
+
+
+  primaryButton: {
+    backgroundColor: COLORS.light_blue4,   // blue tiles (top row)
+  },
+  neutralButton: {
+    backgroundColor: COLORS.grey,          // grey tiles (lower rows)
+  },
+
   buttonText: {
     color: COLORS.black,
     fontSize: 16,
     fontFamily: FONTS.main_font,
+    marginTop: 6,
   },
-  dashboardTitle: {
-    position: 'absolute',
-    color: COLORS.white,
-    fontSize: 50,
-    top: 35,
-    fontFamily: FONTS.survey_font_bold,
-  }
 });
 
-export default Dashboard
+export default Dashboard;
