@@ -205,7 +205,7 @@ const SignUp = ({ navigation }) => {
             fontSize: 14,
             color: COLORS.black,
             fontFamily: FONTS.main_font,}}>
-          Have an account?{' '}</Text>
+          Already have an account?{' '}</Text>
 
           <TouchablePlatform onPress={() => navigation.navigate("Login")}>
             <Text style={{
