@@ -10,7 +10,7 @@ import Button from '../../../components/Buttons/Button';
 import * as Notifications from 'expo-notifications';
 import { requestNotificationPermission } from '../../../firebase/config';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE || 'http://127.0.0.1:5000';
+const API_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://127.0.0.1:5000';
 const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY;
 
 const STORAGE_KEYS = {
@@ -198,7 +198,7 @@ const Profile = ({ navigation }) => {
             }
         };
         init();
-    }, []);
+    }, []);  
 
     const handleUpdateDisplayName = () => {
         const auth = getAuth();
