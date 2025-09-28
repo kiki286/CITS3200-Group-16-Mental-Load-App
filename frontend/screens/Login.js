@@ -195,7 +195,7 @@ const SignInScreen = ({ navigation }) => {
             handleSignIn(navigation);
           }}/>
         
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 150 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 40 }}>
           <Text style={{
             fontSize: 14,
             color: COLORS.black,
