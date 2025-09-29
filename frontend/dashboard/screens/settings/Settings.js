@@ -1,7 +1,7 @@
 //CITS3200 project group 23 2024 2024
 //Settings tab part of the dashboard tabs
 
-import { View, Text, Alert, StyleSheet } from 'react-native'
+import { View, Text, Alert, StyleSheet, TouchableOpacity } from 'react-native'
 import React from 'react'
 import Button from '../../../components/Buttons/Button'
 import COLORS from '../../../constants/colors'
@@ -10,9 +10,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { clearResponsesFile } from '../../../services/StorageHandler'
 import { signOut } from 'firebase/auth'
 import { auth } from '../../../firebase/config'
+import { ChevronBackOutline, LogOutOutline } from 'react-ionicons';
+import PillButton from '../../../components/Buttons/PillButton';
 
 const Settings = ({ navigation }) => {
-  
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -47,61 +48,82 @@ const Settings = ({ navigation }) => {
 
 
   return (
-    <View style={styles.main_container}>
-      <View style={styles.title_container}>
-        <Text style={styles.title_text}>
-          Settings
-        </Text>
-      </View>
-      <View style={styles.body_container}>
-        <View style={styles.container}>
-          <Button 
-            title="Clear History" 
-            onPress={handleClearResponses} 
-          />
-        </View>
-        <View style={styles.container}>
-          <Button
-            title="Logout"
-            onPress={()=>navigation.navigate("Welcome")}
-          />
-        </View>
-        <View style={styles.container}>
-        <Button
-          title="Back"
-          onPress={()=>navigation.navigate("Dashboard")}
+    <View style={styles.page}>
+      {/* Back Chevron */}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <ChevronBackOutline color={COLORS.almost_white} height="28px" width="28px" />
+      </TouchableOpacity>
+
+      {/* Title */}
+      <Text style={styles.title}>Settings</Text>
+
+      {/* Buttons */}
+      <View style={styles.buttons}>
+        <PillButton
+          title="Clear Mental Load History"
+          onPress={handleClearResponses}
+          variant="neutral"
+          style={styles.pillSpacing}
+        />
+
+        <PillButton
+          title="Log Out"
+          onPress={handleLogout}
+          variant="neutral"
+          leftIcon={<LogOutOutline color={COLORS.black} height="22px" width="22px" />}
+          style={styles.pillSpacing}
         />
       </View>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text style={styles.footerTitle}>About the app </Text>
+        <Text style={styles.footerLine}>Mental Labour App developed 2025</Text>
+        <Text style={styles.footerLine}>CITS3200 group project at University of Western Australia</Text>
+        <Text style={styles.footerLine}>App idea by Emma Stephenson</Text>
+      </View>
     </View>
-  </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
-  main_container: {
+  page: {
     flex: 1,
-    backgroundColor: COLORS.black,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 24,
+    paddingTop: 20,
   },
-  title_container: {
-    position: 'absolute',
-    top: 20,
-    left: 0, // Ensure the view takes the full width
-    right: 0, // Ensure the view takes the full width
-    alignItems: 'center', // Center the text horizontally
-    justifyContent: 'center',
+  backButton: {
+    alignSelf: 'flex-start',
+    marginBottom: 8,
   },
-  title_text: {
-    fontSize: 50,
-    color: COLORS.almost_white,
+  title: {
+    fontSize: 30,
+    color: COLORS.black,
+    fontFamily: FONTS.survey_font_bold,
+    marginBottom: 16,
+  },
+  buttons: {
+    width: '100%',
+  },
+  pillSpacing: {
+    marginBottom: 16,
+  },
+  footer: {
+    marginTop: 'auto',
+    marginBottom: 12,
+  },
+  footerTitle: {
     fontFamily: FONTS.main_font_bold,
+    color: COLORS.black,
+    fontSize: 14,
+    marginBottom: 6,
   },
-  body_container: {
-    flex: 1,
-    marginTop: 100,
-  },
-  container: {
-    flex: 0.1,
-    paddingHorizontal: 26,
+  footerLine: {
+    fontFamily: FONTS.main_font,
+    color: COLORS.black,
+    fontSize: 12,
+    lineHeight: 18,
   },
 });
 
