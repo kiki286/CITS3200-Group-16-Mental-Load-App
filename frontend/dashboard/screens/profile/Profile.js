@@ -11,12 +11,8 @@ import * as Notifications from 'expo-notifications';
 import { ColorFill } from 'react-ionicons';
 import { ChevronBackOutline } from 'react-ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import PillButton from '../../../components/Buttons/PillButton';
 
-const InlineButton = ({ title, onPress }) => (
-  <TouchableOpacity style={styles.inlineButton} onPress={onPress}>
-    <Text style={styles.inlineButtonText}>{title}</Text>
-  </TouchableOpacity>
-);
 const Profile = ({ navigation }) => {
     // State management
     const [displayName, setDisplayName] = useState('');
@@ -172,9 +168,15 @@ const Profile = ({ navigation }) => {
                         placeholderTextColor={COLORS.light_grey}
                         value={newDisplayName}
                         onChangeText={setNewDisplayName}
-                        style={styles.textInput}
+                        style={styles.input}
                     />
-                    <InlineButton title="Update" onPress={handleUpdateDisplayName} />
+                    <PillButton
+                      title="Update"
+                      onPress={handleUpdateDisplayName}
+                      variant="primary"
+                      size="md"
+                      fullWidth={false}
+                    />                    
                 </View>
             </View>
 
@@ -198,7 +200,13 @@ const Profile = ({ navigation }) => {
                         value={formatTime(notificationTime)}
                         styles={styles.timePill}
                     />
-                    <InlineButton title="Update" onPress={() => setShowPicker(true)} />
+                    <PillButton
+                        title="Update"
+                        onPress={() => setShowPicker(true)}
+                        variant="primary"
+                        size="md"
+                        fullWidth={false}
+                    />
                 </View>
 
                 {showPicker && Platform.OS !== 'web' && (
@@ -304,22 +312,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: COLORS.black,
     fontFamily: FONTS.main_font,
-  },
-
-  inlineButton: {
-    paddingHorizontal: 14,
-    height: 44,
-    borderRadius: 10,
-    backgroundColor: COLORS.light_blue4, // same accent as Login/primary
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.light_blue4,
-  },
-  inlineButtonText: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontFamily: FONTS.main_font_bold,
   },
 });
 
