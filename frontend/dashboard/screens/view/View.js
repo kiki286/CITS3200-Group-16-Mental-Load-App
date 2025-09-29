@@ -204,7 +204,7 @@ const View_Tab = ({ navigation }) => {
 const styles = StyleSheet.create({
   main_container: {
     flex: 1,
-    backgroundColor: COLORS.black,
+    backgroundColor: COLORS.white,
   },
   title_container: {
     position: "absolute",
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 50,
     fontFamily: FONTS.main_font_bold,
-    color: COLORS.almost_white,
+    color: COLORS.black,
   },
   body_container: {
     flex: 1,
