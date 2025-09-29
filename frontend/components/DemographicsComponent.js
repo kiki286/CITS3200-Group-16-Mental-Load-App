@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
+  Text,
 } from "react-native";
 import TouchablePlatform from './TouchablePlatform';
 import { SurveyContext } from "../context/SurveyContext";
@@ -15,10 +16,11 @@ import { Loading, Error } from "./Messages";
 import { setDemographicsSubmit, readResponsesFromFile, clearResponsesFile } from "../services/StorageHandler";
 import Button from "./Buttons/Button_Light_Blue";
 import COLORS from "../constants/colors";
-import { ArrowForwardCircleOutline } from 'react-ionicons';
+import FONTS from "../constants/fonts";
 import RenderQuestionUI from './RenderQuestionUI';
 import { useNavigation } from "@react-navigation/native";
-
+import PillButton from './Buttons/PillButton';
+import { ArrowForwardCircleOutline, ChevronBackOutline } from 'react-ionicons';
 
 // Component which displays each question from demographics survey
 const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
@@ -70,7 +72,7 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
   }
 
   const noConsent = () => {
-  navigation.navigate("Login");
+    navigation.navigate("Login");
   }
   
   // Reset selectedOptions when allQuestionDetails changes
@@ -352,7 +354,8 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
     if (submitQualResponse.success) {
       setIsSubmitted(true);
     }
-    backNavigate()
+    if (backNavigate) backNavigate();
+    else navigation.goBack();
   }
   
   //let choiceComponents = null;
@@ -360,15 +363,28 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
 
   // Render the questionsUI in your return block
   return (
-    <View style={{flex: 1, padding: 10, paddingTop: 30, paddingBottom: 60, backgroundColor: COLORS.black, }}>
+    <View style={styles.page}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchablePlatform
+          onPress={() => (backNavigate ? backNavigate() : navigation.goBack())}
+          accessibilityRole="button"
+          style={styles.backButtonHitbox}
+        >
+          <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+        </TouchablePlatform>
+        <Text style={styles.title}>Demographics</Text>
+      </View>
+
+      {/* Content */}
       {loading ? (
         <Loading />
       ) : error ? (
         <Error message={error} />
       ) : (
-        <ScrollView ref={scrollViewRef} contentContainerStyle={styles.container}>
-          <RenderQuestionUI 
-            questionDetails={questionDetails} 
+        <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContainer}>
+          <RenderQuestionUI
+            questionDetails={questionDetails}
             questionsID={questionsID}
             sliderValues={sliderValues}
             setSliderValues={setSliderValues}
@@ -381,42 +397,67 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
             inputValues={inputValues}
             AllornotAll={allOrNotAll}
           />
+
+          {/* Action area */}
           {questionDetails ? (
-            <View style={{paddingBottom: 20, paddingTop: 10, alignItems: 'center'}}>
-                <TouchablePlatform onPress={handleNextQuestion}>
-                <ArrowForwardCircleOutline
-                  color={COLORS.white}
-                  height="80px"
-                  width="80px"
-                  style={{
-                    backgroundColor: COLORS.black,
-                }}/>
-                </TouchablePlatform>
+            <View style={styles.actions}>
+              <PillButton
+                title="Next"
+                variant="primary"
+                onPress={handleNextQuestion}
+                fullWidth
+              />
             </View>
           ) : (
-            <View style={{paddingBottom: 20, paddingTop: 10,}}>
-            <Button title="Submit" 
-            onPress={() => {
-              if (demoSubmit) {
-                demoSubmit();
-              } else {
-                handleSubmitSurvey();
-              }
-            }}/>
+            <View style={styles.actions}>
+              <PillButton
+                title="Submit"
+                variant="primary"
+                onPress={() => {
+                  if (demoSubmit) demoSubmit();
+                  else handleSubmitSurvey();
+                }}
+                fullWidth
+              />
             </View>
           )}
-          {/* Button to clear responses */}
-          {/*<Button title="Clear Responses" onPress={handleClearResponses} />*/}
         </ScrollView>
       )}
     </View>
   );
 };
 
-//Styling for the component
 const styles = StyleSheet.create({
-  container: {
+  page: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    marginBottom: 8,
+  },
+  backButtonHitbox: {
+    padding: 4,
+    marginRight: 8,
+  },
+  title: {
+    fontSize: 30,
+    color: COLORS.black,
+    fontFamily: FONTS.survey_font_bold,
+  },
+  scrollContainer: {
+    paddingHorizontal: 24,
     paddingBottom: 40,
+    width: '100%',
+    alignSelf: 'center',
+    maxWidth: 540, // slightly wider than other screens for question text
+  },
+  actions: {
+    marginTop: 16,
+    marginBottom: 8,
   },
 });
 
