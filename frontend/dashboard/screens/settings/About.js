@@ -20,16 +20,16 @@ const About = ({ navigation }) => {
           style={{
             fontSize: 20,
             margin: 18,
-            color: COLORS.white,
+            color: COLORS.black,
           }}
         >
-      <Text style={{fontWeight:"bold", fontSize: 40, alignSelf:'center', marginBottom:20}}>
+      <Text style={{color:"black", fontWeight:"bold", fontSize: 40, alignSelf:'center', marginBottom:20}}>
           About
           </Text>
       <ScrollView style={styles.body_container} contentContainerStyle={styles.scroll_content}>
-          <Text style={{fontWeight:"bold"}}>Aim of the Study</Text>
+          <Text style={{color:"black", fontWeight:"bold"}}>Aim of the Study</Text>
             This study aims to investigate employee experiences at home and work that influence wellbeing and other work-related outcomes.
-          <Text style={{fontWeight:"bold"}}>What is Mental Load?</Text>
+          <Text style={{color:"black", fontWeight:"bold"}}>What is Mental Load?</Text>
             The mental load (or mental labour) refers to thinking work performed to achieve goals that benefit others (e.g., planning meetings or deciding what to cook for dinner). Research has consistently shown that in the home, the mental load is disproportionately shouldered by women, and our research suggests that this same trend also happens at work. Although the popular press suggests the mental load is a bad thing, emerging research suggests it has both positive and negative outcomes.
           Mental Labour App developed in 2024
           Initially developed by CITS3200 Group 23 project at University of Western Australia in 2024
@@ -44,10 +44,9 @@ const About = ({ navigation }) => {
 const styles = StyleSheet.create({
   main_container: {
     flex: 1,
-    backgroundColor: COLORS.black,
+    backgroundColor: COLORS.white,
     paddingHorizontal: 24,
     paddingTop: 20,
-    color: COLORS.white,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -89,7 +88,7 @@ const styles = StyleSheet.create({
     fontSize: 25,
     fontFamily: FONTS.main_font,
     textAlign: 'center',
-    color: COLORS.white,
+    color: COLORS.black,
   },
 });
 
