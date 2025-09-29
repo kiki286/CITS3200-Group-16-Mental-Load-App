@@ -387,8 +387,7 @@ export const MentalLoadLineChart = ({timestamps = [], homeML = [], workML = []})
 
 
 /* ---------- styles (light theme) ---------- */
-
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   section: {
     backgroundColor: COLORS.white,
     paddingHorizontal: 24,
