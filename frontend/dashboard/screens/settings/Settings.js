@@ -51,7 +51,7 @@ const Settings = ({ navigation }) => {
     <View style={styles.page}>
       {/* Back Chevron */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <ChevronBackOutline color={COLORS.almost_white} height="28px" width="28px" />
+        <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
       </TouchableOpacity>
 
       {/* Title */}

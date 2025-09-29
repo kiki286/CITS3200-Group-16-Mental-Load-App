@@ -68,7 +68,7 @@ const View_Tab = ({ navigation }) => {
             onPress={() => navigation.goBack()}
           >
             <ChevronBackOutline
-              color={COLORS.almost_white}
+              color={COLORS.black}
               height="28px"
               width="28px"
             />
@@ -141,7 +141,7 @@ const View_Tab = ({ navigation }) => {
           onPress={() => navigation.goBack()}
         >
           <ChevronBackOutline
-            color={COLORS.almost_white}
+            color={COLORS.black}
             height="28px"
             width="28px"
           />
