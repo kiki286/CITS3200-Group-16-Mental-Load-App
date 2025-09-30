@@ -5,12 +5,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  ScrollView,
+  Dimensions,
 } from "react-native";
 import COLORS from "../../../constants/colors";
 import FONTS from "../../../constants/fonts";
 import { useFocusEffect } from "@react-navigation/native";
 import { Loading } from "../../../components/Messages";
-import Button from "../../../components/Buttons/Button";
+import PillButton from '../../../components/Buttons/PillButton';
 import { ChevronBackOutline, LogOutOutline } from "react-ionicons";
 
 // Chart imports
@@ -24,8 +26,19 @@ import {
 } from "../../../components/VisualisationComponent";
 import { processResponses } from "../../../components/VisualisationPreProcessing";
 
+const PAGES = [
+  { key: 'MentalLoad', label: 'Overall line' },
+  { key: 'Burnout', label: 'Burnout line' },
+  { key: 'StackedBarHome', label: 'Home stacked' },
+  { key: 'StackedBarWork', label: 'Work stacked' },
+  { key: 'PieChartHome', label: 'Home pie' },
+  { key: 'PieChartWork', label: 'Work pie' },
+];
+
+const screenWidth = Dimensions.get('window').width;
+
 const View_Tab = ({ navigation }) => {
-  const [selectedChart, setSelectedChart] = useState("PieChartWork"); // Default selected chart
+  const [selectedIndex, setSelectedIndex] = useState(4); // Default selected chart index
   const [timestamps, setTimestamps] = useState(null);
   const [homeML, setHomeML] = useState(null);
   const [workML, setWorkML] = useState(null);
@@ -33,64 +46,74 @@ const View_Tab = ({ navigation }) => {
   const [burnoutValues, setBurnoutValues] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const scrollRef = React.useRef(null);
+
   // Using useFocusEffect to run fetchData when screen is focused
   useFocusEffect(
     React.useCallback(() => {
       const fetchData = async () => {
         setLoading(true); // Set loading to true before fetching
-        const { timestamps, homeML, workML, workData, burnoutValues } =
-          await processResponses();
-        setTimestamps(timestamps);
-        setHomeML(homeML);
-        setWorkML(workML);
-        setWorkData(workData);
-        setBurnoutValues(burnoutValues);
+        const res = await processResponses();
+        setTimestamps(res.timestamps || []);
+        setHomeML(res.homeML || []);
+        setWorkML(res.workML || []);
+        setWorkData(res.workData || []);
+        setBurnoutValues(res.burnoutValues || []);
         setLoading(false); // Set loading to false after fetching
       };
       fetchData();
     }, [])
   );
 
+  const goToIndex = (i) => {
+    setSelectedIndex(i);
+    if (scrollRef.current?.scrollTo) {
+      scrollRef.current.scrollTo({ x: i * screenWidth, animated: true });
+    }
+  };
+
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#0000ff" />
+      <View style={[styles.page, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color={COLORS.black} />
       </View>
     );
   }
 
-  if (timestamps.length == 0) {
+  if (!timestamps || timestamps.length === 0) {
     return (
-      <View style={styles.main_container}>
-        <View style={styles.container}>
+      <View style={styles.page}>
+        {/* Header */}
+        <View style={styles.header}>
           <TouchableOpacity
-            style={styles.backButton}
             onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            style={styles.backHitbox}
           >
-            <ChevronBackOutline
-              color={COLORS.black}
-              height="28px"
-              width="28px"
-            />
+            <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
           </TouchableOpacity>
+          <Text style={styles.title}> Analytics </Text>
         </View>
-        <View style={styles.title_container}>
-          <Text style={styles.title}>Analytics</Text>
-        </View>
-        <View style={styles.body_container}>
-          <View style={styles.emptyStateContainer}>
-            <Text style={styles.emptyStateText}>
+
+        {/* Empty State */}
+        <View style={styles.content}>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>
               Do your first check in to see your stats!
             </Text>
           </View>
+          <PillButton
+            title="Back to Dashboard"
+            variant="neutral"
+            onPress={() => navigation.navigate('Dashboard')}/>
         </View>
       </View>
     );
   }
 
   // Function to render the selected chart
-  const renderChart = () => {
-    switch (selectedChart) {
+  const renderChartByKey = (k) => {
+    switch (k) {
       case "PieChartWork":
         return <PieChartExampleWork workML={workML} />;
       case "PieChartHome":
@@ -112,13 +135,6 @@ const View_Tab = ({ navigation }) => {
           />
         );
       case "MentalLoad":
-        return (
-          <MentalLoadLineChart
-            timestamps={timestamps}
-            homeML={homeML}
-            workML={workML}
-          />
-        );
       default:
         return (
           <MentalLoadLineChart
@@ -131,133 +147,117 @@ const View_Tab = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.main_container}>
-      <View style={styles.title_container}>
-        <Text style={styles.title}>Analytics</Text>
-      </View>
-      <View style={styles.container}>
+    <View style={styles.page}>
+      {/* Header */}
+      <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
           onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          style={styles.backHitbox}
         >
-          <ChevronBackOutline
-            color={COLORS.black}
-            height="28px"
-            width="28px"
-          />
+          <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
         </TouchableOpacity>
+        <Text style={styles.title}> Analytics </Text>
       </View>
-      <View style={styles.body_container}>
-        {/* Buttons to switch charts in reverse order */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[
-              styles.dotButton,
-              selectedChart === "MentalLoad" && styles.selectedButton,
-            ]}
-            onPress={() => setSelectedChart("MentalLoad")}
-          />
-          <TouchableOpacity
-            style={[
-              styles.dotButton,
-              selectedChart === "Burnout" && styles.selectedButton,
-            ]}
-            onPress={() => setSelectedChart("Burnout")}
-          />
-          <TouchableOpacity
-            style={[
-              styles.dotButton,
-              selectedChart === "StackedBarHome" && styles.selectedButton,
-            ]}
-            onPress={() => setSelectedChart("StackedBarHome")}
-          />
-          <TouchableOpacity
-            style={[
-              styles.dotButton,
-              selectedChart === "StackedBarWork" && styles.selectedButton,
-            ]}
-            onPress={() => setSelectedChart("StackedBarWork")}
-          />
-          <TouchableOpacity
-            style={[
-              styles.dotButton,
-              selectedChart === "PieChartHome" && styles.selectedButton,
-            ]}
-            onPress={() => setSelectedChart("PieChartHome")}
-          />
-          <TouchableOpacity
-            style={[
-              styles.dotButton,
-              selectedChart === "PieChartWork" && styles.selectedButton,
-            ]}
-            onPress={() => setSelectedChart("PieChartWork")}
-          />
-        </View>
 
-        {/* Render the selected chart */}
-        <View style={{ flex: 0.8 }}>{renderChart()}</View>
+      {/* Pager dots */}
+      <View style={styles.dotsRow}>
+        {PAGES.map((p, i) => (
+          <TouchableOpacity
+            key={p.key}
+            style={[styles.dot, i === selectedIndex ? styles.dotActive : styles.dotInactive]}
+            onPress={() => goToIndex(i)}
+          />
+        ))}
       </View>
+
+      {/* Horizontal ScrollView for charts */}
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(e) => {
+          const i = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
+          if (i !== selectedIndex) {
+            setSelectedIndex(i);
+          }
+        }}
+      >
+        {PAGES.map((p) => (
+          <View key={p.key} style={{ width: screenWidth }}>
+            <View style={styles.chartWrap}>{renderChartByKey(p.key)}</View>
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  main_container: {
+  page: {
     flex: 1,
     backgroundColor: COLORS.white,
   },
-  title_container: {
-    position: "absolute",
-    top: 20,
-    left: 0, // Ensure the view takes the full width
-    right: 0, // Ensure the view takes the full width
-    alignItems: "center", // Center the text horizontally
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 50,
-    fontFamily: FONTS.main_font_bold,
-    color: COLORS.black,
-  },
-  body_container: {
-    flex: 1,
-    marginTop: 100,
-  },
-  container: {
-    flex: 0.1,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 20,
   },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 40,
-  },
-  dotButton: {
-    backgroundColor: COLORS.blue, // Default color for unselected dots
-    width: 15, // Width of the dot
-    height: 15, // Height of the dot
-    borderRadius: 7.5, // Make it circular
-    marginHorizontal: 5, // Space between dots
-  },
-  selectedButton: {
-    backgroundColor: "white", // Color for the selected dot
-  },
-  emptyStateContainer: {
-    flex: 0.7,
-    paddingHorizontal: 26,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emptyStateText: {
+  backHitbox: { padding: 4, marginRight: 8 },
+  title: {
     fontSize: 24,
-    color: COLORS.almost_white,
-    fontFamily: FONTS.main_font,
-    textAlign: "center",
+    color: COLORS.black,
+    fontFamily: FONTS.survey_font_bold,
   },
-  backButton: {
-    alignSelf: "flex-start",
+
+  // Dots
+  dotsRow: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    marginTop: 8,
     marginBottom: 8,
+    gap: 8,
+  },
+  dot: {
+    width: 28,
+    height: 6,
+    borderRadius: 3,
+  },
+  dotInactive: { backgroundColor: COLORS.light_grey },
+  dotActive: { backgroundColor: COLORS.light_blue4 },
+
+  // Main content
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    gap: 16,
+    justifyContent: 'space-between',
+  },
+  chartWrap: {
+    paddingHorizontal: 24,
+    paddingBottom: 12,
+    paddingTop: 4,
+  },
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    marginTop: 4,
+  },
+
+  // Empty state
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: COLORS.black,
+    fontFamily: FONTS.main_font,
+    textAlign: 'center',
   },
 });
 

@@ -45,7 +45,7 @@ const calculateAverages = (data) => {
 const prepareStackedBarData = (data = [], timestamps = []) => 
     data.slice(-7).map((entry, index) => ({
     stacks: [
-        { value: entry.Deciding, color: dimensionColors.Deciding },
+        { value: entry.Deciding, color: dimensionColors.Deciding, marginBottom: 2 },
         { value: entry.Planning, color: dimensionColors.Planning, marginBottom: 2 },
         { value: entry.Monitoring, color: dimensionColors.Monitoring, marginBottom: 2 },
         { value: entry.Knowing, color: dimensionColors.Knowing, marginBottom: 2 },
@@ -63,7 +63,7 @@ export const StackedBarChartWorkML = ({workML = [], timestamps = []}) => {
             <Text style={styles.chartTitle}>Mental Load per Dimension at Work</Text>
             {/* Stacked Bar Chart */}
             <View style={styles.chartRow}>
-                <View style={styles.yAxisBox}><Text style={styles.axisTitle}>Mental Load</Text></View>
+                <View style={[styles.yAxisBox, {height: 250}]}><Text style={styles.axisTitle}>Mental Load</Text></View>
                 <View>
                     <BarChart
                         width={300}
@@ -107,7 +107,7 @@ export const StackedBarChartHomeML = ({homeML = [], timestamps = []}) => {
             
             {/* Stacked Bar Chart */}
             <View style={styles.chartRow}>
-                <View style={styles.yAxisBox}>
+                <View style={[styles.yAxisBox, {height: 250}]}>
                     <Text style={styles.axisTitle}>Mental Load</Text>
                 </View>
                 <View>
@@ -154,7 +154,7 @@ export const PieChartExampleHome = ({homeML = []}) => {
     }));
 
     // Determine which dimension has the highest average
-    const maxDimension = Object.keys(averages).reduce((a, b) => (averages[a] > averages[b] ? a : b), 'Deciding');
+    const maxDimension = Object.keys(averages).reduce((a, b) => (averages[a] > averages[b] ? a : b));
 
     return (
         <View style={styles.section}>
@@ -205,7 +205,7 @@ export const PieChartExampleWork = ({workML = []}) => {
         text: k,
     }));
     // Determines dimension with highest average for insight
-    const maxDimension = Object.keys(averages).reduce((a, b) => (averages[a] > averages[b] ? a : b), 'Deciding');
+    const maxDimension = Object.keys(averages).reduce((a, b) => (averages[a] > averages[b] ? a : b));
     const maxValue = averages[maxDimension];
 
     return (
@@ -275,7 +275,7 @@ export const BurnoutLineChart = ({burnoutValues, workData, timestamps}) => {
             <Text style={styles.chartTitle}>Burnout Over Time</Text>
             <View style={styles.chartRow}>
               {/* Y-axis Label */}
-              <View style={styles.yAxisBox}>
+              <View style={[styles.yAxisBox, {height: 280}]}>
                 <Text style={styles.axisTitle}>Burnout Level</Text>
               </View>
               <View>
@@ -342,7 +342,7 @@ export const MentalLoadLineChart = ({timestamps = [], homeML = [], workML = []})
                 </View>
             </View>
             <View style={styles.chartRow}>
-                <View style={styles.yAxisBox}>
+                <View style={[styles.yAxisBox, {height: 250}]}>
                   <Text style={styles.axisTitle}>Mental Load</Text>
                 </View>
                 <View>
@@ -408,6 +408,7 @@ const styles = StyleSheet.create({
     width: 28,
     marginRight: 8,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   axisTitle: {
     transform: [{ rotate: '-90deg' }],
