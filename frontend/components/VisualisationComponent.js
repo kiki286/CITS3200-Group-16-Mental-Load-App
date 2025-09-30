@@ -256,8 +256,8 @@ export const BurnoutLineChart = ({burnoutValues, workData, timestamps}) => {
     const lastSevenWorkData = workData.slice(-7);
 
     const lineData = lastSevenDays.map((value, index) => ({
-        value: v,
-        label: formatDate(timestamps.slice(-7)[index]), // Format the last 7 timestamps
+        value,
+        label: formatLabel(timestamps.slice(-7)[index]), // Format the last 7 timestamps
         didWork: lastSevenWorkData[index]?.DidWork, // Check if the user worked that day
     }));
 
@@ -291,7 +291,7 @@ export const BurnoutLineChart = ({burnoutValues, workData, timestamps}) => {
                       thickness={3}
                       color={COLORS.red}
                       xAxisColor={COLORS.light_grey}
-                      yAxisColor={COLORS.white}
+                      yAxisColor={COLORS.light_grey}
                       xAxisLabelTextStyle={styles.axisTick}
                       yAxisLabelTextStyle={styles.axisTick}
                       dataPointsColor={COLORS.red}
@@ -333,11 +333,11 @@ export const MentalLoadLineChart = ({timestamps = [], homeML = [], workML = []})
             <Text style={styles.chartTitle}>Mental Load Over Time (Work vs Home)</Text>
             <View style={styles.legendRow}>
                 <View style={styles.legendItem}>
-                    <View style={[s.legendSwatch, { backgroundColor: COLORS.orange }]} />
+                    <View style={[styles.legendSwatch, { backgroundColor: COLORS.orange }]} />
                     <Text style={styles.legendText}>Home</Text>
                 </View>
                 <View style={styles.legendItem}>
-                    <View style={[s.legendSwatch, { backgroundColor: COLORS.purple }]} />
+                    <View style={[styles.legendSwatch, { backgroundColor: COLORS.purple }]} />
                     <Text style={styles.legendText}>Work</Text>
                 </View>
             </View>
