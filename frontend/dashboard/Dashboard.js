@@ -1,7 +1,7 @@
 //CITS3200 project group 23 2024
 //Dashboard page that has buttons to other pages
 
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, ScrollView } from 'react-native';
 import React, {useEffect} from 'react';
 import { Profile_Navigator, View_Navigator, Settings_Navigator, Home_Navigator } from './screens';
 import COLORS from '../constants/colors';
@@ -35,7 +35,11 @@ const Dashboard = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps="handled"
+    >
       {/* Title */}
       <Text style={styles.dashboardTitle}>Dashboard</Text>
 
@@ -104,7 +108,7 @@ const Dashboard = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -132,6 +136,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,             
     alignItems: 'center',
+    alignSelf: 'center',
     justifyContent: 'center',
   },
 
@@ -171,6 +176,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: FONTS.main_font,
     marginTop: 6,
+  },
+  scroll: {
+    flex: 1,
+    ...(Platform.OS === 'web' ? { touchAction: 'pan-y' } : null),
+    backgroundColor: COLORS.white,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 80, 
   },
 });
 
