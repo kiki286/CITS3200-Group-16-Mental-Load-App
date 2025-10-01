@@ -12,7 +12,7 @@ import Welcome from "./screens/Welcome";
 import Demographics from "./screens/Demographics";
 import TermsConditions from "./screens/TermsConditions";
 import { useFonts } from 'expo-font';
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, getIdTokenResult } from "firebase/auth";
 import { auth, requestNotificationPermission, listenForMessages} from "./firebase/config";
 import { getMessaging, getToken, isSupported } from "firebase/messaging"; // For web push notifications
 import COLORS from "./constants/colors";
@@ -32,6 +32,7 @@ export default function App() {
   
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(false);
 
   // Check if notifications are already enabled (web only)
@@ -43,10 +44,24 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user)
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+
+      if (currentUser) {
+        try {
+          const { claims } = await getIdTokenResult(currentUser, true);
+          setIsAdmin(!!claims.admin);
+        } catch (err) {
+        console.error("getIdTokenResult failed:", err);
+        setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+
       if (initializing) setInitializing(false);
-    })
+    });
+
     return () => unsubscribe();
   }, [initializing]);
 
@@ -161,11 +176,15 @@ export default function App() {
           />
           <welcome_stack.Screen
             name="Dashboard_Navigator"
-            component={Dashboard_Navigator}
             options={{
               headerShown:false
             }}
-          />
+          >
+            {(navProps) => (
+              <Dashboard_Navigator {...navProps} isAdmin={isAdmin} />
+            )}
+          </welcome_stack.Screen>
+
           <welcome_stack.Screen
             name="Demographics"
             component={Demographics}

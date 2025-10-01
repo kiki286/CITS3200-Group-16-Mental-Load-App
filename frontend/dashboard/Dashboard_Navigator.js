@@ -14,18 +14,21 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const dashboard_stack = createStackNavigator();
 
-const Dashboard_Navigator = () => {
+const Dashboard_Navigator = (props) => {
+  const { isAdmin } = props;
   return (
     <dashboard_stack.Navigator 
       initialRouteName={"Dashboard"}
     >
       <dashboard_stack.Screen 
-        name="Dashboard" 
-        component={Dashboard}
+        name="Dashboard"
         options={{
           headerShown:false
         }}
-      />
+      >
+        {(screenProps) => <Dashboard {...screenProps} isAdmin={isAdmin} />}
+      </dashboard_stack.Screen>
+
       <dashboard_stack.Screen 
         name="Home_Navigator" 
         component={Home_Navigator}
@@ -54,13 +57,16 @@ const Dashboard_Navigator = () => {
           headerShown:false
         }}
       />
-      <dashboard_stack.Screen 
-        name="Admin_Navigator" 
-        component={Admin_Navigator}
-        options={{
-          headerShown:false
-        }}
-      />
+      {isAdmin && (
+        <dashboard_stack.Screen 
+          name="Admin_Navigator" 
+          component={Admin_Navigator}
+          options={{
+            headerShown:false
+          }}
+        />
+        )}
+      
       <dashboard_stack.Screen 
         name="About" 
         component={About}

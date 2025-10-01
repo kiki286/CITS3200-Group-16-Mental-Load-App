@@ -122,6 +122,19 @@ def verify_firebase_token(f):
     
     return decorated_function
 
+def require_admin(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        user = getattr(request, "user", None)
+
+        if not user:
+            return jsonify({"message": "Unauthorized"}), 401
+        if not user.get("admin", False):
+            return jsonify({"message": "Forbidden"}), 403
+        return f(*args, **kwargs)
+    
+    return wrapper
+
 def get_survey_id():
     """Retrieve the survey ID based on the request header."""
     survey_type = request.headers.get('Survey-Type')
@@ -197,6 +210,7 @@ def hello():
 # Admin endpoints to view/update survey IDs persisted in Firestore
 @app.route('/admin/surveys', methods=['GET'])
 @verify_firebase_token
+@require_admin
 def admin_get_surveys():
     """Return the currently-configured survey IDs."""
     try:
@@ -215,6 +229,7 @@ def admin_get_surveys():
 
 @app.route('/admin/surveys', methods=['POST'])
 @verify_firebase_token
+@require_admin
 def admin_set_surveys():
     """Update survey IDs in Firestore and refresh in-memory values."""
     body = request.get_json(force=True) or {}

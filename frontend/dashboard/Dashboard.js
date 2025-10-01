@@ -17,7 +17,7 @@ import { signOut } from 'firebase/auth'
 import { auth } from '../firebase/config'
 import { getDemographicsSubmitted } from '../services/StorageHandler';
 
-const Dashboard = ({ navigation }) => {
+const Dashboard = ({ navigation, isAdmin }) => {
   
   useEffect(() => {
     const checkDemographicsSubmission = async () => {
@@ -80,15 +80,17 @@ const Dashboard = ({ navigation }) => {
             <Text style={styles.buttonText}>Settings</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.row}>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={()=>navigation.navigate("Admin_Navigator")}
-          >
-            <Feather name="shield" size={60} color="black" />
-            <Text style={styles.buttonText}>Admin</Text>
-          </TouchableOpacity>
-        </View>
+        {isAdmin && (
+          <View style={styles.row}>
+            <TouchableOpacity 
+              style={styles.button}
+              onPress={()=>navigation.navigate("Admin_Navigator")}
+            >
+              <Feather name="shield" size={60} color="black" />
+              <Text style={styles.buttonText}>Admin</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <View style={styles.row}>
           <TouchableOpacity 
             style={styles.button}
