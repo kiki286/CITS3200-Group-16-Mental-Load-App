@@ -44,26 +44,30 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!mounted) return;
       setUser(currentUser);
-
-      if (currentUser) {
-        try {
+      try {
+        if (currentUser) {
           const { claims } = await getIdTokenResult(currentUser, true);
+          if (!mounted) return;
           setIsAdmin(!!claims.admin);
-        } catch (err) {
-        console.error("getIdTokenResult failed:", err);
-        setIsAdmin(false);
+        } else {
+          setIsAdmin(false);
         }
-      } else {
-        setIsAdmin(false);
+      } catch (err) {
+        console.error("getIdTokenResult failed:", err);
+        if (mounted) setIsAdmin(false);
+      } finally {
+        if (mounted) setInitializing(false);
       }
-
-      if (initializing) setInitializing(false);
     });
-
-    return () => unsubscribe();
-  }, [initializing]);
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, []);
 
   // Auto-register SW and (if permission is already granted) sync token to backend on login
   useEffect(() => {
@@ -184,7 +188,6 @@ export default function App() {
               <Dashboard_Navigator {...navProps} isAdmin={isAdmin} />
             )}
           </welcome_stack.Screen>
-
           <welcome_stack.Screen
             name="Demographics"
             component={Demographics}

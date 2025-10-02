@@ -49,7 +49,7 @@ const SurveySettings = ({ navigation }) => {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
         if (res.ok) {
-          const json = await res.json();
+          const json = await res.json()
           const s = json?.surveys || json || {};
           setCheckinInput(s.checkin_survey || s.checkinSurveyId || '');
           setDemographicsInput(s.demographics_survey || s.demographicsSurveyId || '');

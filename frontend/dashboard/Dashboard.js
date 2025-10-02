@@ -35,7 +35,7 @@ const Dashboard = ({ navigation, isAdmin }) => {
       await signOut(auth);
       console.log("User signed out successfully");
       navigation.navigate("Welcome");
-    } catch {
+    } catch(error) {
       console.error("Error signout out:", error);
     }
   }

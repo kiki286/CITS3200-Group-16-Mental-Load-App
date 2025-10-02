@@ -17,6 +17,7 @@ const CampaignCreate = ({ navigation }) => {
   const [scheduledAt, setScheduledAt] = useState(new Date(Date.now() + 60 * 60 * 1000))
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showTimePicker, setShowTimePicker] = useState(false)
+  const [sendNow, setSendNow] = useState(false)
 
   const DEFAULT_TZ = 'Australia/Perth'
   const timezone = useMemo(() => DEFAULT_TZ, [])
@@ -93,16 +94,21 @@ const CampaignCreate = ({ navigation }) => {
       Alert.alert('Validation', 'Please enter at least one email, comma-separated.')
       return
     }
-    if (scheduledAt.getTime() < Date.now() + 60 * 1000) {
+    if (!sendNow && scheduledAt.getTime() < Date.now() + 60 * 1000) {
       Alert.alert('Validation', 'Please select a time at least 1 minute in the future.')
       return
     }
 
-    const base = process.env.EXPO_PUBLIC_BACKEND_URL
+    let base = process.env.EXPO_PUBLIC_BACKEND_URL
     if (!base) {
-      Alert.alert('Not configured', 'Backend URL is not set. Define EXPO_PUBLIC_BACKEND_URL.')
+      if (Platform.OS === 'web') window.alert('Not configured: EXPO_PUBLIC_BACKEND_URL missing')
+      else Alert.alert('Not configured', 'Backend URL is not set. Define EXPO_PUBLIC_BACKEND_URL.')
       return
     }
+    // strip quotes if present and ensure protocol is included
+    base = String(base).replace(/^"|"$/g, '')
+    if (!/^https?:\/\//i.test(base)) base = `http://${base}`
+    base = base.replace(/\/$/, '')
 
     const emails = emailsCsv
       .split(',')
@@ -111,14 +117,19 @@ const CampaignCreate = ({ navigation }) => {
 
     const payload = {
       message: message.trim(),
-      scheduledAtUtc: scheduledAt.toISOString(),
+      // If sendNow is selected, set scheduled time to now so server will send immediately.
+      scheduledAtUtc: (sendNow ? new Date() : scheduledAt).toISOString(),
       timezone,
       target: targetMode === 'all' ? { type: 'all' } : { type: 'emails', emails },
     }
 
     try {
+      console.debug('[campaign] submitting', { base, payload })
       const token = await auth?.currentUser?.getIdToken?.()
-      const res = await fetch(`${base}/admin/campaigns`, {
+      console.debug('[campaign] idToken present?', !!token)
+      const url = `${base}/admin/campaigns`
+      console.debug('[campaign] POST', url)
+      const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,15 +137,21 @@ const CampaignCreate = ({ navigation }) => {
         },
         body: JSON.stringify(payload),
       })
+      console.debug('[campaign] response status', res.status)
+      const text = await res.text()
+      console.debug('[campaign] response body', text)
       if (res.ok) {
-        Alert.alert('Scheduled', 'Campaign has been scheduled.')
+        if (Platform.OS === 'web') window.alert('Scheduled: Campaign has been scheduled.')
+        else Alert.alert('Scheduled', 'Campaign has been scheduled.')
         navigation.goBack()
       } else {
-        const t = await res.text()
-        Alert.alert('Error', t || 'Failed to schedule')
+        if (Platform.OS === 'web') window.alert('Error scheduling campaign: ' + (text || res.status))
+        else Alert.alert('Error', text || 'Failed to schedule')
       }
     } catch (e) {
-      Alert.alert('Error', Platform.OS === 'web' ? String(e) : 'Failed to schedule')
+      console.error('[campaign] submit exception', e)
+      if (Platform.OS === 'web') window.alert('Error scheduling campaign: ' + String(e))
+      else Alert.alert('Error', Platform.OS === 'web' ? String(e) : 'Failed to schedule')
     }
   }
 
@@ -169,12 +186,21 @@ const CampaignCreate = ({ navigation }) => {
       )}
 
       <Text style={styles.label}>Schedule</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+        <TouchableOpacity
+          style={[styles.toggle, sendNow && styles.toggleActive]}
+          onPress={() => setSendNow(!sendNow)}
+        >
+          <Text style={[styles.toggleText, sendNow && styles.toggleTextActive]}>{sendNow ? 'Send now' : 'Send later'}</Text>
+        </TouchableOpacity>
+        <Text style={[styles.caption, { marginLeft: 12 }]}>When "Send now" is selected the campaign will be sent immediately.</Text>
+      </View>
       <Text style={styles.caption}>Timezone: {timezone} (AWST)</Text>
       <View style={styles.row}>
-        <TouchableOpacity style={styles.smallButton} onPress={openDatePicker}>
+        <TouchableOpacity style={styles.smallButton} onPress={openDatePicker} disabled={sendNow}>
           <Text style={styles.smallButtonText}>{scheduledAt.toLocaleDateString('en-AU', { timeZone: timezone })}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.smallButton} onPress={openTimePicker}>
+        <TouchableOpacity style={styles.smallButton} onPress={openTimePicker} disabled={sendNow}>
           <Text style={styles.smallButtonText}>{scheduledAt.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timezone })}</Text>
         </TouchableOpacity>
       </View>

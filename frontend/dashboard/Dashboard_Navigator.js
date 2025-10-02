@@ -21,14 +21,13 @@ const Dashboard_Navigator = (props) => {
       initialRouteName={"Dashboard"}
     >
       <dashboard_stack.Screen 
-        name="Dashboard"
+        name="Dashboard" 
         options={{
           headerShown:false
         }}
       >
         {(screenProps) => <Dashboard {...screenProps} isAdmin={isAdmin} />}
       </dashboard_stack.Screen>
-
       <dashboard_stack.Screen 
         name="Home_Navigator" 
         component={Home_Navigator}
@@ -65,8 +64,7 @@ const Dashboard_Navigator = (props) => {
             headerShown:false
           }}
         />
-        )}
-      
+      )}
       <dashboard_stack.Screen 
         name="About" 
         component={About}
