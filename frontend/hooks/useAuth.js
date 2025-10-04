@@ -59,7 +59,8 @@ export const useSignIn = () => {
         });
       }})
       .catch((error) => {
-        setErrorMessage(error.message);
+        console.error("SignIn error:", error.code, error.message, error?.customData?.serverResponse);
+        setErrorMessage(formatError(error.code));
       });
   };
   return { handleSignIn, email, password, errorMessage, setErrorMessage, setEmail, setPassword };
@@ -85,7 +86,8 @@ export const useSignUp = () => {
         });
       })
       .catch((error) => {
-        setErrorMessage(error.message);
+        console.error("SignUp error:", error.code, error.message, error?.customData?.serverResponse);
+        setErrorMessage(formatError(error.code));
       });
   };
   return {

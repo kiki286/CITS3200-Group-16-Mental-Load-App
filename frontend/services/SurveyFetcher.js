@@ -11,8 +11,16 @@ export const fetchSurveyData = async (surveyType) => {
   if (user) {
     try {
       const idToken = await user.getIdToken();
-      
-      const response = await fetch("https://mental-load-app.onrender.com/get-survey", {
+      //Get backend URL from .env instead of hardcoding
+      //Makes it easier to switch between localhost, emulator, and production environment
+      const baseUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
+      if (!baseUrl) {
+        throw new Error("Missing EXPO_PUBLIC_BACKEND_URL. Define it in frontend/.env and restart the app.");
+      }
+      const url = `${baseUrl}/get-survey`;
+      console.log("Fetching survey from:", url, "type:", surveyType);
+
+      const response = await fetch(url, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${idToken}`,
@@ -26,7 +34,14 @@ export const fetchSurveyData = async (surveyType) => {
       console.log("StatusText:", response.statusText);
       console.log("Headers:", JSON.stringify([...response.headers.entries()]));
 
+      const contentType = response.headers.get("content-type") || "";
+
       if (response.ok) {
+        if (!contentType.includes("application/json")) {
+          const text = await response.text();
+          console.error("Non-JSON response body:", text.slice(0, 500));
+          throw new Error(`Expected JSON but received '${contentType}'`);
+        }
         const data = await response.json();
         return data;
       } else {
