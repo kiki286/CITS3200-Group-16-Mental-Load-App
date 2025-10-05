@@ -10,8 +10,18 @@ import Button from '../../../components/Buttons/Button';
 import * as Notifications from 'expo-notifications';
 import { ColorFill } from 'react-ionicons';
 import { ChevronBackOutline } from 'react-ionicons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import PillButton from '../../../components/Buttons/PillButton';
+import { requestNotificationPermission } from '../../../firebase/config';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+const API_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://127.0.0.1:5000';
+const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY;
+
+const STORAGE_KEYS = {
+    enabled: 'notificationsEnabled',
+    time: 'notificationTime',
+    fcmToken: 'fcmToken',
+};
 
 const Profile = ({ navigation }) => {
     // State management
@@ -21,54 +31,67 @@ const Profile = ({ navigation }) => {
     const [showPicker, setShowPicker] = useState(false);
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
-  const formatTime = (d) =>
-    d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const saveItem = async (key, value) => {
+        if (Platform.OS === 'web') {
+            localStorage.setItem(key, value);
+        } else {
+            const AsyncStorage = require('@react-native-async-storage/async-storage');
+            await AsyncStorage.setItem(key, value);
+        }
+    };
 
-  const logCurrentTime = () => {
-    const currentTime = new Date();
-    console.log(`Current Time: ${formatTime(currentTime)}`);
-  };
+    const loadItem = async (key) => {
+        if (Platform.OS === 'web') return localStorage.getItem(key);
+            const AsyncStorage = require('@react-native-async-storage/async-storage');
+            return await AsyncStorage.getItem(key);
+    };
+
+const formatTime = (date) =>
+  new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const onTimeChange = async (event, selectedDate) => {
-        const currentDate = selectedDate || notificationTime;
+        const picked = selectedDate || notificationTime;
         setShowPicker(false);
-        setNotificationTime(currentDate);
-        logCurrentTime();
-
-        // Schedule notification immediately after picking a time
-        await scheduleNotification(currentDate);
+        const when = new Date(picked);
+        setNotificationTime(when);
+        await saveItem(STORAGE_KEYS.time, when.toISOString());
+        if (notificationsEnabled && Platform.OS !== 'web') {
+            await scheduleNotification(when);
+        } 
     };
 
     const toggleNotifications = async () => {
         const newValue = !notificationsEnabled;
-        setNotificationsEnabled(newValue);
-        logCurrentTime();
-
-        // If notifications are being enabled, schedule them
-        if (newValue) {
-            if (Platform.OS !== 'web') {
-                await scheduleNotification(notificationTime);
-            } else {
-                console.warn('Notifications scheduling is not available in web builds.');
-            }
-        } else {
-            await cancelNotification();
-        }
-
-        // Persist the setting: localStorage on web, AsyncStorage on native
+        
+        // Web push notifications
         if (Platform.OS === 'web') {
-            localStorage.setItem('notificationsEnabled', JSON.stringify(newValue));
-        } else {
-            const AsyncStorage = require('@react-native-async-storage/async-storage');
-            await AsyncStorage.setItem('notificationsEnabled', JSON.stringify(newValue));
+            console.log('[toggle] web->', newValue ? 'enable' : 'disable');
+            if (newValue) {
+                const ok = await enableWebPush();
+                if (!ok) return;
+            } else {
+                await disableWebPush();
+            }
+            await saveItem(STORAGE_KEYS.enabled, JSON.stringify(newValue));
+            setNotificationsEnabled(newValue);
+            return;
         }
+
+        // Local notifications for iOS/Android
+        setNotificationsEnabled(newValue);
+        if (newValue) await scheduleNotification(notificationTime);
+        else await cancelNotification();
+        await saveItem(STORAGE_KEYS.enabled, JSON.stringify(newValue));
     };
 
     const scheduleNotification = async (time) => {
-        const trigger = new Date(time);
-        trigger.setSeconds(0); // Trigger at the start of the minute
+        if (Platform.OS === 'web') return; // not supported on web
+        await cancelNotification(); // Cancel existing notifications to avoid duplicates
 
-        console.log(`Scheduling notification for: ${trigger.toLocaleTimeString()}`); // Log scheduled time
+        const t = new Date(time);
+        t.setSeconds(0); // Trigger at the start of the minute
+
+        console.log(`Scheduling notification for: ${t.toLocaleTimeString()}`); // Log scheduled time
 
         await Notifications.scheduleNotificationAsync({
             content: {
@@ -76,49 +99,108 @@ const Profile = ({ navigation }) => {
                 body: "This is a reminder to Do your Mental Load Check.",
             },
             trigger: {
-                hour: trigger.getHours(),
-                minute: trigger.getMinutes(),
+                hour: t.getHours(),
+                minute: t.getMinutes(),
                 repeats: true,
+                channelId: Platform.OS === 'android' ? 'default' : undefined,
             },
         });
     };
 
 
     const cancelNotification = async () => {
-        const allScheduled = await Notifications.getAllScheduledNotificationsAsync();
-        for (const notification of allScheduled) {
-            if (notification.id) {
-                await Notifications.cancelScheduledNotificationAsync(notification.id);
-            }
+        if (Platform.OS === 'web') return; // not supported on web
+        const all = await Notifications.getAllScheduledNotificationsAsync();
+        await Promise.all(
+            all.map((n)=>
+                Notifications.cancelScheduledNotificationAsync(n.identifier)
+            )
+        );
+        console.log('All scheduled notifications cancelled');
+    };
+
+    const enableWebPush = async () => {
+        const user = getAuth().currentUser;
+        if (!user) {
+            Alert.alert('Notifications', 'Please sign in first.');
+            return false;
         }
+        console.log('[webpush] requesting permission & token', { hasVapid: !!VAPID_PUBLIC_KEY, API_BASE });
+        const { ok, token, reason } = await requestNotificationPermission(VAPID_PUBLIC_KEY);
+        console.log('[webpush] permission result', { ok, token, reason });
+
+        if (!ok || !token) {
+            Alert.alert('Notifications', `Could not enable notifications: ${reason || 'permission denied'}`);
+            return false;
+        }
+        const idToken = await user.getIdToken();
+        await fetch(`${API_BASE}/api/push/subscribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+            body: JSON.stringify({ token, platform: 'web' }),
+        });
+        await saveItem(STORAGE_KEYS.fcmToken, token);
+        console.log('[webpush] subscribed & stored token');
+        return true;
+    };
+
+    const disableWebPush = async () => {
+        const user = getAuth().currentUser;
+        const token = await loadItem(STORAGE_KEYS.fcmToken);
+        if (!user || !token) return;
+        const idToken = await user.getIdToken();
+        const resp = await fetch(`${API_BASE}/api/push/unsubscribe`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', Authorization: `Bearer ${idToken}`},
+            body: JSON.stringify({ token }),
+        });
+
+        if (!resp || !resp.ok) {
+            const text = await resp.text().catch(() => '');
+            console.warn('[webpush] unsubscribe failed:', resp.status, text);
+        }
+
+        if (Platform.OS === 'web') localStorage.removeItem(STORAGE_KEYS.fcmToken);
+        else{
+            const AsyncStorage = require('@react-native-async-storage/async-storage');
+            await AsyncStorage.removeItem(STORAGE_KEYS.fcmToken);
+        }
+        console.log('[webpush] unsubscribed & removed token');
+        return true;
     };
 
     useEffect(() => {
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (user) {
-            setDisplayName(user.displayName);
-        }
+        const init = async () => {
+            const auth = getAuth();
+            if (auth.currentUser?.displayName) setDisplayName(auth.currentUser.displayName);
 
-        const loadNotificationSettings = async () => {
-            try {
-                let notificationsStatus = null;
-                if (Platform.OS === 'web') {
-                    notificationsStatus = localStorage.getItem('notificationsEnabled');
-                } else {
-                    const AsyncStorage = require('@react-native-async-storage/async-storage');
-                    notificationsStatus = await AsyncStorage.getItem('notificationsEnabled');
+            //Native permission + channel setup
+            if (Platform.OS !== 'web') {
+                const { status } = await Notifications.getPermissionsAsync();
+                if (status !== 'granted') {
+                    setNotificationsEnabled(false);
+                    return
                 }
-                if (notificationsStatus !== null) {
-                    setNotificationsEnabled(JSON.parse(notificationsStatus));
+                if (Platform.OS === 'android') {
+                    await Notifications.setNotificationChannelAsync('default', {
+                        name: 'Default',
+                        importance: Notifications.AndroidImportance.DEFAULT,
+                    });
                 }
-            } catch (e) {
-                console.warn('Failed to load notification settings', e);
+            }
+
+            //restore settings
+            const savedEnabled = await loadItem(STORAGE_KEYS.enabled);
+            const savedTime = await loadItem(STORAGE_KEYS.time);
+
+            if (savedEnabled !== null) setNotificationsEnabled(JSON.parse(savedEnabled));
+            if (savedTime) {
+                const t = new Date(savedTime);
+                if (!isNaN(t.getTime())) setNotificationTime(t);
             }
         };
-
-        loadNotificationSettings();
-    }, []);
+        init();
+    }, []);  
 
     const handleUpdateDisplayName = () => {
         const auth = getAuth();
@@ -198,7 +280,7 @@ const Profile = ({ navigation }) => {
                     <TextInput
                         editable={false}
                         value={formatTime(notificationTime)}
-                        styles={styles.timePill}
+                        style={styles.timePill}
                     />
                     <PillButton
                         title="Update"

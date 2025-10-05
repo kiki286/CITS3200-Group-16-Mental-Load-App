@@ -1,0 +1,194 @@
+//CITS3200 project group 23 2024
+//Admin screen to edit survey links/IDs
+
+import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Platform, ScrollView } from 'react-native'
+import { auth } from '../../../firebase/config'
+import COLORS from '../../../constants/colors'
+import FONTS from '../../../constants/fonts'
+import { ChevronBackOutline } from 'react-ionicons';
+import PillButton from '../../../components/Buttons/PillButton';
+
+const SurveySettings = ({ navigation }) => {
+  const [checkinInput, setCheckinInput] = useState('')
+  const [demographicsInput, setDemographicsInput] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const extractQualtricsId = (value) => {
+    if (!value) return ''
+    // Common Qualtrics survey IDs start with SV_
+    const svMatch = value.match(/SV_[A-Za-z0-9]+/)
+    if (svMatch) return svMatch[0]
+    try {
+      const url = new URL(value)
+      // Try typical query params that may contain survey id
+      const paramKeys = ['SID', 'surveyId', 'SurveyID', 'id']
+      for (const k of paramKeys) {
+        const v = url.searchParams.get(k)
+        if (v && /SV_[A-Za-z0-9]+/.test(v)) return v.match(/SV_[A-Za-z0-9]+/)[0]
+        if (v && /^[A-Za-z0-9_\-]+$/.test(v)) return v
+      }
+      // Fallback: last path segment that looks like an id
+      const segs = url.pathname.split('/').filter(Boolean)
+      const last = segs[segs.length - 1]
+      if (last && /SV_[A-Za-z0-9]+/.test(last)) return last.match(/SV_[A-Za-z0-9]+/)[0]
+      if (last && /^[A-Za-z0-9_\-]+$/.test(last)) return last
+    } catch (_) {
+      // not a URL; treat as raw id
+      if (/^[A-Za-z0-9_\-]+$/.test(value)) return value
+    }
+    return ''
+  }
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const base = process.env.EXPO_PUBLIC_BACKEND_URL
+        if (!base) return
+        const token = await auth?.currentUser?.getIdToken?.()
+        const res = await fetch(`${base}/admin/surveys`, {
+          method: 'GET',
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setCheckinInput(data?.checkinSurveyId || '')
+          setDemographicsInput(data?.demographicsSurveyId || '')
+        }
+      } catch (e) {
+        // ignore if endpoint not available yet
+      }
+    }
+    load()
+  }, [])
+
+  const handleSave = async () => {
+    if (!checkinInput.trim() || !demographicsInput.trim()) {
+      Alert.alert('Validation', 'Both survey identifiers are required.')
+      return
+    }
+    const normalizedCheckin = extractQualtricsId(checkinInput.trim())
+    const normalizedDemo = extractQualtricsId(demographicsInput.trim())
+    if (!normalizedCheckin || !normalizedDemo) {
+      Alert.alert('Validation', 'Could not detect valid survey IDs from inputs.')
+      return
+    }
+    try {
+      const base = process.env.EXPO_PUBLIC_BACKEND_URL
+      if (!base) {
+        Alert.alert('Not configured', 'Backend URL is not set. Define EXPO_PUBLIC_BACKEND_URL.')
+        return
+      }
+      setLoading(true)
+      const token = await auth?.currentUser?.getIdToken?.()
+      const res = await fetch(`${base}/admin/surveys`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ checkinSurveyId: normalizedCheckin, demographicsSurveyId: normalizedDemo })
+      })
+      setLoading(false)
+      if (res.ok) {
+        Alert.alert('Saved', 'Survey configuration updated.')
+        navigation.goBack()
+      } else {
+        const t = await res.text()
+        Alert.alert('Error', t || 'Failed to save')
+      }
+    } catch (e) {
+      setLoading(false)
+      Alert.alert('Error', Platform.OS === 'web' ? String(e) : 'Failed to save')
+    }
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* Back */}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+      </TouchableOpacity>
+
+      {/* Title */}
+      <Text style={styles.header}>Survey Settings</Text>
+
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.label}>Check-in Survey Link or ID (Qualtrics)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Paste full Qualtrics link or SV_… ID"
+          placeholderTextColor={COLORS.grey}
+          value={checkinInput}
+          onChangeText={setCheckinInput}
+          autoCapitalize="none"
+        />
+        {!!checkinInput && (
+          <Text style={styles.helper}>Detected ID: {extractQualtricsId(checkinInput) || '—'}</Text>
+        )}
+
+        <Text style={styles.label}>Demographics Survey Link or ID (Qualtrics)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Paste full Qualtrics link or SV_… ID"
+          placeholderTextColor={COLORS.grey}
+          value={demographicsInput}
+          onChangeText={setDemographicsInput}
+          autoCapitalize="none"
+        />
+        {!!demographicsInput && (
+          <Text style={styles.helper}>Detected ID: {extractQualtricsId(demographicsInput) || '—'}</Text>
+        )}
+
+        <PillButton
+          title={loading ? 'Saving…' : 'Save'}
+          onPress={handleSave}
+          variant="neutral"
+          style={{ marginTop: 16 }}
+          disabled={loading}
+        />
+
+      </ScrollView>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+  },
+  header: {
+    fontSize: 24,
+    color: COLORS.black,
+    fontFamily: FONTS.survey_font_bold,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  label: {
+    marginTop: 14,
+    marginBottom: 6,
+    color: COLORS.black,
+    fontFamily: FONTS.main_font,
+    fontSize: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: COLORS.black,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: COLORS.black,
+    fontFamily: FONTS.main_font,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+})
+
+export default SurveySettings
+
+

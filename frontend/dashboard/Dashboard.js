@@ -6,7 +6,13 @@ import React, {useEffect} from 'react';
 import { Profile_Navigator, View_Navigator, Settings_Navigator, Home_Navigator } from './screens';
 import COLORS from '../constants/colors';
 import FONTS from '../constants/fonts';
-import { SettingsOutline, Home, StatsChart, PersonOutline, HelpCircleOutline, LogOutOutline } from 'react-ionicons'
+import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient';
+import Entypo from '@expo/vector-icons/Entypo';
+import Feather from '@expo/vector-icons/Feather';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase/config'
 import { getDemographicsSubmitted } from '../services/StorageHandler';
@@ -29,8 +35,8 @@ const Dashboard = ({ navigation }) => {
       await signOut(auth);
       console.log("User signed out successfully");
       navigation.navigate("Welcome");
-    } catch {
-      console.error("Error signout out:", error);
+    } catch (error) {
+      console.error("Error signing out:", error);
     }
   };
 
@@ -52,7 +58,7 @@ const Dashboard = ({ navigation }) => {
             onPress={() => navigation.navigate('Home_Navigator')}
             accessibilityLabel="Check-in"
           >
-            <Home color={COLORS.black} height="60px" width="60px" />
+            <Feather name="square" size={60} color="black" />
             <Text style={styles.buttonText}>Check-in</Text>
           </TouchableOpacity>
 
@@ -61,8 +67,8 @@ const Dashboard = ({ navigation }) => {
             onPress={() => navigation.navigate('View_Navigator')}
             accessibilityLabel="Stats"
           >
-            <StatsChart color={COLORS.black} height="60px" width="60px" />
-            <Text style={styles.buttonText}>Stats</Text>
+            <Entypo name="bar-graph" size={60} color="black" />
+            <Text style={styles.buttonText}>Analytics</Text>
           </TouchableOpacity>
         </View>
 
@@ -73,7 +79,7 @@ const Dashboard = ({ navigation }) => {
             onPress={() => navigation.navigate('Profile_Navigator')}
             accessibilityLabel="Profile"
           >
-            <PersonOutline color={COLORS.black} height="60px" width="60px" />
+            <AntDesign name="user" size={60} color="black" />
             <Text style={styles.buttonText}>Profile</Text>
           </TouchableOpacity>
 
@@ -82,19 +88,27 @@ const Dashboard = ({ navigation }) => {
             onPress={() => navigation.navigate('Settings_Navigator')}
             accessibilityLabel="Settings"
           >
-            <SettingsOutline color={COLORS.black} height="60px" width="60px" />
+            <Ionicons name="settings" size={60} color="black" />
             <Text style={styles.buttonText}>Settings</Text>
           </TouchableOpacity>
         </View>
 
         {/* Row 3: neutral (grey) */}
         <View style={styles.row}>
-          <TouchableOpacity
+          <TouchableOpacity 
             style={[styles.button, styles.neutralButton]}
-            onPress={() => navigation.navigate('About')}
-            accessibilityLabel="About"
+            onPress={()=>navigation.navigate("Admin_Navigator")}
           >
-            <HelpCircleOutline color={COLORS.black} height="60px" width="60px" />
+            <Feather name="shield" size={60} color="black" />
+            <Text style={styles.buttonText}>Admin</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.row}>
+          <TouchableOpacity 
+            style={[styles.button, styles.neutralButton]}
+            onPress={()=>navigation.navigate("About")}
+          >
+            <FontAwesome name="question" size={60} color="black" />
             <Text style={styles.buttonText}>About</Text>
           </TouchableOpacity>
 
@@ -103,7 +117,7 @@ const Dashboard = ({ navigation }) => {
             onPress={handleLogout}
             accessibilityLabel="Logout"
           >
-            <LogOutOutline color={COLORS.black} height="60px" width="60px" />
+            <MaterialIcons name="logout" size={60} color="black" />
             <Text style={styles.buttonText}>Logout</Text>
           </TouchableOpacity>
         </View>

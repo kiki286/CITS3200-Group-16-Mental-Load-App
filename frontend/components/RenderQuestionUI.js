@@ -9,7 +9,8 @@ import {
   StyleSheet,
   TextInput,
   ScrollView,
-    Image
+  Image,
+  useWindowDimensions,
 } from "react-native";
 import TouchablePlatform from './TouchablePlatform';
 import COLORS from "../constants/colors";
@@ -60,6 +61,38 @@ const RenderQuestionUI = ({
   inputValues,
   AllornotAll,
 }) => {
+  const { width: screenWidth } = useWindowDimensions();
+  const isSmallScreen = screenWidth < 480;
+  const colWidth = isSmallScreen ? "100%" : "48%";
+  const textOffsetStyle = React.useMemo(() => {
+    if (screenWidth < 480) {
+      return {
+        transform: [{ translateX: 0 }],
+        textAlign: 'left',
+        width: '100%',
+        alignSelf: 'flex-start',
+      };
+    }
+    if (screenWidth < 1024) {
+      return {
+        transform: [{ translateX: screenWidth * 0.10 }],
+        textAlign: 'left',
+        width: Math.min(screenWidth * 0.6, 800),
+        alignSelf: 'flex-start',
+      };
+    }
+    return {
+      transform: [{ translateX: screenWidth * 0.28 }],
+      textAlign: 'left',
+      width: Math.min(screenWidth * 0.5, 900),
+      alignSelf: 'flex-start',
+    };
+  }, [screenWidth]);
+  const responsiveRowStyle = {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: isSmallScreen ? "flex-start" : "space-between",
+  };
   // State to track the loading status of images
   const [imageLoading, setImageLoading] = useState(true);
   // For removing html tags from text
@@ -120,7 +153,7 @@ const RenderQuestionUI = ({
   if (QuestionType === "Slider") {
     questionsUI = (
       <View key={questionID} style={styles.questionContainer}>
-        <Text style={styles.questionText}>
+        <Text style={[styles.questionText, textOffsetStyle]}>
           {highlightTextWithColors(
             stripHtmlTags(questionDetails["QuestionDescription"]),
             wordColorMap
@@ -133,7 +166,7 @@ const RenderQuestionUI = ({
         
           return (
             <View key={index} style={styles.subQuestionContainer}>
-              <Text style={[styles.subQuestionText, { fontSize: 20 }]}>
+              <Text style={[styles.subQuestionText, textOffsetStyle, { fontSize: 20 }]}>
                 {stripHtmlTags(subQuestion["Display"])}
               </Text>
               <SliderComponent
@@ -167,15 +200,15 @@ const RenderQuestionUI = ({
     if (questionDetails["DataExportTag"] === "ChildrenAges" && AllornotAll > 0) {
       questionsUI = (
         <View key={questionID} style={styles.optionsContainer}>
-          <Text style={styles.questionText}>
+          <Text style={[styles.questionText, textOffsetStyle]}>
             {stripHtmlTags(questionDetails["QuestionText"])}
           </Text>
-          <View style={[styles.optionsContainer, { flexDirection: "row", flexWrap: "wrap" }]}>
+          <View style={[styles.optionsContainer, responsiveRowStyle]}>
             {questionDetails["Choices"].slice(0, AllornotAll).map((option, index) => (
               <View
                 key={index}
                 style={{
-                  width: "50%",
+                  width: colWidth,
                   flexDirection: "row",
                   alignItems: "center",
                   marginBottom: 10,
@@ -208,20 +241,20 @@ const RenderQuestionUI = ({
       AllornotAll = questionDetails["Choices"].length;  // Controls the number of options displayed for non-ChildrenAges questions
       questionsUI = (
         <View key={questionID} style={styles.optionsContainer}>
-          <Text style={styles.questionText}>
+          <Text style={[styles.questionText, textOffsetStyle]}>
             {stripHtmlTags(questionDetails["QuestionText"])}
           </Text>
           <View
             style={[
               styles.optionsContainer,
-              { flexDirection: "row", flexWrap: "wrap" },
+              responsiveRowStyle,
             ]}
           >
             {questionDetails["Choices"].slice(0, AllornotAll).map((option, index) => (
               <View
                 key={index}
                 style={{
-                  width: "50%",
+                  width: colWidth,
                   flexDirection: "row",
                   alignItems: "center",
                   marginBottom: 10,
@@ -267,7 +300,7 @@ const RenderQuestionUI = ({
       />
     ) : (
       <View>
-        <Text style={styles.questionText}>
+        <Text style={[styles.questionText, textOffsetStyle]}>
           {highlightTextWithColors(
             stripHtmlTags(questionDetails["QuestionText"]),
             wordColorMap
@@ -275,7 +308,7 @@ const RenderQuestionUI = ({
         </Text>
         {questionDetails["SubQuestions"].map((subquestion, subIndex) => (
           <View key={subIndex} style={styles.questionContainer}>
-            <Text style={styles.subQuestionText}>
+            <Text style={[styles.subQuestionText, textOffsetStyle]}>
               {highlightTextWithColors(
                 stripHtmlTags(subquestion["Display"]),
                 wordColorMap
@@ -308,7 +341,7 @@ const RenderQuestionUI = ({
     const allowMultipleSelection = questionDetails["Selector"] == "MACOL";
     questionsUI = (
       <View key={questionID} style={styles.questionContainer}>
-        <Text style={styles.questionText}>
+        <Text style={[styles.questionText, textOffsetStyle]}>
           {highlightTextWithColors(
             stripHtmlTags(questionDetails["QuestionText"]),
             wordColorMap
@@ -406,7 +439,7 @@ const RenderQuestionUI = ({
   } else if (QuestionType === "DB") {
     questionsUI = (
       <View>
-        <Text style={styles.questionText}>
+        <Text style={[styles.questionText, textOffsetStyle]}>
           {stripHtmlTags(questionDetails["QuestionText"])}
         </Text>
       </View>

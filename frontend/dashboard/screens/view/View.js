@@ -38,7 +38,7 @@ const PAGES = [
 const screenWidth = Dimensions.get('window').width;
 
 const View_Tab = ({ navigation }) => {
-  const [selectedIndex, setSelectedIndex] = useState(4); // Default selected chart index
+  const [selectedIndex, setSelectedIndex] = useState(0); // Default selected chart index
   const [timestamps, setTimestamps] = useState(null);
   const [homeML, setHomeML] = useState(null);
   const [workML, setWorkML] = useState(null);
