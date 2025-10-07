@@ -16,8 +16,9 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth, requestNotificationPermission, listenForMessages} from "./firebase/config";
 import { getMessaging, getToken, isSupported } from "firebase/messaging"; // For web push notifications
 import COLORS from "./constants/colors";
+import './dev-on-device';
 
-const API_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "http://127.0.0.1:5000";
+const API_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "http://192.168.0.244:5000";
 const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY; //public key from frontend\.env
 const welcome_stack = createStackNavigator();
 console.disableYellowBox = true;

@@ -65,33 +65,19 @@ const RenderQuestionUI = ({
   const isSmallScreen = screenWidth < 480;
   const colWidth = isSmallScreen ? "100%" : "48%";
   const textOffsetStyle = React.useMemo(() => {
-    if (screenWidth < 480) {
-      return {
-        transform: [{ translateX: 0 }],
-        textAlign: 'left',
-        width: '100%',
-        alignSelf: 'flex-start',
-      };
-    }
-    if (screenWidth < 1024) {
-      return {
-        transform: [{ translateX: screenWidth * 0.10 }],
-        textAlign: 'left',
-        width: Math.min(screenWidth * 0.6, 800),
-        alignSelf: 'flex-start',
-      };
-    }
+    //Center the question text in a readable coloumn
+    const maxW = Math.min(screenWidth -48,720); // 24px pad each side, cap ~720px
     return {
-      transform: [{ translateX: screenWidth * 0.28 }],
-      textAlign: 'left',
-      width: Math.min(screenWidth * 0.5, 900),
-      alignSelf: 'flex-start',
+      width: '100%',
+      maxWidth: maxW,
+      alignSelf: 'center',
+      textAlign: 'center',
     };
   }, [screenWidth]);
   const responsiveRowStyle = {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: isSmallScreen ? "flex-start" : "space-between",
+    justifyContent: "center",
   };
   // State to track the loading status of images
   const [imageLoading, setImageLoading] = useState(true);

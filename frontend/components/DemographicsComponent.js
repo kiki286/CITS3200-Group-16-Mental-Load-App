@@ -383,44 +383,46 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
         <Error message={error} />
       ) : (
         <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContainer}>
-          <RenderQuestionUI
-            questionDetails={questionDetails}
-            questionsID={questionsID}
-            sliderValues={sliderValues}
-            setSliderValues={setSliderValues}
-            handleTextInputChange={handleTextInputChange}
-            selectedOptions={selectedOptions}
-            handleOptionPress={handleOptionPress}
-            wordColorMap={wordColorMap}
-            colorIndex={colorIndex}
-            colors_list={colors_list}
-            inputValues={inputValues}
-            AllornotAll={allOrNotAll}
-          />
+          <View style={styles.content}>
+            <RenderQuestionUI
+              questionDetails={questionDetails}
+              questionsID={questionsID}
+              sliderValues={sliderValues}
+              setSliderValues={setSliderValues}
+              handleTextInputChange={handleTextInputChange}
+              selectedOptions={selectedOptions}
+              handleOptionPress={handleOptionPress}
+              wordColorMap={wordColorMap}
+              colorIndex={colorIndex}
+              colors_list={colors_list}
+              inputValues={inputValues}
+              AllornotAll={allOrNotAll}
+            />
 
-          {/* Action area */}
-          {questionDetails ? (
-            <View style={styles.actions}>
-              <PillButton
-                title="Next"
-                variant="primary"
-                onPress={handleNextQuestion}
-                fullWidth
-              />
+            {/* Action area */}
+            {questionDetails ? (
+              <View style={styles.actions}>
+                <PillButton
+                  title="Next"
+                  variant="primary"
+                  onPress={handleNextQuestion}
+                  fullWidth
+                />
+              </View>
+            ) : (
+              <View style={styles.actions}>
+                <PillButton
+                  title="Submit"
+                  variant="primary"
+                  onPress={() => {
+                    if (demoSubmit) demoSubmit();
+                    else handleSubmitSurvey();
+                  }}
+                  fullWidth
+                />
+              </View>
+            )}
             </View>
-          ) : (
-            <View style={styles.actions}>
-              <PillButton
-                title="Submit"
-                variant="primary"
-                onPress={() => {
-                  if (demoSubmit) demoSubmit();
-                  else handleSubmitSurvey();
-                }}
-                fullWidth
-              />
-            </View>
-          )}
         </ScrollView>
       )}
     </View>
@@ -451,9 +453,12 @@ const styles = StyleSheet.create({
   scrollContainer: {
     paddingHorizontal: 24,
     paddingBottom: 40,
+    alignItems: 'center',
+  },
+  content: {
     width: '100%',
-    alignSelf: 'center',
-    maxWidth: 540, // slightly wider than other screens for question text
+    maxWidth: 540,
+    alignself: 'center',
   },
   actions: {
     marginTop: 16,

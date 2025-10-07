@@ -23,7 +23,9 @@ const Dashboard = ({ navigation }) => {
     const checkDemographicsSubmission = async () => {
       const isDemographicsSubmitted = await getDemographicsSubmitted(); // Checking the flag
       if (!isDemographicsSubmitted) {
-        navigation.navigate('./screens/profile/Survey_demographics'); // Navigate to demographics survey
+        navigation.navigate('Profile_Navigator', {
+          screen: 'Survey_Demographics',
+        }); // Navigate to demographics survey
       }
     };
 
