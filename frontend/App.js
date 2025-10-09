@@ -12,13 +12,15 @@ import Welcome from "./screens/Welcome";
 import Demographics from "./screens/Demographics";
 import TermsConditions from "./screens/TermsConditions";
 import { useFonts } from 'expo-font';
-import { onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { auth, requestNotificationPermission, listenForMessages} from "./firebase/config";
 import { getMessaging, getToken, isSupported } from "firebase/messaging"; // For web push notifications
 import COLORS from "./constants/colors";
 import './dev-on-device';
+import { API_BASE, fetchWithAuth } from './services/api'
 
-const API_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "http://192.168.0.244:5000";
+if (typeof window !== 'undefined') console.log('[API_BASE]', API_BASE);
+
 const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY; //public key from frontend\.env
 const welcome_stack = createStackNavigator();
 console.disableYellowBox = true;
@@ -76,10 +78,9 @@ export default function App() {
       const idToken = await auth.currentUser?.getIdToken();
       if (!idToken) return;
 
-      await fetch(`${API_BASE}/api/push/subscribe`, {
+      await fetchWithAuth("/api/push/subscribe", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-        body: JSON.stringify({ token: newToken, platform: "web" }),
+        body: { token: newToken, platform: "web" },
       });
 
       setPushEnabled(true);
@@ -104,17 +105,40 @@ export default function App() {
     if (!ok) {console.warn("Push not enabled:", reason); return}
     //send token to backend to save against user
     const idToken = await auth.currentUser.getIdToken();
-    await fetch(`${API_BASE}/api/push/subscribe`, {
+    await fetchWithAuth("/api/push/subscribe", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${idToken}` //verify ID token
-      },
-      body: JSON.stringify({ token, platform: "web" }),
+      body: { token, platform: "web" },
     });
     //update UI
     setPushEnabled(true);
   }
+
+  if (typeof window !== "undefined") {
+  // 1) Log what API base your built app is actually using
+  //    Set this to whatever you currently export/use for requests
+  //    (If you don’t have one, just paste the line with your string)
+  // Example if you have API_BASE:
+  //   import { API_BASE } from "./lib/api";
+  //   window.__API_BASE__ = API_BASE;
+  window.__API_BASE__ = process.env.EXPO_PUBLIC_BACKEND_URL || "";
+
+  // 2) Expose a function to get a fresh ID token from the current user
+  window.__getIdToken__ = async () => {
+    const user = getAuth().currentUser;
+    if (!user) {
+      console.log("[auth] not signed in");
+      return null;
+    }
+    const t = await user.getIdToken(true); // force refresh
+    console.log("[auth] idToken length:", t.length);
+    return t;
+  };
+
+  // 3) Log sign-in state changes
+  onAuthStateChanged(getAuth(), (u) => {
+    console.log("[auth] signed in:", !!u, u?.email || null);
+  });
+}
 
   if (!fontsLoaded) {
     // Display a loading spinner while fonts are being loaded

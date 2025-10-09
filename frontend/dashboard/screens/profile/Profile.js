@@ -13,8 +13,8 @@ import { ChevronBackOutline } from 'react-ionicons';
 import PillButton from '../../../components/Buttons/PillButton';
 import { requestNotificationPermission } from '../../../firebase/config';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { API_BASE, fetchWithAuth } from '../../../services/api'
 
-const API_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://127.0.0.1:5000';
 const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY;
 
 const STORAGE_KEYS = {
@@ -133,11 +133,10 @@ const formatTime = (date) =>
             Alert.alert('Notifications', `Could not enable notifications: ${reason || 'permission denied'}`);
             return false;
         }
-        const idToken = await user.getIdToken();
-        await fetch(`${API_BASE}/api/push/subscribe`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-            body: JSON.stringify({ token, platform: 'web' }),
+
+        await fetchWithAuth("/api/push/subscribe", {
+            method: "POST",
+            body: {token, platform: "web" },
         });
         await saveItem(STORAGE_KEYS.fcmToken, token);
         console.log('[webpush] subscribed & stored token');
@@ -148,13 +147,10 @@ const formatTime = (date) =>
         const user = getAuth().currentUser;
         const token = await loadItem(STORAGE_KEYS.fcmToken);
         if (!user || !token) return;
-        const idToken = await user.getIdToken();
-        const resp = await fetch(`${API_BASE}/api/push/unsubscribe`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json', Authorization: `Bearer ${idToken}`},
-            body: JSON.stringify({ token }),
+        const resp = await fetchWithAuth("/api/push/unsubscribe", {
+            method: "POST",
+            body: { token },
         });
-
         if (!resp || !resp.ok) {
             const text = await resp.text().catch(() => '');
             console.warn('[webpush] unsubscribe failed:', resp.status, text);
