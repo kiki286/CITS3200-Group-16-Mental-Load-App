@@ -68,8 +68,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   primary: {
-    backgroundColor: COLORS.light_blue4,
-    borderColor: COLORS.light_blue4,
+    backgroundColor: "#79aefd",
+    borderColor: COLORS.black,
   },
   neutral: {
     backgroundColor: COLORS.light_grey2,
