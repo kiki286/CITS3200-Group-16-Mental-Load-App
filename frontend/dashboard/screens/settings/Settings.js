@@ -77,10 +77,16 @@ const Settings = ({ navigation }) => {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerTitle}>About the app </Text>
-        <Text style={styles.footerLine}>Mental Labour App developed 2025</Text>
-        <Text style={styles.footerLine}>CITS3200 group project at University of Western Australia</Text>
-        <Text style={styles.footerLine}>App idea by Emma Stephenson</Text>
+        <Text style={styles.footerTitle}>Aim of the Study</Text>
+        <Text style={styles.footerLine}>This study aims to investigate employee experiences at home and work that influence wellbeing and other work-related outcomes.</Text>
+        
+        <Text style={[styles.footerTitle, { marginTop: 12 }]}>What is Mental Load?</Text>
+        <Text style={styles.footerLine}>The mental load (or mental labour) refers to thinking work performed to achieve goals that benefit others (e.g., planning meetings or deciding what to cook for dinner). Research has consistently shown that in the home, the mental load is disproportionately shouldered by women, and our research suggests this same trend also happens at work. Although the popular press suggests the mental load is a bad thing, emerging research suggests it has both positive and negative outcomes.</Text>
+        
+        <Text style={[styles.footerLine, { marginTop: 12 }]}>Mental Labour App developed in 2024</Text>
+        <Text style={styles.footerLine}>Initially developed by CITS3200 Group 23 project at University of Western Australia in 2024</Text>
+        <Text style={styles.footerLine}>Continued development by CITS3200 Group 16 project at University of Western Australia in 2025</Text>
+        <Text style={styles.footerLine}>App idea by Emma Stephenson (UWA Business School)</Text>
       </View>
     </View>
   );

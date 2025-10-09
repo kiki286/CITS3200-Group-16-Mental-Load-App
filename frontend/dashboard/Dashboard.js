@@ -101,24 +101,6 @@ const Dashboard = ({ navigation }) => {
             <Text style={styles.buttonText}>Admin</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.row}>
-          <TouchableOpacity 
-            style={[styles.button, styles.neutralButton]}
-            onPress={()=>navigation.navigate("About")}
-          >
-            <HelpCircleOutline color="black" height="60px" width="60px" />
-            <Text style={styles.buttonText}>About</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, styles.neutralButton]}
-            onPress={handleLogout}
-            accessibilityLabel="Logout"
-          >
-            <LogOutOutline color="black" height="60px" width="60px" />
-            <Text style={styles.buttonText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </ScrollView>
   );
@@ -139,8 +121,8 @@ const styles = StyleSheet.create({
     color: COLORS.black,
     fontSize: 30,                 
     textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 60,
+    marginBottom: 32,
     fontFamily: FONTS.survey_font_bold,
   },
 
@@ -196,6 +178,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 80, 
