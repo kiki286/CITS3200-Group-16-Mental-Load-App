@@ -8,11 +8,7 @@ import COLORS from '../constants/colors';
 import FONTS from '../constants/fonts';
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient';
-import Entypo from '@expo/vector-icons/Entypo';
-import Feather from '@expo/vector-icons/Feather';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { SettingsOutline, Home, StatsChart, PersonOutline, ShieldOutline, HelpCircleOutline, LogOutOutline } from 'react-ionicons'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase/config'
 import { getDemographicsSubmitted } from '../services/StorageHandler';
@@ -60,7 +56,7 @@ const Dashboard = ({ navigation }) => {
             onPress={() => navigation.navigate('Home_Navigator')}
             accessibilityLabel="Check-in"
           >
-            <Feather name="square" size={60} color="black" />
+            <Home color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Check-in</Text>
           </TouchableOpacity>
 
@@ -69,7 +65,7 @@ const Dashboard = ({ navigation }) => {
             onPress={() => navigation.navigate('View_Navigator')}
             accessibilityLabel="Stats"
           >
-            <Entypo name="bar-graph" size={60} color="black" />
+            <StatsChart color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Analytics</Text>
           </TouchableOpacity>
         </View>
@@ -81,7 +77,7 @@ const Dashboard = ({ navigation }) => {
             onPress={() => navigation.navigate('Profile_Navigator')}
             accessibilityLabel="Profile"
           >
-            <AntDesign name="user" size={60} color="black" />
+            <PersonOutline color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Profile</Text>
           </TouchableOpacity>
 
@@ -90,7 +86,7 @@ const Dashboard = ({ navigation }) => {
             onPress={() => navigation.navigate('Settings_Navigator')}
             accessibilityLabel="Settings"
           >
-            <Ionicons name="settings" size={60} color="black" />
+            <SettingsOutline color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Settings</Text>
           </TouchableOpacity>
         </View>
@@ -101,7 +97,7 @@ const Dashboard = ({ navigation }) => {
             style={[styles.button, styles.neutralButton]}
             onPress={()=>navigation.navigate("Admin_Navigator")}
           >
-            <Feather name="shield" size={60} color="black" />
+            <ShieldOutline color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Admin</Text>
           </TouchableOpacity>
         </View>
@@ -110,7 +106,7 @@ const Dashboard = ({ navigation }) => {
             style={[styles.button, styles.neutralButton]}
             onPress={()=>navigation.navigate("About")}
           >
-            <FontAwesome name="question" size={60} color="black" />
+            <HelpCircleOutline color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>About</Text>
           </TouchableOpacity>
 
@@ -119,7 +115,7 @@ const Dashboard = ({ navigation }) => {
             onPress={handleLogout}
             accessibilityLabel="Logout"
           >
-            <MaterialIcons name="logout" size={60} color="black" />
+            <LogOutOutline color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Logout</Text>
           </TouchableOpacity>
         </View>
