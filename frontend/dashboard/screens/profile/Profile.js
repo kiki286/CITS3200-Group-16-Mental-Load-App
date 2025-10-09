@@ -1,14 +1,13 @@
-//CITS3200 project group 23 2024 2024
-//Profile tab part of the dashboard tabs
+//CITS3200 project group 16 2025
+// //Profile tab part of the dashboard tabs
 
-import { View, Text, TextInput, Alert, Switch, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Alert, Switch, StyleSheet, Platform, TouchableOpacity, ScrollView } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { getAuth, updateProfile } from 'firebase/auth';
 import COLORS from '../../../constants/colors';
 import FONTS from '../../../constants/fonts';
 import Button from '../../../components/Buttons/Button';
 import * as Notifications from 'expo-notifications';
-import { ColorFill } from 'react-ionicons';
 import { ChevronBackOutline } from 'react-ionicons';
 import PillButton from '../../../components/Buttons/PillButton';
 import { requestNotificationPermission } from '../../../firebase/config';
@@ -136,7 +135,7 @@ const formatTime = (date) =>
 
         await fetchWithAuth("/api/push/subscribe", {
             method: "POST",
-            body: {token, platform: "web" },
+            body: { token, platform: "web" },
         });
         await saveItem(STORAGE_KEYS.fcmToken, token);
         console.log('[webpush] subscribed & stored token');
@@ -217,111 +216,154 @@ const formatTime = (date) =>
         }
     };
 
-    return (
-        <View style={styles.page}>
-            {/* Back button */}
-            <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => navigation.navigate("Dashboard")}
-                accessibilityLabel="Back"
-            >
-                <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
-            </TouchableOpacity>
+  const content = (
+    <>
+      {/* Back button */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.navigate("Dashboard")}
+        accessibilityLabel="Back"
+      >
+        <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+      </TouchableOpacity>
 
-            {/* Title */}
-            <Text style={styles.title}>Profile</Text>
+      {/* Title */}
+      <Text style={styles.title}>Profile</Text>
 
-            {/* Subheader */}
-            <Text style={styles.subtitle}>
-                Hi {displayName || 'User'}.
-                <Text style={styles.subtitleSecondary}> What would you like to update? </Text>
-            </Text>
+      {/* Subheader */}
+      <Text style={styles.subtitle}>
+        Hi {displayName || 'User'}.
+        <Text style={styles.subtitleSecondary}> What would you like to update? </Text>
+      </Text>
 
-            {/* Section: Change display name */}
-            <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Change your display name:</Text>
-                <View style={styles.inlineRow}>
-                    <TextInput
-                        placeholder='Enter new display name'
-                        placeholderTextColor={COLORS.light_grey}
-                        value={newDisplayName}
-                        onChangeText={setNewDisplayName}
-                        style={styles.input}
-                    />
-                    <PillButton
-                      title="Update"
-                      onPress={handleUpdateDisplayName}
-                      variant="primary"
-                      size="md"
-                      fullWidth={false}
-                    />                    
-                </View>
-            </View>
-
-            {/*Section: Notification settings */}
-            <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Set Notifications and time:</Text>
-
-                <View style={styles.inlineRow}>
-                    <Text style={styles.inlineLabel}>Notifications</Text>
-                    <Switch
-                        value={notificationsEnabled}
-                        onValueChange={toggleNotifications}
-                        trackColor={{ false: COLORS.light_grey, true: COLORS.light_blue2 }}
-                        thumbColor={notificationsEnabled ? COLORS.yellow : COLORS.almost_white}
-                    />
-                </View>
-
-                <View style={styles.inlineRow}>
-                    <TextInput
-                        editable={false}
-                        value={formatTime(notificationTime)}
-                        style={styles.timePill}
-                    />
-                    <PillButton
-                        title="Update"
-                        onPress={() => setShowPicker(true)}
-                        variant="primary"
-                        size="md"
-                        fullWidth={false}
-                    />
-                </View>
-
-                {showPicker && Platform.OS !== 'web' && (
-                    <DateTimePicker
-                        value={notificationTime}
-                        mode="time"
-                        is24Hour={true}
-                        onChange={onTimeChange}
-                    />
-                )}
-            </View>
-
-            {/* Section: Update demographics */}
-            <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Update your demographics survey:</Text>
-                <Button
-                    title="Update Demographics"
-                    onPress={() => navigation.navigate("Survey_Demographics")}
-                />
-            </View>
+      {/* Section: Change display name */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Change your display name:</Text>
+        <View style={styles.inlineRow}>
+          <TextInput
+            placeholder='Enter new display name'
+            placeholderTextColor={COLORS.light_grey}
+            value={newDisplayName}
+            onChangeText={setNewDisplayName}
+            style={styles.input}
+          />
+          <PillButton
+            title="Update"
+            onPress={handleUpdateDisplayName}
+            variant="primary"
+            size="md"
+            fullWidth={false}
+          />
         </View>
+      </View>
+
+      {/* Section: Notification settings */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Set Notifications and time:</Text>
+
+        <View style={styles.inlineRow}>
+          <Text style={styles.inlineLabel}>Notifications</Text>
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={toggleNotifications}
+            trackColor={{ false: COLORS.light_grey, true: COLORS.light_blue2 }}
+            thumbColor={notificationsEnabled ? COLORS.yellow : COLORS.almost_white}
+          />
+        </View>
+
+        <View style={styles.inlineRow}>
+          <TextInput
+            editable={false}
+            value={formatTime(notificationTime)}
+            style={styles.timePill}
+          />
+          <PillButton
+            title="Update"
+            onPress={() => setShowPicker(true)}
+            variant="primary"
+            size="md"
+            fullWidth={false}
+          />
+        </View>
+
+        {showPicker && Platform.OS !== 'web' && (
+          <DateTimePicker
+            value={notificationTime}
+            mode="time"
+            is24Hour={true}
+            onChange={onTimeChange}
+          />
+        )}
+      </View>
+
+      {/* Section: Update demographics */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Update your demographics survey:</Text>
+        <Button
+          title="Update Demographics"
+          onPress={() => navigation.navigate("Survey_Demographics")}
+        />
+      </View>
+    </>
+  );
+
+  // Web: native div with overflow scrolling
+  if (Platform.OS === 'web') {
+    return (
+      <div style={{
+        height: '100dvh',
+        width: '100%',
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        backgroundColor: COLORS.white,
+        touchAction: 'pan-y',
+      }}>
+        <div style={{
+          paddingLeft: 24,
+          paddingRight: 24,
+          paddingTop: 12,
+          paddingBottom: 120,
+          minHeight: '100dvh',
+        }}>
+          {content}
+        </div>
+      </div>
     );
+  }
+
+  // Native: ScrollView
+  return (
+    <View style={styles.page}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.pageContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator
+        alwaysBounceVertical
+      >
+        {content}
+      </ScrollView>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   page: {
     flex: 1,
+    ...(Platform.OS === 'web' ? { touchAction: 'pan-y' } : null),
     backgroundColor: COLORS.white,
-    paddingHorizontal: 24,
-    paddingTop: 20,
   },
-
+  pageContent: {
+    minHeight: Platform.OS === 'web' ? '100dvh' : '100%',
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 120,
+  },
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 8,
   },
-
   title: {
     fontSize: 30,
     color: COLORS.black,
@@ -329,7 +371,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     marginBottom: 4,
   },
-
   subtitle: {
     fontSize: 16,
     color: COLORS.black,
@@ -340,31 +381,26 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     color: COLORS.black,
   },
-
   section: {
     marginBottom: 20,
   },
-
   sectionLabel: {
     fontSize: 16,
     color: COLORS.black,
     fontFamily: FONTS.main_font_bold,
     marginBottom: 8,
   },
-
   inlineRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-
   inlineLabel: {
     fontSize: 16,
     color: COLORS.black,
     fontFamily: FONTS.main_font,
     marginRight: 10,
   },
-
   input: {
     flex: 1,
     height: 44,
@@ -376,7 +412,6 @@ const styles = StyleSheet.create({
     color: COLORS.black,
     fontFamily: FONTS.main_font,
   },
-
   timePill: {
     flexGrow: 0,
     width: 120,
