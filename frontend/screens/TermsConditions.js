@@ -13,7 +13,11 @@ const TermsConditions = () => {
   const { onAgree } = route.params || {};
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.black }}>
-      <ScrollView style={{ padding: 10 }}>
+      <ScrollView
+        style={{ padding: 10 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text
           style={{
             fontSize: 20,

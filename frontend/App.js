@@ -25,6 +25,65 @@ const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY; //public ke
 const welcome_stack = createStackNavigator();
 console.disableYellowBox = true;
 
+// Ensure body scrolling is enabled on web: some injected resets set overflow: hidden.
+// Append a small style tag at runtime with !important to override that.
+if (typeof window !== 'undefined' && Platform.OS === 'web') {
+  try {
+    const existing = document.getElementById('fix-expo-overflow');
+    if (!existing) {
+      const s = document.createElement('style');
+      s.id = 'fix-expo-overflow';
+      s.innerHTML = `html, body { height: 100%; } body { overflow: auto !important; } #root { display: flex; height: 100%; flex: 1; }`;
+      document.head.appendChild(s);
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+// Patch any Expo/react-native-web injected reset styles (they can be added
+// or updated after the app loads). We watch the head and rewrite the
+// expo-reset style content so body overflow is auto.
+if (typeof window !== 'undefined' && Platform.OS === 'web') {
+  try {
+    const fixExpoResetOnce = () => {
+      const s = document.getElementById('expo-reset');
+      if (s && s.tagName === 'STYLE') {
+        const txt = s.innerHTML || '';
+        // replace body { overflow: hidden } with overflow: auto
+        const replaced = txt.replace(/body\s*\{[^}]*overflow:\s*hidden;?[^}]*\}/i, 'body { overflow: auto !important; }');
+        if (replaced !== txt) s.innerHTML = replaced;
+      }
+    };
+
+    // Run once immediately in case expo already injected it
+    fixExpoResetOnce();
+
+    // Observe head for new style nodes (some tooling injects after load)
+    const mo = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === 'childList' && m.addedNodes.length) {
+          for (const n of m.addedNodes) {
+            try {
+              if (n && n.id === 'expo-reset') {
+                fixExpoResetOnce();
+                return;
+              }
+            } catch (e) { /* ignore */ }
+          }
+        }
+        if (m.type === 'attributes' && m.target && m.target.id === 'expo-reset') {
+          fixExpoResetOnce();
+        }
+      }
+    });
+    mo.observe(document.head, { childList: true, subtree: true, attributes: true });
+    // keep observer intentionally (no disconnect) so any future updates are patched
+  } catch (e) {
+    // ignore
+  }
+}
+
 export default function App() {
   
   const [fontsLoaded] = useFonts({
@@ -139,6 +198,23 @@ export default function App() {
     console.log("[auth] signed in:", !!u, u?.email || null);
   });
 }
+
+  // Fix for mobile browser chrome causing white gaps / viewport resize on web
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    try {
+      const body = document && document.body;
+      if (body) {
+        body.style.background = COLORS.black;
+        body.style.minHeight = '100vh';
+        body.style.margin = '0';
+      }
+      const html = document && document.documentElement;
+      if (html) html.style.height = '100%';
+    } catch (e) {
+      // ignore in non-browser envs
+    }
+  }, []);
 
   if (!fontsLoaded) {
     // Display a loading spinner while fonts are being loaded
