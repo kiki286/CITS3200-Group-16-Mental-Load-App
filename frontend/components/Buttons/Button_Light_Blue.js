@@ -1,5 +1,4 @@
-//CITS3200 project group 23 2024 2024
-//Dark blue coloured button with custom style
+// Light blue custom button
 
 import { View, Text } from 'react-native'
 import React from 'react'
@@ -24,20 +23,21 @@ const Button = (props) => {
 
 const styles = StyleSheet.create({
   button_container:{
-    paddingBottom: 10,
-    paddingVertical: 7,
-    borderColor: COLORS.dark_grey,
-    borderWidth: 3,
-    borderRadius: 30,
+    paddingBottom: 12,
+    paddingVertical: 12,
+    backgroundColor: "#79aefd",
+    borderRadius: 25,
+    borderWidth: 1.8,
+    borderColor: COLORS.black,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.light_blue3
   },
   
   button_text:{
-    fontSize: 24,
-    color: COLORS.black,
+    fontSize: 18,
+    color: COLORS.white,
     fontFamily: FONTS.main_font,
+    fontWeight: '600',
   }
 })
 

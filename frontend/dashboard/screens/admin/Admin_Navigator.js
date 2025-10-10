@@ -2,12 +2,12 @@
 //Admin Navigator handles navigations in the admin area
 
 import React from 'react'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { createStackNavigator } from '@react-navigation/stack'
 import AdminHome from './AdminHome'
 import CampaignCreate from './CampaignCreate'
 import SurveySettings from './SurveySettings'
 
-const admin_stack = createNativeStackNavigator();
+const admin_stack = createStackNavigator();
 
 
 //TODO useRole to check if user is admin to navigate to admin home

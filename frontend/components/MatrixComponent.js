@@ -24,13 +24,6 @@ export default function MatrixComponent({
 }) {
   // hook used to toggle groups of sub questions
   const [toggleGroups, setToggleGroups] = useState({});
-  const colorsArray = [
-    COLORS.light_blue3, // First group color
-    COLORS.light_green, // Second group color
-    COLORS.dark_purple, // Third group color
-    COLORS.pink2, // Third group color
-    // Add more colors as needed
-  ];
 
   //Setting initial Groups Toggle states
   useEffect(() => {
@@ -47,114 +40,77 @@ export default function MatrixComponent({
   }, [questionDetails]);
 
   // Creating an array of sub question components
-  subQuestionsComponents = questionDetails["SubQuestions"].map(
-    (subquestion, subIndex) => {
-      return (
-        <View key={subIndex} style={matrixStyles.groupBox}>
-          <Text style={matrixStyles.subQuestionText}>
-            {highlightTextWithColors(
-              stripHtmlTags(subquestion["Display"]),
-              wordColorMap
-            )}
-          </Text>
+  const subQuestionsComponents = questionDetails.SubQuestions.map((subquestion, subIndex) => {
+    return (
+      <View key={`sub_${subIndex}`} style={matrixStyles.subBlock}>
+        <Text style={matrixStyles.subQuestionText}>
+          {highlightTextWithColors(
+            stripHtmlTags(subquestion["Display"]),
+            wordColorMap
+          )}
+        </Text>
+        <View style={matrixStyles.optionsContainer}>
+          {questionDetails.Choices.map((option, optionIndex) => {
+            // first / middle / last show a round “pill”; the rest rectangle
+            const displayRound =
+              optionIndex === 0 ||
+              optionIndex === Math.floor(questionDetails.Choices.length / 2) ||
+              optionIndex === questionDetails.Choices.length - 1;
 
-          <View style={matrixStyles.optionsContainer}>
-            {/* Displays options for each subquestion */}
-            {/* Displays the line between the buttons unless first or last question */}
+            const isSelected = selectedOptions[subIndex] === optionIndex;
 
-            <View style={matrixStyles.line} />
-
-            {questionDetails["Choices"].map((option, optionIndex) => {
-              //displaying the first, middle and last choice  with the title
-              displayRound =
-                optionIndex === 0 ||
-                optionIndex ===
-                  Math.floor(questionDetails["Choices"].length / 2) ||
-                optionIndex === questionDetails["Choices"].length - 1;
-
-              return (
-                <View style={matrixStyles.optionButtonContainer}>
-                  {/* Rendering buttons for choices for each subquestion */}
-                  <TouchablePlatform
-                    key={optionIndex}
-                    style={[
-                      // checks if it is the first, middle and last option and displays round or rectangle
-                      displayRound
-                        ? matrixStyles.roundOptionButton
-                        : matrixStyles.rectOptionButton,
-                      selectedOptions[subIndex] === optionIndex && {
-                        backgroundColor:
-                          colorsArray[subIndex % colors_list.length],
-                      },
-                    ]}
-                    onPress={() => handleOptionPress(subIndex, optionIndex)}
-                  >
-                    {/* Displays the button text */}
-                    <Text
-                      style={[
-                        matrixStyles.buttonText,
-                        selectedOptions[subIndex] === optionIndex,
-                      ]}
-                    >
-                      {/* only displays text if middle, last or first option*/}
-                      {displayRound ? option["Display"] : null}
-                    </Text>
-                  </TouchablePlatform>
-                </View>
-              );
-            })}
-          </View>
+            return (
+              <TouchablePlatform
+                key={`option_${subIndex}_${optionIndex}`}
+                accessibilityRole="button"
+                style={[
+                  displayRound ? matrixStyles.roundOptionButton : matrixStyles.rectOptionButton,
+                  isSelected && matrixStyles.optionSelected,
+                ]}
+                onPress={() => handleOptionPress(subIndex, optionIndex)}
+              >
+                 {/* Only label first/middle/last*/}
+                 {displayRound ? (
+                  <Text style={matrixStyles.optionText}>{option.Display}</Text>
+                ) : null}
+                </TouchablePlatform>
+            );
+          })}
         </View>
-      );
-    }
-  );
+      </View>
+    );
+  });
+               
 
   // Groups SubQuestions if there are groups otherwise just displays sub questions
   DisplaySubQuestions = questionDetails["ChoiceGroups"]
     ? Object.keys(questionDetails["ChoiceGroups"]).map((groupKey, index) => {
-        group = questionDetails["ChoiceGroups"][groupKey];
-        subQuestions = group["ChoiceGroupOrder"].map(
-          (index) => subQuestionsComponents[index - 1]
-        );
+        const group = questionDetails["ChoiceGroups"][groupKey];
+        const subQuestions = group["ChoiceGroupOrder"].map((index) => subQuestionsComponents[index - 1]);
 
-        // Group color array
-        const groupColor = colorsArray[index % colorsArray.length];
         return (
-          <View
-            // Sets the group color
-            style={[matrixStyles.groupBox, { backgroundColor: groupColor }]}
-          >
+          <View key={`group_${groupKey}`} style={matrixStyles.groupBox}>
             {/* Renders group title and sub questions */}
             <View style={matrixStyles.groupHeaderContainer}>
-              <Text style={matrixStyles.groupTitle} key={groupKey}>
-                {group["GroupLabel"]}
-              </Text>
+              <Text style={matrixStyles.groupTitle}> {group["GroupLabel"]} </Text>
 
               {/* Renders the +/- button */}
 
               <TouchablePlatform
-                key={`${groupKey}_button`}
-                onPress={() => {
-                  setToggleGroups((prevToggleGroups) => ({
-                    ...prevToggleGroups,
-                    [groupKey]: !prevToggleGroups[groupKey],
-                  }));
-                }}
+                accessibilityRole="button"
+                accessibilityLabel={toggleGroups[groupKey] ? "Collapse group" : "Expand group"}
+                onPress={() => 
+                  setToggleGroups((prevToggleGroups) => ({ ...prevToggleGroups, [groupKey]: !prevToggleGroups[groupKey] }))
+                }
+                style={matrixStyles.chevronHitbox}
               >
-                <Text style={matrixStyles.toggleText}>
-                  <Image
-                    source={require("./../assets/chevronRight.png")}
-                    style={{
-                      height: 30,
-                      width: 30,
-                      transform: [
-                        toggleGroups[groupKey]
-                          ? { rotate: "90deg" }
-                          : { rotate: "0deg" }, // Rotate if toggleGroups[groupKey] is true
-                      ],
-                    }}
-                  />
-                </Text>
+                <Image
+                  source={require("./../assets/chevronRight.png")}
+                  style={[
+                    matrixStyles.chevron,
+                    toggleGroups[groupKey] ? { transform: [{ rotate: "90deg" }] } : null,
+                  ]}
+                />
               </TouchablePlatform>
             </View>
 
@@ -162,8 +118,7 @@ export default function MatrixComponent({
           </View>
         );
       })
-    : /* Renders sub questions if there are no groups*/
-      subQuestionsComponents;
+    : subQuestionsComponents;
 
   /*Checks if there are groups and renders them otherwise renders sub questions*/
 
@@ -183,93 +138,82 @@ export default function MatrixComponent({
   );
 }
 const matrixStyles = StyleSheet.create({
-  optionButtonContainer: {
-    flexDirection: "row", // Keep the buttons in a row
-
-    justifyContent: "flex-start",
-  },
   optionsContainer: {
     flexDirection: "row",
+    flexWrap: "wrap",
     width: "100%",
-    paddingTop: 10,
-    paddingBottom: 10,
-    paddingLeft: 10,
-    paddingRight: 10,
-    color: COLORS.white,
+    paddingVertical: 10,
     justifyContent: "space-between",
-  },
-  line: {
-    width: "90%",
-    height: 5,
-    backgroundColor: COLORS.white,
-    position: "absolute",
-    top: "90%",
-    left: 20,
-    borderWidth: 1,
-    borderColor: COLORS.dark_blue,
   },
 
   roundOptionButton: {
     paddingVertical: 10,
-    paddingHorizontal: 10,
-    marginHorizontal: 10,
-    borderRadius: 50,
-    position: "relative",
-    borderWidth: 1,
-    borderColor: COLORS.dark_blue,
-
+    paddingHorizontal: 12,
+    marginHorizontal: 8,
+    marginVertical: 6,
+    borderWidth: 1.5,
+    borderColor: COLORS.light_grey,
     backgroundColor: COLORS.white,
+    minWidth: 110,
+    alignItems: "center",
+    justifyContent: "center",
   },
+
   rectOptionButton: {
     paddingVertical: 10,
-    borderRadius: 5,
-    paddingHorizontal: 4,
-    marginHorizontal: 10,
-    position: "relative",
+    paddingHorizontal: 8,
+    marginHorizontal: 8,
+    marginVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1.5,
     backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: COLORS.dark_blue,
-    border: "3px solid black",
+    borderColor: COLORS.light_grey,
+    minWidth: 56,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  optionSelected: {
+    borderColor: COLORS.light_blue4, // selection highlight
+    borderWidth: 2,
+  },
+  optionText: {
+    fontSize: 14,
+    color: COLORS.black,
+    fontFamily: FONTS.survey_font_bold,
+    textAlign: "center",
   },
   groupHeaderContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-
+    alignItems: "center",
     marginBottom: 10,
   },
   selectionContainer: {
     width: "100%",
   },
   groupBox: {
-    padding: 15,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 16,
-    fontFamily: FONTS.survey_font_bold,
-  },
-  toggleText: {
-    fontSize: 30,
-    color: COLORS.white,
-    fontFamily: FONTS.survey_font_bold,
-  },
-  subQuestionText: {
-    color: COLORS.white,
-    fontFamily: FONTS.survey_font_bold,
-    fontSize: 17,
-    padding: 5,
+    backgroundColor: COLORS.light_grey2,  
+    borderWidth: 1,
+    borderColor: COLORS.light_grey,
   },
   groupTitle: {
-    fontSize: 30,
-    color: COLORS.white,
+    fontSize: 22,
+    color: COLORS.black,
     fontFamily: FONTS.survey_font_bold,
   },
-  buttonText: {
-    fontSize: 13,
-    color: COLORS.white,
+  chevronHitbox: { padding: 4 },
+  chevron: { height: 24, width: 24 },
+
+  // Each sub-question block
+  subBlock: { marginBottom: 20 },
+  subQuestionText: {
+    color: COLORS.black,
     fontFamily: FONTS.survey_font_bold,
-    display: "flex",
-    flexDirection: "column",
-    position: "absolute",
-    bottom: -25,
-    left: -17,
+    fontSize: 17,
+    paddingVertical: 6,
   },
 });
