@@ -1,16 +1,20 @@
 //CITS3200 project group 23 2024 2024
 //Profile tab part of the dashboard tabs
 
-import { View, Text, TextInput, Alert, Switch, StyleSheet, Platform, DateTimePicker } from 'react-native';
+import { View, Text, TextInput, Alert, Switch, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { getAuth, updateProfile } from 'firebase/auth';
 import COLORS from '../../../constants/colors';
 import FONTS from '../../../constants/fonts';
-import Button from '../../../components/Buttons/Button';
+import Button from '../../../components/Buttons/Button_Light_Blue';
 import * as Notifications from 'expo-notifications';
+import { ColorFill } from 'react-ionicons';
+import { ChevronBackOutline } from 'react-ionicons';
+import PillButton from '../../../components/Buttons/PillButton';
 import { requestNotificationPermission } from '../../../firebase/config';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { API_BASE, fetchWithAuth } from '../../../services/api'
 
-const API_BASE = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://127.0.0.1:5000';
 const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY;
 
 const STORAGE_KEYS = {
@@ -42,10 +46,8 @@ const Profile = ({ navigation }) => {
             return await AsyncStorage.getItem(key);
     };
 
-    const logCurrentTime = () => {
-        const currentTime = new Date();
-        console.log(`Current Time: ${currentTime.toLocaleTimeString()}`);
-    };
+const formatTime = (date) =>
+  new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const onTimeChange = async (event, selectedDate) => {
         const picked = selectedDate || notificationTime;
@@ -131,11 +133,10 @@ const Profile = ({ navigation }) => {
             Alert.alert('Notifications', `Could not enable notifications: ${reason || 'permission denied'}`);
             return false;
         }
-        const idToken = await user.getIdToken();
-        await fetch(`${API_BASE}/api/push/subscribe`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-            body: JSON.stringify({ token, platform: 'web' }),
+
+        await fetchWithAuth("/api/push/subscribe", {
+            method: "POST",
+            body: {token, platform: "web" },
         });
         await saveItem(STORAGE_KEYS.fcmToken, token);
         console.log('[webpush] subscribed & stored token');
@@ -146,13 +147,10 @@ const Profile = ({ navigation }) => {
         const user = getAuth().currentUser;
         const token = await loadItem(STORAGE_KEYS.fcmToken);
         if (!user || !token) return;
-        const idToken = await user.getIdToken();
-        const resp = await fetch(`${API_BASE}/api/push/unsubscribe`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json', Authorization: `Bearer ${idToken}`},
-            body: JSON.stringify({ token }),
+        const resp = await fetchWithAuth("/api/push/unsubscribe", {
+            method: "POST",
+            body: { token },
         });
-
         if (!resp || !resp.ok) {
             const text = await resp.text().catch(() => '');
             console.warn('[webpush] unsubscribe failed:', resp.status, text);
@@ -220,129 +218,179 @@ const Profile = ({ navigation }) => {
     };
 
     return (
-        <View style={styles.main_container}>
-            <View style={styles.title_container}>
-                <Text style={styles.title_text}>
-                    Profile
-                </Text>
-            </View>
-            <View style={styles.body_container}>
-                <View style={styles.container}>
-                    <Text style={styles.display_text}>
-                        Hi {displayName || 'User'}. What would you like to update?
-                    </Text>
-                </View>
+        <View style={styles.page}>
+            {/* Back button */}
+            <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.navigate("Dashboard")}
+                accessibilityLabel="Back"
+            >
+                <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+            </TouchableOpacity>
 
-                <View style={styles.container}>
+            {/* Title */}
+            <Text style={styles.title}>Profile</Text>
+
+            {/* Subheader */}
+            <Text style={styles.subtitle}>
+                Hi {displayName || 'User'}.
+                <Text style={styles.subtitleSecondary}> What would you like to update? </Text>
+            </Text>
+
+            {/* Section: Change display name */}
+            <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Change your display name:</Text>
+                <View style={styles.inlineRow}>
                     <TextInput
                         placeholder='Enter new display name'
                         placeholderTextColor={COLORS.light_grey}
                         value={newDisplayName}
                         onChangeText={setNewDisplayName}
-                        style={styles.text_input}
+                        style={styles.input}
                     />
+                    <PillButton
+                      title="Update"
+                      onPress={handleUpdateDisplayName}
+                      variant="primary"
+                      size="md"
+                      fullWidth={false}
+                    />                    
                 </View>
-                <View style={styles.container}>
-                    <Button
-                        title="Update Name"
-                        onPress={handleUpdateDisplayName}
-                    />
-                </View>
-                <View style={styles.container}>
-                    <Button
-                        title="Set Notification Time"
-                        onPress={() => setShowPicker(true)}
-                    />
-                </View>
-                <View style={styles.notification_container}>
-                    <Text style={styles.notification}>Notifications: </Text>
+            </View>
+
+            {/*Section: Notification settings */}
+            <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Set Notifications and time:</Text>
+
+                <View style={styles.inlineRow}>
+                    <Text style={styles.inlineLabel}>Notifications</Text>
                     <Switch
                         value={notificationsEnabled}
                         onValueChange={toggleNotifications}
-                        trackColor={{ false: "#767577", true: "#81b0ff" }}
-                        thumbColor={notificationsEnabled ? "#f5dd4b" : "#f4f3f4"}
+                        trackColor={{ false: COLORS.light_grey, true: COLORS.light_blue2 }}
+                        thumbColor={notificationsEnabled ? COLORS.yellow : COLORS.almost_white}
                     />
                 </View>
 
-                {showPicker && (
+                <View style={styles.inlineRow}>
+                    <TextInput
+                        editable={false}
+                        value={formatTime(notificationTime)}
+                        style={styles.timePill}
+                    />
+                    <PillButton
+                        title="Update"
+                        onPress={() => setShowPicker(true)}
+                        variant="primary"
+                        size="md"
+                        fullWidth={false}
+                    />
+                </View>
+
+                {showPicker && Platform.OS !== 'web' && (
                     <DateTimePicker
-                        testID="dateTimePicker"
                         value={notificationTime}
                         mode="time"
                         is24Hour={true}
                         onChange={onTimeChange}
                     />
                 )}
-                <View style={styles.container}>
-                    <Button
-                        title="Update Demographics"
-                        onPress={() => navigation.navigate("Survey_Demographics")}
-                    />
-                </View>
-                <View style={styles.container}>
-                    <Button
-                        title="Back"
-                        onPress={() => navigation.navigate("Dashboard")}
-                    />
-                </View>
+            </View>
+
+            {/* Section: Update demographics */}
+            <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Update your demographics survey:</Text>
+                <Button
+                    title="Update Demographics"
+                    onPress={() => navigation.navigate("Survey_Demographics")}
+                />
             </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    main_container: {
-        flex: 1,
-        backgroundColor: COLORS.black,
-    },
-    title_container: {
-        position: 'absolute',
-        top: 20,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    title_text: {
-        fontSize: 50,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font_bold,
-    },
-    body_container: {
-        flex: 1,
-        marginTop: 100,
-    },
-    display_text: {
-        fontSize: 24,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font,
-    },
-    container: {
-        flex: 0.1,
-        paddingHorizontal: 26,
-    },
-    text_input: {
-        width: '100%',
-        height: 40,
-        borderColor: COLORS.almost_white,
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font,
-    },
-    notification_container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 26,
-        flex: 0.1,
-    },
-    notification: {
-        fontSize: 24,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font,
-    }
+  page: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+  },
+
+  backButton: {
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+
+  title: {
+    fontSize: 30,
+    color: COLORS.black,
+    fontFamily: FONTS.survey_font_bold,
+    textAlign: 'left',
+    marginBottom: 4,
+  },
+
+  subtitle: {
+    fontSize: 16,
+    color: COLORS.black,
+    fontFamily: FONTS.main_font,
+    marginBottom: 16,
+  },
+  subtitleSecondary: {
+    fontStyle: 'italic',
+    color: COLORS.black,
+  },
+
+  section: {
+    marginBottom: 60,
+  },
+
+  sectionLabel: {
+    fontSize: 16,
+    color: COLORS.black,
+    fontFamily: FONTS.main_font_bold,
+    marginBottom: 8,
+  },
+
+  inlineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  inlineLabel: {
+    fontSize: 16,
+    color: COLORS.black,
+    fontFamily: FONTS.main_font,
+    marginRight: 10,
+  },
+
+  input: {
+    flex: 1,
+    height: 44,
+    borderWidth: 1,
+    borderColor: COLORS.light_grey,
+    backgroundColor: COLORS.white,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    color: COLORS.black,
+    fontFamily: FONTS.main_font,
+  },
+
+  timePill: {
+    flexGrow: 0,
+    width: 120,
+    height: 44,
+    borderWidth: 1,
+    borderColor: COLORS.light_grey,
+    backgroundColor: COLORS.white,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    textAlignVertical: 'center',
+    textAlign: 'center',
+    color: COLORS.black,
+    fontFamily: FONTS.main_font,
+  },
 });
 
 export default Profile;

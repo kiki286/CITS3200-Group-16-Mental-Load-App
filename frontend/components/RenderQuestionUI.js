@@ -34,7 +34,7 @@ const StepSlider = ({ minimumValue = 0, maximumValue = 1, step = 1, value = 0, o
               width: s === value ? 18 : 8,
               height: s === value ? 18 : 8,
               borderRadius: 18 / 2,
-              backgroundColor: s === value ? COLORS.blue : COLORS.light_grey,
+              backgroundColor: s === value ? COLORS.light_blue4 : COLORS.light_grey,
               marginVertical: 12,
             }} />
           </TouchablePlatform>
@@ -65,33 +65,19 @@ const RenderQuestionUI = ({
   const isSmallScreen = screenWidth < 480;
   const colWidth = isSmallScreen ? "100%" : "48%";
   const textOffsetStyle = React.useMemo(() => {
-    if (screenWidth < 480) {
-      return {
-        transform: [{ translateX: 0 }],
-        textAlign: 'left',
-        width: '100%',
-        alignSelf: 'flex-start',
-      };
-    }
-    if (screenWidth < 1024) {
-      return {
-        transform: [{ translateX: screenWidth * 0.10 }],
-        textAlign: 'left',
-        width: Math.min(screenWidth * 0.6, 800),
-        alignSelf: 'flex-start',
-      };
-    }
+    //Center the question text in a readable coloumn
+    const maxW = Math.min(screenWidth -48,720); // 24px pad each side, cap ~720px
     return {
-      transform: [{ translateX: screenWidth * 0.28 }],
-      textAlign: 'left',
-      width: Math.min(screenWidth * 0.5, 900),
-      alignSelf: 'flex-start',
+      width: '100%',
+      maxWidth: maxW,
+      alignSelf: 'center',
+      textAlign: 'center',
     };
   }, [screenWidth]);
   const responsiveRowStyle = {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: isSmallScreen ? "flex-start" : "space-between",
+    justifyContent: "center",
   };
   // State to track the loading status of images
   const [imageLoading, setImageLoading] = useState(true);
@@ -216,7 +202,7 @@ const RenderQuestionUI = ({
               >
                 <Text
                   style={{
-                    color: COLORS.white,
+                    color: COLORS.black,
                     fontFamily: FONTS.survey_font_bold,
                     fontSize: 17,
                     marginRight: 10,  // Adds some space between text and input
@@ -229,6 +215,7 @@ const RenderQuestionUI = ({
                   value={inputValues[questionID]?.[index] || ""}
                   onChangeText={(text) => handleTextInputChange(questionID, index, text, "MULTI")}
                   placeholder={`Age of child ${index + 1}`} // Placeholder for child's age
+                  placeholderTextColor={COLORS.light_grey}
                 />
               </View>
             ))}
@@ -261,7 +248,7 @@ const RenderQuestionUI = ({
               >
                 <Text
                   style={{
-                    color: COLORS.white,
+                    color: COLORS.black,
                     fontFamily: FONTS.survey_font_bold,
                     fontSize: 17,
                   }}
@@ -274,6 +261,8 @@ const RenderQuestionUI = ({
                   onChangeText={(text) =>
                     handleTextInputChange(questionID, index, text)
                   }
+                  placeholder="Type here"
+                  placeholderTextColor={COLORS.light_grey}
                 />
               </View>
             ))}
@@ -312,28 +301,21 @@ const RenderQuestionUI = ({
               )}
             </Text>
             <View style={styles.optionsContainer}>
-              {questionDetails["Choices"].map((option, optionIndex) => (
-                <TouchablePlatform
-                  key={optionIndex}
-                  style={[
-                    styles.optionButton,
-                    selectedOptions[subIndex] === optionIndex && {
-                      borderColor: colors_list[subIndex % colors_list.length],
-                    },
-                  ]}
-                  onPress={() => handleOptionPress(subIndex, optionIndex)}
-                >
-                  <Text
+              {questionDetails["Choices"].map((option, optionIndex) => {
+                const isSelected = selectedOptions[subIndex] === optionIndex;
+                return (
+                  <TouchablePlatform
+                    key={optionIndex}
                     style={[
-                      styles.optionText,
-                      selectedOptions[subIndex] === optionIndex &&
-                        styles.selectedText,
+                      styles.optionButton,
+                      isSelected && { borderColor: COLORS.light_blue4 },
                     ]}
+                    onPress={() => handleOptionPress(subIndex, optionIndex)}
                   >
-                    {option["Display"]}
-                  </Text>
-                </TouchablePlatform>
-              ))}
+                    <Text style={styles.optionText}>{option["Display"]}</Text>
+                  </TouchablePlatform>
+                );
+              })}
             </View>
           </View>
         ))}
@@ -361,7 +343,7 @@ const RenderQuestionUI = ({
                   <TextInput
                     style={styles.textInput}
                     placeholder={option["Display"]}
-                    placeholderTextColor="white"
+                    placeholderTextColor={COLORS.light_grey}
                     onChangeText={(text) =>{
                       if (!allowMultipleSelection) {
                         handleTextInputChange(questionID, index, text, "RESET");
@@ -455,23 +437,13 @@ const RenderQuestionUI = ({
 
 //Styling for the questionUI
 const styles = StyleSheet.create({
-  button: {
-    padding: 10, // Adjust the padding as needed
-    backgroundColor: "#007BFF", // Customize the background color
-    borderRadius: 5, // Optional: Rounded corners
-    alignItems: "center", // Center the text horizontally
-  },
-  buttonText: {
-    color: COLORS.black, // Text color
-    fontSize: 16, // Font size
-  },
   container: {
     paddingBottom: 40,
   },
   questionBox: {
     padding: 16,
     borderWidth: 2,
-    borderColor: COLORS.white,
+    borderColor: COLORS.light_grey,
     backgroundColor: COLORS.white,
     borderRadius: 8,
     marginBottom: 16,
@@ -479,7 +451,7 @@ const styles = StyleSheet.create({
   questionText: {
     fontSize: 20,
     fontFamily: FONTS.survey_font_bold,
-    color: COLORS.white,
+    color: COLORS.black,
     paddingBottom: 20,
   },
   subQuestionText: {
@@ -487,7 +459,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.survey_font_bold,
     paddingHorizontal: 0,
     paddingBottom: 10,
-    color: COLORS.white,
+    color: COLORS.black,
   },
   questionContainer: {
     marginBottom: 16,
@@ -507,24 +479,24 @@ const styles = StyleSheet.create({
     minWidth: 110,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: COLORS.light_grey4,
+    backgroundColor: COLORS.white,
   },
   optionText: {
     fontSize: 17,
     fontFamily: FONTS.survey_font_bold,
-    color: COLORS.white,
+    color: COLORS.black,
   },
   selectedText: {
     fontSize: 17,
     fontFamily: FONTS.survey_font_bold,
-    color: COLORS.white,
+    color: COLORS.black,
   },
   sliderText: {
     fontSize: 30,
     justifyContent: "center",
     alignItems: "center",
     fontFamily: FONTS.survey_font_bold,
-    color: COLORS.white,
+    color: COLORS.black,
   },
   textInput: {
     padding: 4,
@@ -533,14 +505,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     minHeight: 70,
     minWidth: 110,
-    borderColor: "gray",
+    borderColor: COLORS.light_grey,
     textAlign: "center",
     justifyContent: "center",
     alignItems: "center",
-    color: COLORS.almost_white,
+    color: COLORS.black,
     fontSize: 17,
     fontFamily: FONTS.survey_font_bold,
-    fontColor: COLORS.almost_white,
+    backgroundColor: COLORS.white,
   },
 });
 

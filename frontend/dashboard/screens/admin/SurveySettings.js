@@ -2,10 +2,12 @@
 //Admin screen to edit survey links/IDs
 
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Platform } from 'react-native'
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Platform, ScrollView } from 'react-native'
 import { auth } from '../../../firebase/config'
 import COLORS from '../../../constants/colors'
 import FONTS from '../../../constants/fonts'
+import { ChevronBackOutline } from 'react-ionicons';
+import PillButton from '../../../components/Buttons/PillButton';
 
 const SurveySettings = ({ navigation }) => {
   const [checkinInput, setCheckinInput] = useState('')
@@ -104,41 +106,50 @@ const SurveySettings = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* Back */}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+      </TouchableOpacity>
+
+      {/* Title */}
       <Text style={styles.header}>Survey Settings</Text>
 
-      <Text style={styles.label}>Check-in Survey Link or ID (Qualtrics)</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Paste full Qualtrics link or SV_… ID"
-        placeholderTextColor={COLORS.almost_white}
-        value={checkinInput}
-        onChangeText={setCheckinInput}
-        autoCapitalize="none"
-      />
-      {!!checkinInput && (
-        <Text style={styles.helper}>Detected ID: {extractQualtricsId(checkinInput) || '—'}</Text>
-      )}
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.label}>Check-in Survey Link or ID (Qualtrics)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Paste full Qualtrics link or SV_… ID"
+          placeholderTextColor={COLORS.grey}
+          value={checkinInput}
+          onChangeText={setCheckinInput}
+          autoCapitalize="none"
+        />
+        {!!checkinInput && (
+          <Text style={styles.helper}>Detected ID: {extractQualtricsId(checkinInput) || '—'}</Text>
+        )}
 
-      <Text style={styles.label}>Demographics Survey Link or ID (Qualtrics)</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Paste full Qualtrics link or SV_… ID"
-        placeholderTextColor={COLORS.almost_white}
-        value={demographicsInput}
-        onChangeText={setDemographicsInput}
-        autoCapitalize="none"
-      />
-      {!!demographicsInput && (
-        <Text style={styles.helper}>Detected ID: {extractQualtricsId(demographicsInput) || '—'}</Text>
-      )}
+        <Text style={styles.label}>Demographics Survey Link or ID (Qualtrics)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Paste full Qualtrics link or SV_… ID"
+          placeholderTextColor={COLORS.grey}
+          value={demographicsInput}
+          onChangeText={setDemographicsInput}
+          autoCapitalize="none"
+        />
+        {!!demographicsInput && (
+          <Text style={styles.helper}>Detected ID: {extractQualtricsId(demographicsInput) || '—'}</Text>
+        )}
 
-      <TouchableOpacity style={styles.primaryButton} onPress={handleSave} disabled={loading}>
-        <Text style={styles.primaryButtonText}>{loading ? 'Saving…' : 'Save'}</Text>
-      </TouchableOpacity>
+        <PillButton
+          title={loading ? 'Saving…' : 'Save'}
+          onPress={handleSave}
+          variant="neutral"
+          style={{ marginTop: 16 }}
+          disabled={loading}
+        />
 
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.backButtonText}>Back</Text>
-      </TouchableOpacity>
+      </ScrollView>
     </View>
   )
 }
@@ -146,12 +157,13 @@ const SurveySettings = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.black,
-    padding: 20,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 24,
+    paddingTop: 20,
   },
   header: {
     fontSize: 24,
-    color: COLORS.almost_white,
+    color: COLORS.black,
     fontFamily: FONTS.survey_font_bold,
     marginBottom: 16,
     textAlign: 'center',
@@ -159,39 +171,22 @@ const styles = StyleSheet.create({
   label: {
     marginTop: 14,
     marginBottom: 6,
-    color: COLORS.almost_white,
+    color: COLORS.black,
     fontFamily: FONTS.main_font,
     fontSize: 16,
   },
   input: {
     borderWidth: 1,
-    borderColor: COLORS.almost_white,
+    borderColor: COLORS.black,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: COLORS.almost_white,
-    fontFamily: FONTS.main_font,
-  },
-  primaryButton: {
-    marginTop: 20,
-    backgroundColor: COLORS.white,
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
     color: COLORS.black,
     fontFamily: FONTS.main_font,
-    fontSize: 16,
   },
   backButton: {
-    marginTop: 10,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  backButtonText: {
-    color: COLORS.almost_white,
-    fontFamily: FONTS.main_font,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
   },
 })
 

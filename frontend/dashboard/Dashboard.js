@@ -1,18 +1,14 @@
 //CITS3200 project group 23 2024
 //Dashboard page that has buttons to other pages
 
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, ScrollView } from 'react-native';
 import React, {useEffect} from 'react';
 import { Profile_Navigator, View_Navigator, Settings_Navigator, Home_Navigator } from './screens';
 import COLORS from '../constants/colors';
 import FONTS from '../constants/fonts';
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient';
-import Entypo from '@expo/vector-icons/Entypo';
-import Feather from '@expo/vector-icons/Feather';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { SettingsOutline, Home, StatsChart, PersonOutline, ShieldOutline, HelpCircleOutline, LogOutOutline } from 'react-ionicons'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase/config'
 import { getDemographicsSubmitted } from '../services/StorageHandler';
@@ -23,7 +19,9 @@ const Dashboard = ({ navigation, isAdmin }) => {
     const checkDemographicsSubmission = async () => {
       const isDemographicsSubmitted = await getDemographicsSubmitted(); // Checking the flag
       if (!isDemographicsSubmitted) {
-        navigation.navigate('./screens/profile/Survey_demographics'); // Navigate to demographics survey
+        navigation.navigate('Profile_Navigator', {
+          screen: 'Survey_Demographics',
+        }); // Navigate to demographics survey
       }
     };
 
@@ -35,136 +33,159 @@ const Dashboard = ({ navigation, isAdmin }) => {
       await signOut(auth);
       console.log("User signed out successfully");
       navigation.navigate("Welcome");
-    } catch(error) {
-      console.error("Error signout out:", error);
+    } catch (error) {
+      console.error("Error signing out:", error);
     }
-  }
-  
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.roundedSquare}>
-      </View>
-        <Text style={styles.dashboardTitle}>
-          Dashboard
-        </Text>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* Title */}
+      <Text style={styles.dashboardTitle}>Dashboard</Text>
+
+      {/* 2-column grid */}
       <View style={styles.button_container}>
+        {/* Row 1: primary (blue) */}
         <View style={styles.row}>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={()=>navigation.navigate("Home_Navigator")}
+          <TouchableOpacity
+            style={[styles.button, styles.primaryButton]}
+            onPress={() => navigation.navigate('Home_Navigator')}
+            accessibilityLabel="Check-in"
           >
-            <Feather name="square" size={60} color="black" />
+            <Home color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Check-in</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={()=>navigation.navigate("View_Navigator")}
+
+          <TouchableOpacity
+            style={[styles.button, styles.primaryButton]}
+            onPress={() => navigation.navigate('View_Navigator')}
+            accessibilityLabel="Stats"
           >
-            <Entypo name="bar-graph" size={60} color="black" />
-            <Text style={styles.buttonText}>View</Text>
+            <StatsChart color="black" height="60px" width="60px" />
+            <Text style={styles.buttonText}>Analytics</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Row 2: neutral (grey) */}
         <View style={styles.row}>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={()=>navigation.navigate("Profile_Navigator")}
+          <TouchableOpacity
+            style={[styles.button, styles.neutralButton]}
+            onPress={() => navigation.navigate('Profile_Navigator')}
+            accessibilityLabel="Profile"
           >
-            <AntDesign name="user" size={60} color="black" />
+            <PersonOutline color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Profile</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={()=>navigation.navigate("Settings_Navigator")}
+
+          <TouchableOpacity
+            style={[styles.button, styles.neutralButton]}
+            onPress={() => navigation.navigate('Settings_Navigator')}
+            accessibilityLabel="Settings"
           >
-            <Ionicons name="settings" size={60} color="black" />
+            <SettingsOutline color="black" height="60px" width="60px" />
             <Text style={styles.buttonText}>Settings</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Row 3: neutral (grey) */}
         {isAdmin && (
           <View style={styles.row}>
             <TouchableOpacity 
-              style={styles.button}
+              style={[styles.button, styles.neutralButton]}
               onPress={()=>navigation.navigate("Admin_Navigator")}
             >
-              <Feather name="shield" size={60} color="black" />
+              <ShieldOutline color="black" height="60px" width="60px" />
               <Text style={styles.buttonText}>Admin</Text>
             </TouchableOpacity>
           </View>
         )}
-        <View style={styles.row}>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={()=>navigation.navigate("About")}
-          >
-            <FontAwesome name="question" size={60} color="black" />
-            <Text style={styles.buttonText}>About</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={handleLogout}
-          >
-            <MaterialIcons name="logout" size={60} color="black" />
-            <Text style={styles.buttonText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
       </View>
-    </View>
-  )
-}
+    </ScrollView>
+  );
+};
 
 const styles = StyleSheet.create({
-  roundedSquare: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    width: '100%', // Set width for the square
-    height: 300,
-    backgroundColor: COLORS.light_blue5, // Background color
-    borderRadius: 100, // Set the radius for rounded corners
-    marginTop: -50,
-    position: 'absolute',
-    top: -50, // Position the square at the top
-    left: 0, // Align to the left
-    right: 0, // Align to the right
-    zIndex: -1, // Ensure it is on top of other elements
-  },
+  // Match new design
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: COLORS.white,
     alignItems: 'center',
-    backgroundColor: COLORS.black,
+    justifyContent: 'flex-start',
+    paddingTop: 24,
+    paddingHorizontal: 24,
   },
+
+  dashboardTitle: {
+    color: COLORS.black,
+    fontSize: 30,                 
+    textAlign: 'center',
+    marginTop: 60,
+    marginBottom: 32,
+    fontFamily: FONTS.survey_font_bold,
+  },
+
   button_container: {
-    justifyContent: 'center',
+    width: '100%',
+    maxWidth: 420,             
     alignItems: 'center',
-    marginTop: 70,
+    alignSelf: 'center',
+    justifyContent: 'center',
   },
+
   row: {
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginVertical: 10,
   },
+
+  // Base tile
   button: {
-    width: 140, // Set the width for square buttons
-    height: 180, // Set the height to be the same as the width for square buttons
-    backgroundColor: COLORS.white,
+    width: 140,
+    height: 180,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 15,
     marginHorizontal: 10,
+
+    shadowColor: COLORS.black,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
+
+
+  primaryButton: {
+    backgroundColor: COLORS.light_blue4,   // blue tiles (top row)
+  },
+  neutralButton: {
+    backgroundColor: COLORS.grey,          // grey tiles (lower rows)
+  },
+
   buttonText: {
     color: COLORS.black,
     fontSize: 16,
     fontFamily: FONTS.main_font,
+    marginTop: 6,
   },
-  dashboardTitle: {
-    position: 'absolute',
-    color: COLORS.white,
-    fontSize: 50,
-    top: 35,
-    fontFamily: FONTS.survey_font_bold,
-  }
+  scroll: {
+    flex: 1,
+    ...(Platform.OS === 'web' ? { touchAction: 'pan-y' } : null),
+    backgroundColor: COLORS.white,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 80, 
+  },
 });
 
-export default Dashboard
+export default Dashboard;

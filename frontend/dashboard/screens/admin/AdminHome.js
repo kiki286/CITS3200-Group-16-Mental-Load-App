@@ -5,30 +5,37 @@ import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import COLORS from '../../../constants/colors'
 import FONTS from '../../../constants/fonts'
+import { ChevronBackOutline } from 'react-ionicons';
+import PillButton from '../../../components/Buttons/PillButton';
 
 const AdminHome = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Admin Board</Text>
-      <Text style={styles.subtitle}>Hi!</Text>
-      <TouchableOpacity
-        style={styles.primaryButton}
-        onPress={() => navigation.navigate('Campaign_Create')}
-      >
-        <Text style={styles.primaryButtonText}>Create Campaign</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.primaryButton}
-        onPress={() => navigation.navigate('Survey_Settings')}
-      >
-        <Text style={styles.primaryButtonText}>Survey Settings</Text>
-      </TouchableOpacity>
+      {/* Back */}
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => navigation?.getParent()?.navigate('Dashboard')}
-      >
-        <Text style={styles.backButtonText}>Back</Text>
+        onPress={() => navigation?.getParent()?.goBack()}>
+        <ChevronBackOutline color={COLORS.black}  height="28px" width="28px"/>
       </TouchableOpacity>
+
+      {/* Title */}
+      <Text style={styles.title}>Admin Board</Text>
+
+      {/* Actions */}
+      <View style={styles.buttons}>
+        <PillButton
+          title="Create Campaign"
+          onPress={() => navigation.navigate('Campaign_Create')}
+          variant='neutral'
+          style={styles.pillSpacing}
+        />
+        <PillButton
+          title="Survey Settings"
+          onPress={() => navigation.navigate('Survey_Settings')}
+          variant='neutral'
+          style={styles.pillSpacing}
+        />
+      </View>
     </View>
   )
 }
@@ -36,45 +43,32 @@ const AdminHome = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.black,
-    justifyContent: 'center',
-    alignItems: 'center'
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 24,
+    paddingTop: 20,
   },
   title: {
-    fontSize: 28,
-    color: COLORS.almost_white,
+    fontSize: 30,
+    color: COLORS.black,
     fontFamily: FONTS.survey_font_bold,
-    marginBottom: 8,
+    marginBottom: 16,
   },
   subtitle: {
     fontSize: 16,
-    color: COLORS.almost_white,
+    color: COLORS.black,
     fontFamily: FONTS.main_font,
   },
   backButton: {
-    marginTop: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: COLORS.white,
-    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
   },
-  backButtonText: {
-    color: COLORS.black,
-    fontFamily: FONTS.main_font,
-    fontSize: 16,
+    buttons: {
+    width: '100%',
+    marginBottom: 8,
   },
-  primaryButton: {
-    marginTop: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    backgroundColor: COLORS.white,
-    borderRadius: 8,
+  pillSpacing: {
+    marginBottom: 20,
   },
-  primaryButtonText: {
-    color: COLORS.black,
-    fontFamily: FONTS.main_font,
-    fontSize: 16,
-  }
 })
 
 export default AdminHome

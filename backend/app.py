@@ -635,4 +635,4 @@ def start_scheduler_if_needed():
 # WERKZEUG_RUN_MAIN to avoid duplicate threads in the parent process).
 if __name__ == '__main__':
     start_scheduler_if_needed()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
