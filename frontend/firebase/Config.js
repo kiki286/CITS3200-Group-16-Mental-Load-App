@@ -39,7 +39,16 @@ export async function requestNotificationPermission(vapidPublicKey) {
   return token ? {ok: true, token} : { ok: false, reason: "no-token" };
 }
 
-export function listenForMessages(callback) {
+export async function listenForMessages(callback) {
+  const supported = await isSupported().catch(() => false);
+  const isSecure =
+    location.protocol === 'https:' ||
+    location.hostname === 'localhost' ||
+    location.hostname === '127.0.0.1';
+
+  if (!supported || !('serviceWorker' in navigator) || !isSecure) {
+    return () => {}; // no-op unsubscribe
+  }
   const messaging = getMessaging(app);
   return onMessage(messaging, callback);
 }

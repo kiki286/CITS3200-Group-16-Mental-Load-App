@@ -2,11 +2,13 @@
 //Admin campaign creation UI (target selection, schedule, message)
 
 import React, { useMemo, useState } from 'react'
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Alert } from 'react-native'
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Alert, ScrollView } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import COLORS from '../../../constants/colors'
 import FONTS from '../../../constants/fonts'
 import { auth } from '../../../firebase/config'
+import { ChevronBackOutline } from 'react-ionicons';
+import PillButton from '../../../components/Buttons/PillButton';
 
 //TODO: we can use react-datepicker for web, but need to downloard package from npm
 
@@ -157,114 +159,135 @@ const CampaignCreate = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* Back */}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+      </TouchableOpacity>
+
+      {/* Title */}
       <Text style={styles.header}>Create Campaign</Text>
 
-      <Text style={styles.label}>Target</Text>
-      <View style={styles.row}>
-        <TouchableOpacity
-          style={[styles.toggle, targetMode === 'all' && styles.toggleActive]}
-          onPress={() => setTargetMode('all')}
-        >
-          <Text style={[styles.toggleText, targetMode === 'all' && styles.toggleTextActive]}>All users</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggle, targetMode === 'emails' && styles.toggleActive]}
-          onPress={() => setTargetMode('emails')}
-        >
-          <Text style={[styles.toggleText, targetMode === 'emails' && styles.toggleTextActive]}>Specific emails</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView contentContainerStyle={styles.content}>
+        {/* Target selection */}
+        <Text style={styles.label}>Target</Text>
+        <View style={styles.row}>
+          <TouchableOpacity
+            style={[styles.toggle, targetMode === 'all' && styles.toggleActive]}
+            onPress={() => setTargetMode('all')}
+          >
+            <Text style={[styles.toggleText, targetMode === 'all' && styles.toggleTextActive]}>All users</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toggle, targetMode === 'emails' && styles.toggleActive]}
+            onPress={() => setTargetMode('emails')}
+          >
+            <Text style={[styles.toggleText, targetMode === 'emails' && styles.toggleTextActive]}>Specific emails</Text>
+          </TouchableOpacity>
+        </View>
 
-      {targetMode === 'emails' && (
+        {targetMode === 'emails' && (
+          <TextInput
+            style={styles.input}
+            placeholder="email1@example.com, email2@example.com"
+            placeholderTextColor={COLORS.grey}
+            value={emailsCsv}
+            onChangeText={setEmailsCsv}
+            autoCapitalize='none'
+          />
+        )}
+
+        {/* Schedule */}
+        <Text style={styles.label}>Schedule</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+          <TouchableOpacity
+            style={[styles.toggle, sendNow && styles.toggleActive]}
+            onPress={() => setSendNow(!sendNow)}
+          >
+            <Text style={[styles.toggleText, sendNow && styles.toggleTextActive]}>{sendNow ? 'Send now' : 'Send later'}</Text>
+          </TouchableOpacity>
+          <Text style={[styles.caption, { marginLeft: 12 }]}>When "Send now" is selected the campaign will be sent immediately.</Text>
+        </View>
+        <Text style={styles.caption}>Timezone: {timezone} (AWST)</Text>
+        <View style={styles.row}>
+          <PillButton
+            title={scheduledAt.toLocaleDateString('en-AU', { timeZone: timezone })}
+            onPress={openDatePicker}
+            variant="neutral"
+            style={styles.smallPill}
+            disabled={sendNow}
+          />
+          <PillButton
+            title={scheduledAt.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timezone })}
+            onPress={openTimePicker}
+            variant="neutral"
+            style={styles.smallPill}
+            disabled={sendNow}
+          />
+        </View>
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={scheduledAt}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={onChangeDate}
+          />
+        )}
+        {showTimePicker && (
+          <DateTimePicker
+            value={scheduledAt}
+            mode="time"
+            is24Hour
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={onChangeTime}
+          />
+        )}
+
+        {/* Message */}
+        <Text style={styles.label}>Message</Text>
         <TextInput
-          style={styles.input}
-          placeholder="email1@example.com, email2@example.com"
-          placeholderTextColor={COLORS.almost_white}
-          value={emailsCsv}
-          onChangeText={setEmailsCsv}
+          style={[styles.input, styles.textArea]}
+          placeholder="Notification message"
+          placeholderTextColor={COLORS.grey}
+          value={message}
+          onChangeText={setMessage}
+          multiline
         />
-      )}
 
-      <Text style={styles.label}>Schedule</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-        <TouchableOpacity
-          style={[styles.toggle, sendNow && styles.toggleActive]}
-          onPress={() => setSendNow(!sendNow)}
-        >
-          <Text style={[styles.toggleText, sendNow && styles.toggleTextActive]}>{sendNow ? 'Send now' : 'Send later'}</Text>
-        </TouchableOpacity>
-        <Text style={[styles.caption, { marginLeft: 12 }]}>When "Send now" is selected the campaign will be sent immediately.</Text>
-      </View>
-      <Text style={styles.caption}>Timezone: {timezone} (AWST)</Text>
-      <View style={styles.row}>
-        <TouchableOpacity style={styles.smallButton} onPress={openDatePicker} disabled={sendNow}>
-          <Text style={styles.smallButtonText}>{scheduledAt.toLocaleDateString('en-AU', { timeZone: timezone })}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.smallButton} onPress={openTimePicker} disabled={sendNow}>
-          <Text style={styles.smallButtonText}>{scheduledAt.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timezone })}</Text>
-        </TouchableOpacity>
-      </View>
-      {showDatePicker && (
-        <DateTimePicker
-          value={scheduledAt}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={onChangeDate}
+        {/* Actions */}
+        <PillButton
+          title="Schedule"
+          onPress={handleSubmit}
+          variant="neutral"
+          style={{ marginTop: 16 }}
         />
-      )}
-      {showTimePicker && (
-        <DateTimePicker
-          value={scheduledAt}
-          mode="time"
-          is24Hour
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={onChangeTime}
-        />
-      )}
-
-      <Text style={styles.label}>Message</Text>
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="Notification message"
-        placeholderTextColor={COLORS.almost_white}
-        value={message}
-        onChangeText={setMessage}
-        multiline
-      />
-
-      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-        <Text style={styles.submitButtonText}>Schedule</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.backButtonText}>Back</Text>
-      </TouchableOpacity>
+      </ScrollView>
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.black,
-    padding: 20,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 24,
+    paddingTop: 20,
   },
   header: {
-    fontSize: 24,
-    color: COLORS.almost_white,
+    fontSize: 30,
+    color: COLORS.black,
     fontFamily: FONTS.survey_font_bold,
     marginBottom: 16,
-    textAlign: 'center',
   },
   label: {
     marginTop: 14,
     marginBottom: 6,
-    color: COLORS.almost_white,
+    color: COLORS.black,
     fontFamily: FONTS.main_font,
     fontSize: 16,
   },
   caption: {
-    color: COLORS.almost_white,
+    color: COLORS.black,
     opacity: 0.8,
     marginBottom: 6,
     fontFamily: FONTS.main_font,
@@ -278,46 +301,36 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: COLORS.almost_white,
+    borderColor: COLORS.black,
     borderRadius: 8,
     marginRight: 10,
   },
   toggleActive: {
-    backgroundColor: COLORS.white,
-    borderColor: COLORS.white,
+    backgroundColor: COLORS.light_blue4,
+    borderColor: COLORS.light_blue4,
   },
   toggleText: {
-    color: COLORS.almost_white,
+    color: COLORS.black,
     fontFamily: FONTS.main_font,
   },
   toggleTextActive: {
     color: COLORS.black,
+    fontFamily: FONTS.main_font,
+    fontWeight: '600',
   },
   input: {
     borderWidth: 1,
-    borderColor: COLORS.almost_white,
+    borderColor: COLORS.black,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: COLORS.almost_white,
+    color: COLORS.black,
     fontFamily: FONTS.main_font,
   },
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
     marginTop: 6,
-  },
-  smallButton: {
-    borderWidth: 1,
-    borderColor: COLORS.almost_white,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginRight: 10,
-  },
-  smallButtonText: {
-    color: COLORS.almost_white,
-    fontFamily: FONTS.main_font,
   },
   submitButton: {
     marginTop: 20,
@@ -332,13 +345,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   backButton: {
-    marginTop: 10,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  backButtonText: {
-    color: COLORS.almost_white,
-    fontFamily: FONTS.main_font,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
   },
 })
 

@@ -21,7 +21,8 @@ const StepSlider = ({ minimumValue = 0, maximumValue = 1, step = 1, value = 0, o
   }
 
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+    <View style={{ width: '100%' }}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between"}}>
       {steps.map((s) => (
         <TouchablePlatform
           key={s}
@@ -33,12 +34,13 @@ const StepSlider = ({ minimumValue = 0, maximumValue = 1, step = 1, value = 0, o
               width: s === value ? 16 : 8,
               height: s === value ? 16 : 8,
               borderRadius: 16 / 2,
-              backgroundColor: s === value ? COLORS.green : COLORS.dark_blue,
+              backgroundColor: s === value ? COLORS.light_blue4 : COLORS.light_grey,
               marginVertical: 12,
             }}
           />
         </TouchablePlatform>
       ))}
+      </View>
     </View>
   );
 };
@@ -66,29 +68,6 @@ export default function GroupedMatrixComponent({
 
   // hook used to toggle groups of sub questions
   const [toggleGroups, setToggleGroups] = useState({});
-  const colorsArray = [
-    COLORS.light_blue3, // First group color
-    COLORS.light_green, // Second group color
-    COLORS.dark_purple, // Third group color
-    COLORS.pink2, // Third group color
-    // Add more colors as needed
-  ];
-
-  const StepMarker = ({ stepMarked }) => {
-    return (
-      <View
-        style={{
-          width: 8,               // Width of the rectangle
-          height: 8,              // Height of the rectangle (1:4 ratio)
-          backgroundColor: stepMarked ? COLORS.green : COLORS.dark_blue, // Color changes if the thumb is at this step
-          marginTop: 10,          // Adjust positioning to center it correctly on the slider
-          borderRadius: 5,
-          bottom: '140%',
-        }}
-      >
-      </View>
-    );
-  };
 
   //Setting initial Groups Toggle states
   useEffect(() => {
@@ -124,119 +103,81 @@ export default function GroupedMatrixComponent({
   }, [questionDetails]);
 
   // Creating an array of sub question components
-  const subQuestionsComponents = questionDetails["SubQuestions"].map(
-    (subquestion, subIndex) => {
-      const currentSliderValue =
-        sliderValues[`${questionDetails["QuestionID"]}_${subIndex}`] ||
-        getInitialSliderValue();
+  const subQuestionsComponents = questionDetails["SubQuestions"].map((subquestion, subIndex) => {
+    const qid = questionDetails["QuestionID"];
+    const currentValue = sliderValues[`${qid}_${subIndex}`] ?? getInitialSliderValue();
+    const currentLabel = sliderLabels[`${qid}_${subIndex}`] ?? questionDetails["Choices"][getInitialSliderValue()]?.["Display"];
 
-      const currentLabel = sliderLabels[`${questionDetails["QuestionID"]}_${subIndex}`] || 
-        questionDetails["Choices"][getInitialSliderValue()]["Display"];
+    return (
+      <View key={`${qid}_${subIndex}`} style={matrixStyles.sliderContainer}>
+        <Text style={matrixStyles.subQuestionText}>
+          {highlightTextWithColors(
+            stripHtmlTags(subquestion["Display"]),
+            wordColorMap
+          )}
+        </Text>
 
-      return (
-        <View style={matrixStyles.sliderContainer}>
-          <Text style={matrixStyles.subQuestionText}>
-            {highlightTextWithColors(
-              stripHtmlTags(subquestion["Display"]),
-              wordColorMap
-            )}
-          </Text>
-
-        {/* Custom slider with snap points */}
-        <View style={matrixStyles.sliderTrackContainer}>
-          {/* Circles on the ends */}
-          {/* <View style={[matrixStyles.circleMarker, matrixStyles.leftCircle]} /> */}
-          <SliderComponent
-            minimumValue={0}
-            maximumValue={questionDetails["Choices"].length - 1}
-            step={1}
-            value={currentSliderValue}
-            onValueChange={(value) => {
-              const label = questionDetails["Choices"][value]
-                ? questionDetails["Choices"][value]["Display"]
-                : "Unknown";
-              setSliderLabels((prev) => ({
-                ...prev,
-                [`${questionDetails["QuestionID"]}_${subIndex}`]: label,
-              }));
-              setSliderValues((prev) => ({
-                ...prev,
-                [`${questionDetails["QuestionID"]}_${subIndex}`]: value,
-              }));
-              handleOptionPress(subIndex, value); // Treat the step tap like a selection
+      {/* Custom slider with snap points */}
+      <View style={matrixStyles.sliderTrackContainer}>
+        {/* Circles on the ends */}
+        {/* <View style={[matrixStyles.circleMarker, matrixStyles.leftCircle]} /> */}
+        <SliderComponent
+          minimumValue={0}
+          maximumValue={questionDetails["Choices"].length - 1}
+          step={1}
+          value={currentSliderValue}
+            onValueChange={(val) => {
+              const label = questionDetails["Choices"][val]?.["Display"] ?? "Unknown";
+              setSliderLabels((prev) => ({ ...prev, [`${qid}_${subIndex}`]: label }));
+              setSliderValues((prev) => ({ ...prev, [`${qid}_${subIndex}`]: val }));
+              handleOptionPress(subIndex, val); // keep your selection model in sync
             }}
-          />
-          {/* <View style={[matrixStyles.circleMarker, matrixStyles.rightCircle]} />*/}
+        />
+        {/* <View style={[matrixStyles.circleMarker, matrixStyles.rightCircle]} />*/}
+      </View>
+
+        {/* Labels row */}
+        <View style={matrixStyles.labelsContainer}>
+          <Text style={matrixStyles.firstLastLabel}>{questionDetails["Choices"][0]["Display"]}</Text>
+          <Text style={matrixStyles.currentLabel}>{currentLabel}</Text>
+          <Text style={matrixStyles.firstLastLabel}>
+            {questionDetails["Choices"][questionDetails["Choices"].length - 1]["Display"]}
+          </Text>
         </View>
-          <View style={matrixStyles.labelsContainer}>
-            {/* First option label */}
-            <Text style={matrixStyles.firstLastLabel}>
-              {questionDetails["Choices"][0]["Display"]}
-            </Text>
-            {/* Current selected value label */}
-            <Text style={matrixStyles.currentLabel}>
-              {currentLabel}
-            </Text>
-            {/* Last option label */}
-            <Text style={matrixStyles.firstLastLabel}>
-              {
-                questionDetails["Choices"][
-                  questionDetails["Choices"].length - 1
-                ]["Display"]
-              }
-            </Text>
-          </View>
-        </View>
-      );
-    }
-  );
+      </View>
+    );
+  });
 
   // Groups SubQuestions if there are groups otherwise just displays sub questions
   DisplaySubQuestions = questionDetails["ChoiceGroups"]
     ? Object.keys(questionDetails["ChoiceGroups"]).map((groupKey, index) => {
-        group = questionDetails["ChoiceGroups"][groupKey];
-        subQuestions = group["ChoiceGroupOrder"].map(
-          (index) => subQuestionsComponents[index - 1]
-        );
+        const group = questionDetails["ChoiceGroups"][groupKey];
+        const subQuestions = group["ChoiceGroupOrder"].map((index) => subQuestionsComponents[index - 1]);
 
         // Group color array
         const groupColor = colorsArray[index % colorsArray.length];
         return (
-          <View
-            // Sets the group color
-            style={[matrixStyles.groupBox, { backgroundColor: groupColor }]}
-          >
-            {/* Renders group title and sub questions */}
+          <View key={groupKey} style={matrixStyles.groupBox}>
             <View style={matrixStyles.groupHeaderContainer}>
-              <Text style={matrixStyles.groupTitle} key={groupKey}>
-                {group["GroupLabel"]}
-              </Text>
+              <Text style={matrixStyles.groupTitle}>{group["GroupLabel"]}</Text>
 
               {/* Renders the +/- button */}
-
               <TouchablePlatform
-                key={`${groupKey}_button`}
-                onPress={() => {
-                  setToggleGroups((prevToggleGroups) => ({
-                    ...prevToggleGroups,
-                    [groupKey]: !prevToggleGroups[groupKey],
-                  }));
-                }}
+                accessibilityRole="button"
+                accessibilityLabel={toggleGroups[groupKey] ? "Collapse group" : "Expand group"
+                }
+                onPress={() => 
+                  setToggleGroups((prev) => ({...prev, [groupKey]: !prev[groupKey] }))
+                }
+                style={matrixStyles.chevronHitbox}
               >
-                <Text style={matrixStyles.toggleText}>
-                  <Image
-                    source={require("./../assets/chevronRight.png")}
-                    style={{
-                      height: 30,
-                      width: 30,
-                      transform: [
-                        toggleGroups[groupKey]
-                          ? { rotate: "90deg" }
-                          : { rotate: "0deg" }, // Rotate if toggleGroups[groupKey] is true
-                      ],
-                    }}
-                  />
-                </Text>
+                <Image
+                  source={require("./../assets/chevronRight.png")}
+                  style={[
+                    matrixStyles.chevron,
+                    toggleGroups[groupKey] ? { transform: [{ rotate: "90deg" }] } : null,
+                  ]}
+                />
               </TouchablePlatform>
             </View>
 
@@ -265,11 +206,6 @@ export default function GroupedMatrixComponent({
   );
 }
 const matrixStyles = StyleSheet.create({
-  optionButtonContainer: {
-    flexDirection: "row", // Keep the buttons in a row
-
-    justifyContent: "flex-start",
-  },
   optionsContainer: {
     flexDirection: "row",
     width: "100%",
@@ -280,16 +216,6 @@ const matrixStyles = StyleSheet.create({
     color: COLORS.white,
     justifyContent: "space-between",
   },
-  line: {
-    width: "90%",
-    height: 5,
-    backgroundColor: COLORS.white,
-    position: "absolute",
-    top: "90%",
-    left: 20,
-    borderWidth: 1,
-    borderColor: COLORS.dark_blue,
-  },
 
   roundOptionButton: {
     paddingVertical: 10,
@@ -298,8 +224,7 @@ const matrixStyles = StyleSheet.create({
     borderRadius: 50,
     position: "relative",
     borderWidth: 1,
-    borderColor: COLORS.dark_blue,
-
+    borderColor: COLORS.light_grey,
     backgroundColor: COLORS.white,
   },
   rectOptionButton: {
@@ -310,52 +235,42 @@ const matrixStyles = StyleSheet.create({
     position: "relative",
     backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: COLORS.dark_blue,
-    border: "3px solid black",
+    borderColor: COLORS.light_grey,
   },
   groupHeaderContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-
+    alignItems: "center",
     marginBottom: 10,
   },
   selectionContainer: {
     width: "100%",
   },
   groupBox: {
-    padding: 15,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 16,
     fontFamily: FONTS.survey_font_bold,
-  },
-  toggleText: {
-    fontSize: 30,
-    color: COLORS.white,
-    fontFamily: FONTS.survey_font_bold,
+    backgroundColor: COLORS.light_grey2,     // neutral card surface
+    borderWidth: 1,
+    borderColor: COLORS.light_grey,
   },
   subQuestionText: {
-    color: COLORS.white,
+    color: COLORS.black,
     fontFamily: FONTS.survey_font_bold,
     fontSize: 17,
-    padding: 5,
+    padding: 6,
   },
   groupTitle: {
     fontSize: 30,
-    color: COLORS.white,
+    color: COLORS.black,
     fontFamily: FONTS.survey_font_bold,
   },
-  buttonText: {
-    fontSize: 13,
-    color: COLORS.white,
-    fontFamily: FONTS.survey_font_bold,
-    display: "flex",
-    flexDirection: "column",
-    position: "absolute",
-    bottom: -25,
-    left: -17,
-  },
+  chevronHitbox: { padding: 4 },
+  chevron: { height: 24, width: 24 },
+
   sliderContainer: {
-    marginBottom: 30,
+    marginBottom: 24,
   },
   slider: {
     width: "100%",
@@ -364,16 +279,15 @@ const matrixStyles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 8,
   },
   firstLastLabel: {
-    fontSize: 10,
-    color: COLORS.white,
-    marginTop: -25,
+    fontSize: 12,
+    color: COLORS.black,
   },
   currentLabel: {
     fontSize: 16,
-    color: COLORS.white,
+    color: COLORS.black,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -382,20 +296,6 @@ const matrixStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     position: "relative",
-    marginTop: 15,
-  },
-  circleMarker: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: COLORS.dark_blue,
-    position: "absolute",
-    zIndex: -1,
-  },
-  leftCircle: {
-    left: 4, // Position it at the start of the slider
-  },
-  rightCircle: {
-    right: 4, // Position it at the end of the slider
+    marginTop: 8,
   },
 });

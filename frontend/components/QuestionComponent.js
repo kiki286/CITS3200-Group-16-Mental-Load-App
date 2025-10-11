@@ -22,7 +22,8 @@ import { ResponseSender } from "../services/ResponseSender";
 import COLORS from "../constants/colors";
 import FONTS from "../constants/fonts";
 import Button from "./Buttons/Button_Light_Blue";
-import { ArrowForwardCircleOutline } from 'react-ionicons';
+import PillButton from "./Buttons/PillButton";
+import { ArrowForwardCircleOutline, ChevronBackOutline  } from 'react-ionicons';
 import RenderQuestionUI from "./RenderQuestionUI";
 import { updateCurrentUser } from "firebase/auth";
 
@@ -98,45 +99,21 @@ const QuestionComponent = ({ demoSubmit, backNavigate }) => {
     setSelectedOptions((prev) => {
       // Check if current selections are an array, if not initialize as an empty array
       const currentSelections = Array.isArray(prev[subQuestionIndex]) ? prev[subQuestionIndex] : [];
-      // If multiple selection is allowed
       if (allowMultipleSelection) {
-        optionIndex = `${optionIndex}`
-        // If the option is already selected, remove it
-        if (currentSelections.includes(optionIndex)) {
-          return {
-            ...prev,
-            [questionID]: currentSelections.filter((index) => index !== optionIndex),
-          };
-        } else {
-          // Add the option to the selected array
-          return {
-            ...prev,
-            [subQuestionIndex]: [...currentSelections, optionIndex],
-          };
-        }
-      } else {
-        // If multiple selections are not allowed, just store the single selected option
-        return {
-          ...prev,
-          [subQuestionIndex]: optionIndex,
-        };
+        const key = `${optionIndex}`;
+        return currentSelections.includes(key)
+          ? { ...prev, [subQuestionIndex]: currentSelections.filter((k) => k !== key) } // FIX: was [questionID]
+          : { ...prev, [subQuestionIndex]: [...currentSelections, key] };
       }
+      return { ...prev, [subQuestionIndex]: optionIndex };
     });
   };
 
   //Function for handling textInput changes
   const handleTextInputChange = (questionID, index, text, type) => {
-    if (type == "RESET") {
-      setSelectedOptions({})
-      setInputValues(prev => ({
-        ...prev,
-        [questionDetails["QuestionID"]]: text, // Set text for the current questionID
-      }));
-    } else if (type == "SINGLE") {
-      setInputValues(prev => ({
-        ...prev,
-        [questionDetails["QuestionID"]]: text, // Set text for the current questionID
-      }));
+    if (type === "RESET" || type === "SINGLE") {
+      setSelectedOptions({});
+      setInputValues((prev) => ({ ...prev, [questionDetails["QuestionID"]]: text }));
     } else {
       setInputValues(prev => ({
       ...prev,
@@ -184,6 +161,7 @@ const QuestionComponent = ({ demoSubmit, backNavigate }) => {
 
   // Handles next question button. Stores values to responses, and calls getNextQuestion
   const handleNextQuestion = () => {
+    if (!questionDetails) return;
     const questionID = questionDetails["QuestionID"];
     const QuestionType = questionDetails["QuestionType"];
       let newResponses = {};
@@ -368,37 +346,31 @@ const QuestionComponent = ({ demoSubmit, backNavigate }) => {
 
   // Render the questionsUI in your return block
   return (
-    <View
-      style={{
-        flex: 1,
-        padding: 10,
-        paddingBottom: 60,
-        backgroundColor: COLORS.black,
-        paddingTop: 30
-      }}
-    >
+    <View style={styles.page}>
+      {/* Header */}
+      <View style={styles.header}>
+        {!!!backNavigate && (
+          <TouchablePlatform
+            onPress={() => backNavigate()}
+            accessibilityRole="button"
+            style={styles.backButtonHitbox}
+          >
+            <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+          </TouchablePlatform>
+        )}
+        <Text style={styles.title}>Check-in</Text>
+      </View>
+
       {loading ? (
         <Loading />
       ) : error ? (
         <Error message={error} />
       ) : isSubmitted ? (
-        // Static "Thanks for checking in!" message
         <Animated.View style={{ opacity: fadeAnim, alignItems: "center" }}>
-          <Text style={{
-              fontSize: 24,
-              color: COLORS.white,
-              fontFamily: FONTS.bold, // Assuming you have FONTS.bold defined
-              textAlign: "center",
-              marginTop: 50,
-            }}>
-            Thanks for checking in!
-          </Text>
+          <Text style={styles.thanks}> Thanks for checking in!</Text>
         </Animated.View>
       ) : (
-        <ScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={styles.container}
-        >
+        <ScrollView ref={scrollViewRef} style={styles.scrollcontainer}>
           <RenderQuestionUI
             questionDetails={questionDetails}
             questionID={questionsID[questionNum - 1]}
@@ -412,47 +384,62 @@ const QuestionComponent = ({ demoSubmit, backNavigate }) => {
             colors_list={colors_list}
             inputValues={inputValues}
           />
+
+          {/* Actions */}
           {questionDetails ? (
-            <View style={{ paddingBottom: 20, paddingTop: 10, alignItems: 'center'}}>
-              <TouchablePlatform onPress={handleNextQuestion}>
-                <ArrowForwardCircleOutline
-                  color={COLORS.white}
-                  height="80px"
-                  width="80px"
-                  style={{
-                    top: 0,
-                    alignSelf: "center",
-                    backgroundColor: COLORS.black,
-                  }}
-                />
-              </TouchablePlatform>
+            <View style={styles.actions}>
+              <PillButton title="Next" variant="primary" onPress={handleNextQuestion} fullWidth />
             </View>
           ) : (
-            <View style={{ paddingBottom: 20, paddingTop: 10 }}>
-              <Button
-                title="Submit"
-                onPress={() => {
-                  if (demoSubmit) {
-                    demoSubmit();
-                  } else {
-                    handleSubmitCheckin();
-                  }
-                }}
+            <View style={styles.actions}>
+              <PillButton
+                title="Submit Check-in"
+                variant="primary"
+                onPress={() => (demoSubmit ? demoSubmit() : handleSubmitCheckin())}
+                fullWidth
               />
             </View>
           )}
-          {/* Button to clear responses */}
-          {/* <Button title="Clear Responses" onPress={handleClearResponses} /> */}
         </ScrollView>
       )}
     </View>
   );
 };
 
-//Styling for the component
+// Styles – light theme layout matching other screens
 const styles = StyleSheet.create({
-  container: {
+  page: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    marginBottom: 8,
+  },
+  backButtonHitbox: { padding: 4, marginRight: 8 },
+  title: {
+    fontSize: 30,
+    color: COLORS.black,
+    fontFamily: FONTS.survey_font_bold,
+  },
+  scrollContainer: {
+    paddingHorizontal: 24,
     paddingBottom: 40,
+    width: "100%",
+    alignSelf: "center",
+    maxWidth: 540,
+  },
+  actions: { marginTop: 16, marginBottom: 8, alignItems: "center" },
+  thanks: {
+    fontSize: 24,
+    color: COLORS.black,
+    fontFamily: FONTS.survey_font_bold,
+    textAlign: "center",
+    marginTop: 50,
   },
 });
+
 export default QuestionComponent;
