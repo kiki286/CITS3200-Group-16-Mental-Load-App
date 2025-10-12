@@ -12,7 +12,7 @@ import Welcome from "./screens/Welcome";
 import Demographics from "./screens/Demographics";
 import TermsConditions from "./screens/TermsConditions";
 import { useFonts } from 'expo-font';
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged, getIdTokenResult } from "firebase/auth";
 import { auth, requestNotificationPermission, listenForMessages} from "./firebase/config";
 import { getMessaging, getToken, isSupported } from "firebase/messaging"; // For web push notifications
 import COLORS from "./constants/colors";
@@ -94,6 +94,7 @@ export default function App() {
   
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(false);
 
   // Check if notifications are already enabled (web only)
@@ -105,12 +106,30 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user)
-      if (initializing) setInitializing(false);
-    })
-    return () => unsubscribe();
-  }, [initializing]);
+    let mounted = true;
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!mounted) return;
+      setUser(currentUser);
+      try {
+        if (currentUser) {
+          const { claims } = await getIdTokenResult(currentUser, true);
+          if (!mounted) return;
+          setIsAdmin(!!claims.admin);
+        } else {
+          setIsAdmin(false);
+        }
+      } catch (err) {
+        console.error("getIdTokenResult failed:", err);
+        if (mounted) setIsAdmin(false);
+      } finally {
+        if (mounted) setInitializing(false);
+      }
+    });
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, []);
 
   // Auto-register SW and (if permission is already granted) sync token to backend on login
   useEffect(() => {
@@ -262,11 +281,14 @@ export default function App() {
           />
           <welcome_stack.Screen
             name="Dashboard_Navigator"
-            component={Dashboard_Navigator}
             options={{
               headerShown:false
             }}
-          />
+          >
+            {(navProps) => (
+              <Dashboard_Navigator {...navProps} isAdmin={isAdmin} />
+            )}
+          </welcome_stack.Screen>
           <welcome_stack.Screen
             name="Demographics"
             component={Demographics}
