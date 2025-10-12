@@ -99,10 +99,12 @@ export default function App() {
 
   // Check if notifications are already enabled (web only)
   useEffect(() => {
-    if (Platform.OS !== "web") return;
-    if (typeof Notification !== "undefined") {
-      setPushEnabled(Notification.permission === "granted");
-    }
+    if (Platform.OS !== 'web') return;
+    const read = () => setPushEnabled(JSON.parse(localStorage.getItem('notificationsEnabled') || 'false'));
+    read();
+    const onStorage = e => { if (e.key === 'notificationsEnabled') read(); };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   useEffect(() => {
@@ -133,12 +135,19 @@ export default function App() {
 
   // Auto-register SW and (if permission is already granted) sync token to backend on login
   useEffect(() => {
-    if (Platform.OS !== "web" || !user) return;
+    if (Platform.OS !== "web" || !user || !pushEnabled) return;
 
     (async () => {
       const supported = await isSupported().catch(() => false);
       if (!supported) return;
       if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+
+      // If we already have a stored token, don't re-add/duplicate on the server
+      const existing = localStorage.getItem('fcmToken');
+      if (existing) {
+        setPushEnabled(true);
+        return;
+      }
 
       //  Ensure an ACTIVE service worker controls the page
       await navigator.serviceWorker.register("/firebase-messaging-sw.js");
@@ -153,17 +162,29 @@ export default function App() {
 
       if (!newToken) return;
 
-      const idToken = await auth.currentUser?.getIdToken();
-      if (!idToken) return;
-
       await fetchWithAuth("/api/push/subscribe", {
         method: "POST",
         body: { token: newToken, platform: "web" },
       });
 
+      localStorage.setItem('fcmToken', newToken);
       setPushEnabled(true);
+
+      // also sync prefs so backend can schedule
+      const savedIso = localStorage.getItem('notificationTime');
+      const dt = savedIso ? new Date(savedIso) : new Date();
+      const hh = String(dt.getHours()).padStart(2,'0');
+      const mm = String(dt.getMinutes()).padStart(2,'0');
+      await fetchWithAuth("/api/user/prefs", {
+        method: "POST",
+        body: {
+          notificationsEnabled: true,
+          reminderTime: `${hh}:${mm}`,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
+      });
     })();
-  }, [user]);
+  }, [user, pushEnabled]);
   
   //If on web page, messages dispalyed on page not push notifications
   useEffect(() => {
@@ -188,7 +209,22 @@ export default function App() {
       body: { token, platform: "web" },
     });
     //update UI
+    localStorage.setItem('fcmToken', token); 
+    localStorage.setItem('notificationsEnabled', 'true');
     setPushEnabled(true);
+
+    const savedIso = localStorage.getItem('notificationTime');
+    const dt = savedIso ? new Date(savedIso) : new Date();
+    const hh = String(dt.getHours()).padStart(2, '0');
+    const mm = String(dt.getMinutes()).padStart(2, '0');
+    await fetchWithAuth("/api/user/prefs", {
+      method: "POST",
+      body: {
+        notificationsEnabled: true,
+        reminderTime: `${hh}:${mm}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+    });
   }
 
   if (typeof window !== "undefined") {
@@ -305,7 +341,7 @@ export default function App() {
           />
         </welcome_stack.Navigator>
       </NavigationContainer>
-      {Platform.OS === "web" && !initializing && !!user && !pushEnabled && typeof Notification !== "undefined" && Notification.permission !== "granted" && !pushEnabled &&(
+      {Platform.OS === "web" && !!user && !pushEnabled && typeof Notification !== "undefined" && Notification.permission !== "granted" && (
         <View style={{ position: "absolute", bottom: 10, left: 0, right: 0, alignItems: 'center' }}>
           <TouchableOpacity onPress={onEnableNotifications} 
             style={{ backgroundColor: COLORS.light_green, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 999 }}>

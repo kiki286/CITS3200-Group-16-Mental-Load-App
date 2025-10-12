@@ -13,6 +13,7 @@ import PillButton from '../../../components/Buttons/PillButton';
 import { requestNotificationPermission } from '../../../firebase/config';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { API_BASE, fetchWithAuth } from '../../../services/api'
+import { getMessaging, deleteToken, isSupported } from "firebase/messaging";
 
 const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY;
 
@@ -20,6 +21,13 @@ const STORAGE_KEYS = {
     enabled: 'notificationsEnabled',
     time: 'notificationTime',
     fcmToken: 'fcmToken',
+};
+
+const formatHHMM = (date) => {
+  const d = new Date(date);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
 };
 
 const Profile = ({ navigation }) => {
@@ -68,8 +76,22 @@ const formatTime = (date) =>
             if (newValue) {
                 const ok = await enableWebPush();
                 if (!ok) return;
+                // also persist prefs to backend on enable
+                const hhmm = formatHHMM(notificationTime);
+                await fetchWithAuth("/api/user/prefs", {
+                  method: "POST",
+                  body: {
+                    notificationsEnabled: true,
+                    reminderTime: hhmm,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  },
+                });
             } else {
                 await disableWebPush();
+                await fetchWithAuth("/api/user/prefs", {
+                  method: "POST",
+                  body: { notificationsEnabled: false },
+                });
             }
             await saveItem(STORAGE_KEYS.enabled, JSON.stringify(newValue));
             setNotificationsEnabled(newValue);
@@ -78,8 +100,23 @@ const formatTime = (date) =>
 
         // Local notifications for iOS/Android
         setNotificationsEnabled(newValue);
-        if (newValue) await scheduleNotification(notificationTime);
-        else await cancelNotification();
+        if (newValue) {
+          await scheduleNotification(notificationTime);
+          await fetchWithAuth("/api/user/prefs", {
+            method: "POST",
+            body: {
+              notificationsEnabled: true,
+              reminderTime: formatHHMM(notificationTime),
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            },
+          });
+        } else {
+          await cancelNotification();
+          await fetchWithAuth("/api/user/prefs", {
+            method: "POST",
+            body: { notificationsEnabled: false },
+          });
+        }
         await saveItem(STORAGE_KEYS.enabled, JSON.stringify(newValue));
     };
 
@@ -146,17 +183,28 @@ const formatTime = (date) =>
         const user = getAuth().currentUser;
         const token = await loadItem(STORAGE_KEYS.fcmToken);
         if (!user || !token) return;
+
         const resp = await fetchWithAuth("/api/push/unsubscribe", {
             method: "POST",
             body: { token },
         });
         if (!resp || !resp.ok) {
             const text = await resp.text().catch(() => '');
-            console.warn('[webpush] unsubscribe failed:', resp.status, text);
+            console.warn('[webpush] unsubscribe failed:', resp?.status, text);
         }
 
-        if (Platform.OS === 'web') localStorage.removeItem(STORAGE_KEYS.fcmToken);
-        else{
+        if (Platform.OS === 'web') {
+          const supported = await isSupported().catch(() => false);
+          if (supported) {
+             try {
+              const messaging = getMessaging();
+              await deleteToken(messaging);
+            } catch (e) {
+              console.warn("[webpush] deleteToken failed", e);
+            }
+          }
+          localStorage.removeItem(STORAGE_KEYS.fcmToken);
+        } else{
             const AsyncStorage = require('@react-native-async-storage/async-storage');
             await AsyncStorage.removeItem(STORAGE_KEYS.fcmToken);
         }
@@ -293,6 +341,30 @@ const formatTime = (date) =>
             onChange={onTimeChange}
           />
         )}
+
+        {Platform.OS === 'web' && showPicker && (
+          <input
+            type="time"
+            value={formatHHMM(notificationTime)}
+            onChange={async (e) => {
+              const [h, m] = e.target.value.split(':').map(Number);
+              const t = new Date(notificationTime);
+              t.setHours(h); t.setMinutes(m); t.setSeconds(0); t.setMilliseconds(0);
+              setNotificationTime(t);
+              await saveItem(STORAGE_KEYS.time, t.toISOString());
+              // tell backend immediately on web
+              await fetchWithAuth("/api/user/prefs", {
+                method: "POST",
+                body: {
+                  reminderTime: e.target.value,
+                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                },
+              });
+              setShowPicker(false);
+            }}
+           style={{ height: 44, borderRadius: 10, border: '1px solid #ddd', padding: '0 12px' }}
+          />
+       )}
       </View>
 
       {/* Section: Update demographics */}

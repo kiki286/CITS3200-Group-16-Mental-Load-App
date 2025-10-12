@@ -12,6 +12,7 @@ import logging
 import threading
 import time
 import hashlib
+from zoneinfo import ZoneInfo
 
 # Pull envs from .env file (must be named exactly ".env") - from the raw repo, fill in and rename the file ".env_example"
 load_dotenv()
@@ -169,11 +170,10 @@ def parse_iso_utc(s):
         logger.exception('Failed to parse ISO timestamp: %s', s)
         return None
 
-
 WEBPUSH_TTL = os.getenv('WEBPUSH_TTL', '4500')         # seconds, string
 WEBPUSH_URGENCY = os.getenv('WEBPUSH_URGENCY', 'high') # "high" or "normal"
 
-def _send_notifications_to_tokens(tokens, title, body, link=None):
+def _send_notifications_to_tokens(tokens, title, body, link=None, cleanup_uid=None):
     sent = 0
     errors = []
     logger.info('Attempting to send notifications to %d tokens', len(tokens))
@@ -212,24 +212,16 @@ def _send_notifications_to_tokens(tokens, title, body, link=None):
         except Exception as e:
             msg = str(e)
             errors.append(msg)
-            logger.exception('campaign send error for token %s: %s', token_snippet if 'token_snippet' in locals() else '<unknown>', msg)
-            try:
-                resp = getattr(e, 'response', None)
-                if resp is not None:
-                    logger.error('FCM HTTP response status=%s body=%s', getattr(resp, 'status_code', None), getattr(resp, 'text', None))
-            except Exception:
-                logger.exception('Failed to extract HTTP response from exception')
-            if 'Auth error from APNS or Web Push Service' in msg or 'ThirdPartyAuthError' in msg:
-                logger.error(
-                    'ThirdPartyAuthError detected for token %s. Possible causes: token/project mismatch, incorrect VAPID key on client, or missing APNS credentials in Firebase. Server project: %s',
-                    token_snippet if 'token_snippet' in locals() else '<unknown>', db.project
-                )
-                errors[-1] = f"{errors[-1]} -- check that the client is using the same Firebase project as the server and that the web VAPID key/APNS credentials are configured"
-            try:
-                if 'registration token is not registered' in msg.lower() or 'not registered' in msg.lower():
-                    logger.warning('Detected unregistered token: %s', token_snippet if 'token_snippet' in locals() else '<unknown>')
-            except Exception:
-                pass
+            # Auto-clean dead tokens under this user whether stored by doc-id or 'token' field
+            if cleanup_uid and ('registration token is not registered' in msg.lower() or 'not registered' in msg.lower()):
+                try:
+                    col = db.collection("users").document(cleanup_uid).collection("webPushTokens")
+                    col.document(t).delete()  # best case (token as doc id)
+                    for d in col.where("token", "==", t).stream():  # fallback (auto-id docs)
+                        d.reference.delete()
+                    logger.info("Removed unregistered token for uid=%s", cleanup_uid)
+                except Exception:
+                    logger.exception("Failed to clean up unregistered token for uid=%s", cleanup_uid)
     return sent, errors
 
 
@@ -271,6 +263,32 @@ def gather_tokens_for_emails(emails):
             logger.exception('Could not resolve tokens for email %s: %s', email, repr(e))
             continue
     return tokens
+
+@app.route("/api/user/prefs", methods=["POST"])
+@verify_firebase_token
+def user_prefs_upsert():
+    """
+    Body: { notificationsEnabled: bool, reminderTime: "HH:MM", timezone: "Area/City" }
+    Any field may be omitted (partial update).
+    """
+    body = request.get_json(force=True) or {}
+    uid = request.user.get("uid")
+    prefs_update = {}
+
+    if "notificationsEnabled" in body:
+        prefs_update["prefs.notificationsEnabled"] = bool(body["notificationsEnabled"])
+    if "reminderTime" in body:
+        # store canonical HH:MM
+        hhmm = str(body["reminderTime"])[:5]
+        prefs_update["prefs.reminderHHMM"] = hhmm
+    if "timezone" in body:
+        prefs_update["prefs.timezone"] = str(body["timezone"])
+
+    if not prefs_update:
+        return jsonify({"ok": False, "error": "No fields to update"}), 400
+
+    db.collection("users").document(uid).set(prefs_update, merge=True)
+    return jsonify({"ok": True})
 
 @app.route('/submit-survey', methods=['POST'])
 @verify_firebase_token
@@ -380,7 +398,65 @@ def admin_set_surveys():
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
 
+def _send_daily_reminders_once():
+    now_utc = datetime.now(timezone.utc)
+    users = db.collection("users").stream()
+    for u in users:
+        data = u.to_dict() or {}
+        prefs = data.get("prefs") or {}
+        if not prefs.get("notificationsEnabled"):
+            continue
 
+        tzname = prefs.get("timezone") or "UTC"
+        try:
+            tz = ZoneInfo(tzname)
+        except Exception:
+            tz = timezone.utc
+
+        hhmm = prefs.get("reminderHHMM")
+        if not hhmm or len(hhmm) < 4:
+            continue
+
+        # Compare current local HH:MM and send at the exact minute, once per day
+        local_now = now_utc.astimezone(tz)
+        window = int(os.getenv('DAILY_REMINDER_WINDOW_SEC', '300'))
+        target = local_now.replace(
+            hour=int(hhmm[:2]), minute=int(hhmm[3:5]), second=0, microsecond=0
+        )
+        if abs((local_now - target).total_seconds()) > window:
+            continue
+
+        last_sent = (prefs.get("lastSentDate") or "")
+        today_iso = local_now.date().isoformat()
+        if last_sent == today_iso:
+            continue  # already sent today
+
+        # get this user's tokens
+        toks = []
+        try:
+            ref = db.collection("users").document(u.id).collection("webPushTokens").stream()
+            for d in ref:
+                dd = d.to_dict() or {}
+                tok = dd.get("token") or d.id  # be robust
+                if tok:
+                    toks.append(tok)
+        except Exception:
+            pass
+
+        if not toks:
+            continue
+
+        title = "Your Mental Load Check is Ready!"
+        body = "This is a reminder to do your Mental Load Check."
+
+        sent, errors = _send_notifications_to_tokens(toks, title, body, link="/")
+        try:
+            db.collection("users").document(u.id).set(
+                {"prefs": {"lastSentDate": today_iso}}, merge=True
+            )
+        except Exception:
+            logger.exception("Failed to update lastSentDate for uid=%s", u.id)
+            
 @app.route('/admin/campaigns', methods=['POST'])
 @verify_firebase_token
 @require_admin
@@ -485,7 +561,12 @@ def push_unsubscribe():
         return jsonify({"error": "Missing token or user ID"}), 400
 
     # Remove the token from the user's document
-    db.collection("users").document(uid).collection("webPushTokens").document(token).delete()
+    col = db.collection("users").document(uid).collection("webPushTokens")
+    # best case: token used as doc id
+    col.document(token).delete()
+    # fallback: delete any auto-id docs with the same token field
+    for d in col.where("token", "==", token).stream():
+        d.reference.delete()
     return jsonify({"ok": True})
 
 # Send notification to user (can add feature to call from admin tools)
@@ -503,37 +584,21 @@ def notify_user():
     body = data.get("body", "")
     link = data.get("link") #for Url to open on click
     
-    tokens_ref = db.collection("users").document(target_uid).collection("webPushTokens")
-    tokens = [doc.id for doc in tokens_ref.stream()]
+    col = db.collection("users").document(target_uid).collection("webPushTokens").stream()
+    tokens = []
+    for d in col:
+        data = d.to_dict() or {}
+        tok = data.get("token") or d.id
+        if tok:
+            tokens.append(tok)
+    tokens = list(set(tokens))  # dedupe
+    
     if not tokens:
         return jsonify({"ok": False, "message": "No tokens found for user"}), 200
 
-    sent, errors = 0, []
-    for t in tokens:
-        try:
-            platform_notification = messaging.Notification(title=str(title), body=str(body))
-            webpush_cfg = messaging.WebpushConfig(
-                headers={"Urgency": WEBPUSH_URGENCY, "TTL": WEBPUSH_TTL},
-                notification=messaging.WebpushNotification(title=str(title), body=str(body)),
-            )
-            msg = messaging.Message(
-                token=t,
-                notification=platform_notification,
-                data={
-                    "title": str(title),
-                    "body": str(body),
-                    **({"link": str(link)} if link else {}),
-                },
-                webpush=webpush_cfg,
-            )
-            messaging.send(msg)
-            sent += 1
-        except Exception as e:
-            msg = str(e)
-            errors.append(msg)
-            if "registration token is not registered" in msg.lower():
-                db.collection("users").document(target_uid).collection("webPushTokens").document(t).delete()
-
+    sent, errors = _send_notifications_to_tokens(
+        tokens, title, body, link, cleanup_uid=target_uid
+    )
     return jsonify({"ok": sent > 0, "sent": sent, "errors": errors})
 
 
@@ -608,6 +673,7 @@ def scheduler_loop(interval_seconds: int):
     logger.info('Starting campaign scheduler loop (interval=%ds)', interval_seconds)
     while True:
         process_due_campaigns_once()
+        _send_daily_reminders_once() 
         time.sleep(interval_seconds)
 
 
