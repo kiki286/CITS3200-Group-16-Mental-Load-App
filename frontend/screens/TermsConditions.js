@@ -3,14 +3,19 @@
 
 // TermsConditions.js
 import React from "react";
-import { View, ScrollView, Text } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import { View, ScrollView, Text , TouchableOpacity} from "react-native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import COLORS from "../constants/colors";
 import Button from "../components/Buttons/Button_Green";
+import Button_Light_Blue from "../components/Buttons/Button_Light_Blue";
+import { ChevronBackOutline } from 'react-ionicons';
+
 
 const TermsConditions = () => {
   const route = useRoute();
+  const navigation = useNavigation();
   const { onAgree } = route.params || {};
+  const { back } = route.params || {};
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white}}>
       <ScrollView
@@ -18,6 +23,14 @@ const TermsConditions = () => {
         contentContainerStyle={{ paddingBottom: 120 }}
         keyboardShouldPersistTaps="handled"
       >
+          <TouchableOpacity
+                style={{ alignSelf: 'flex-start', marginBottom: 8 }}
+                onPress={() => navigation.goBack()}
+                accessibilityLabel="Back"
+              >
+                <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+              </TouchableOpacity>
+
         <Text
           style={{
             fontSize: 20,
@@ -138,7 +151,7 @@ const TermsConditions = () => {
           retain a copy of any Participant Information Form and/or Participant
           Consent Form relating to this research project.
         </Text>
-        <View style={{ marginVertical: 20 }}>
+        <View style={{ marginVertical: 20, gap: 10 }}>
           <Button
             title="Agree"
             style={{ marginBottom: 4 }}
