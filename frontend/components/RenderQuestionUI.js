@@ -18,6 +18,16 @@ import FONTS from "../constants/fonts";
 import GroupedMatrixComponent from "./GroupedMatrixComponent";
 import { Loading } from "./Messages";
 
+const QUALTRICS_DC_HOST = "uaw.yu1.qualtrics.com";
+const buildQualtricsImageUrl = (im, useRel = false) => {
+  const safeIM = encodeURIComponent(im || "");
+  const base = useRel
+    ? "WRQualtricsControlPanel_rel"
+    : "WRQualtricsControlPanel";
+  const cb = Date.now();
+  return `https://${QUALTRICS_DC_HOST}/${base}/Graphic.php?IM=${safeIM}&cb=${cb}`;
+};
+
 // Lightweight cross-platform step slider implemented with RN primitives so it
 // works on web and native without extra native dependencies.
 const StepSlider = ({ minimumValue = 0, maximumValue = 1, step = 1, value = 0, onValueChange }) => {
@@ -388,17 +398,21 @@ const RenderQuestionUI = ({
                         <Loading />
                       )}
                       <Image
-                        source={{ uri: `https://yul1.qualtrics.com/API/v3/ControlPanel/Graphic.php?IM=${option.ImageLocation}` }}
-                        style={{
-                          width: '100%',
-                          maxWidth: 100,
-                          maxHeight: 500,
-                          height: undefined,
-                          aspectRatio: 0.5,
-                        }}
-                        resizeMode="contain"
-                        onLoad={handleImageLoad}
-                      />
+                          source={{ uri: imageUri }}
+                          style={{
+                            width: "100%",
+                            maxWidth: 100,
+                            maxHeight: 500,
+                            height: undefined,
+                            aspectRatio: 0.5,
+                          }}
+                          resizeMode="contain"
+                          onLoad={handleImageLoad}
+                          onError={() => {
+                            if (!useRel) setUseRel(true);
+                            else setImageLoading(false);
+                          }}
+                        />
                     </View>
                     )}
                     <Text
