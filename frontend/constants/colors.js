@@ -30,6 +30,7 @@ const COLORS = {
   purple: "#8813ba",
   dark_purple: "#794db3",
   pink2: "#c7406f",
+  red: "#FF3B30",
 
   primary: "#000000",
   secondary: "#FFFFFF",

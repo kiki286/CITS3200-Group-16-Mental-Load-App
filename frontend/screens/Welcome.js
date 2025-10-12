@@ -16,59 +16,54 @@ const Welcome = ({ navigation }) => {
       justifyContent: 'center',
       alignItems: 'center',
       flex: 1, 
-      backgroundColor: COLORS.black,
+      backgroundColor: COLORS.white,
     }}>
-      <Text style={{
-        fontSize: 30,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font,
-        marginTop: -60,
-      }}>TAKE A MOMENT TO</Text>
-      <Text style={{
-        fontSize: 30,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font
-      }}>REFLECT ON YOUR</Text>
-      <Text style={{
-        fontSize: 30,
-        color: COLORS.light_green,
-        fontFamily: FONTS.main_font
-      }}>MENTAL LABOUR</Text>
       <Image
         source={require('./../assets/mental_labour_venn.png')}
         style={{
           height: 400,
           width: 400,
           marginTop: -30,
+          marginBottom: 20
         }}
       />
+      
       <Text style={{
         fontSize: 35,
-        color: COLORS.almost_white,
+        color: COLORS.black,
         fontFamily: FONTS.main_font,
         marginTop: -60,
       }}>MENTAL LOAD</Text>
+
       <Text style={{
         fontSize: 35,
-        color: COLORS.almost_white,
+        color: COLORS.black,
         fontFamily: FONTS.main_font,
       }}>TRACKER</Text>
+
+      <Text style={{
+        fontSize: 16,
+        color: COLORS.light_blue3,
+        fontFamily: FONTS.main_font,
+        fontStyle: 'italic',
+        marginBottom: 40,
+      }}>take a moment to reflect</Text>
+
       <Button
         title="Login"
         onPress={()=>navigation.navigate("Login")}
         style={{
           width: "100%",
-          marginTop: 10,
-        }}
-      />
+          marginBottom: 20,
+        }}/>
+
       <Button
         title="Sign Up"
         onPress={()=>navigation.navigate("Signup")}
         style={{
-          marginTop: 16,
           width: "100%",
-        }}
-      />
+          marginBottom: 32,
+        }}/>
     </View>
   )
 }
