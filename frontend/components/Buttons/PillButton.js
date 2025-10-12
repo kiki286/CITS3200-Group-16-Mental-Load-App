@@ -1,3 +1,4 @@
+//CITS3200 project group 16 2025
 import React from 'react';
 import { Pressable, Text, View, StyleSheet, ActivityIndicator } from 'react-native';
 import COLORS from '../../constants/colors';

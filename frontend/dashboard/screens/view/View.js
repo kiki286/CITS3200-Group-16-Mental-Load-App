@@ -1,3 +1,5 @@
+//CITS3200 project group 16 2025
+//Display the analytics obtained from submitting surveys
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -7,13 +9,14 @@ import {
   ActivityIndicator,
   ScrollView,
   Dimensions,
+  Platform,
 } from "react-native";
 import COLORS from "../../../constants/colors";
 import FONTS from "../../../constants/fonts";
 import { useFocusEffect } from "@react-navigation/native";
 import { Loading } from "../../../components/Messages";
 import PillButton from '../../../components/Buttons/PillButton';
-import { ChevronBackOutline, LogOutOutline } from "react-ionicons";
+import { ChevronBackOutline } from "react-ionicons";
 
 // Chart imports
 import {
@@ -72,17 +75,47 @@ const View_Tab = ({ navigation }) => {
     }
   };
 
+  const renderChartByKey = (k) => {
+    switch (k) {
+      case "PieChartWork":
+        return <PieChartExampleWork workML={workML} />;
+      case "PieChartHome":
+        return <PieChartExampleHome homeML={homeML} />;
+      case "StackedBarWork":
+        return <StackedBarChartWorkML workML={workML} timestamps={timestamps} />;
+      case "StackedBarHome":
+        return <StackedBarChartHomeML homeML={homeML} timestamps={timestamps} />;
+      case "Burnout":
+        return (
+          <BurnoutLineChart
+            burnoutValues={burnoutValues}
+            workData={workData}
+            timestamps={timestamps}
+          />
+        );
+      case "MentalLoad":
+      default:
+        return (
+          <MentalLoadLineChart
+            timestamps={timestamps}
+            homeML={homeML}
+            workML={workML}
+          />
+        );
+    }
+  };
+
+  let content = null;
+
   if (loading) {
-    return (
-      <View style={[styles.page, { justifyContent: "center", alignItems: "center" }]}>
+    content = (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24 }}>
         <ActivityIndicator size="large" color={COLORS.black} />
       </View>
     );
-  }
-
-  if (!timestamps || timestamps.length === 0) {
-    return (
-      <View style={styles.page}>
+  } else if (!timestamps || timestamps.length === 0) {
+    content = (
+      <>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -105,90 +138,95 @@ const View_Tab = ({ navigation }) => {
           <PillButton
             title="Back to Dashboard"
             variant="neutral"
-            onPress={() => navigation.navigate('Dashboard')}/>
+            onPress={() => navigation.navigate('Dashboard')}
+          />
         </View>
-      </View>
+      </>
+    );
+  } else {
+    content = (
+      <>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            style={styles.backHitbox}
+          >
+            <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+          </TouchableOpacity>
+          <Text style={styles.title}> Analytics </Text>
+        </View>
+
+        {/* Pager dots */}
+        <View style={styles.dotsRow}>
+          {PAGES.map((p, i) => (
+            <TouchableOpacity
+              key={p.key}
+              style={[styles.dot, i === selectedIndex ? styles.dotActive : styles.dotInactive]}
+              onPress={() => goToIndex(i)}
+            />
+          ))}
+        </View>
+
+        {/* Horizontal ScrollView for charts */}
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={(e) => {
+            const i = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
+            if (i !== selectedIndex) {
+              setSelectedIndex(i);
+            }
+          }}
+        >
+          {PAGES.map((p) => (
+            <View key={p.key} style={{ width: screenWidth }}>
+              <View style={styles.chartWrap}>{renderChartByKey(p.key)}</View>
+            </View>
+          ))}
+        </ScrollView>
+      </>
     );
   }
 
-  // Function to render the selected chart
-  const renderChartByKey = (k) => {
-    switch (k) {
-      case "PieChartWork":
-        return <PieChartExampleWork workML={workML} />;
-      case "PieChartHome":
-        return <PieChartExampleHome homeML={homeML} />;
-      case "StackedBarWork":
-        return (
-          <StackedBarChartWorkML workML={workML} timestamps={timestamps} />
-        );
-      case "StackedBarHome":
-        return (
-          <StackedBarChartHomeML homeML={homeML} timestamps={timestamps} />
-        );
-      case "Burnout":
-        return (
-          <BurnoutLineChart
-            burnoutValues={burnoutValues}
-            workData={workData}
-            timestamps={timestamps}
-          />
-        );
-      case "MentalLoad":
-      default:
-        return (
-          <MentalLoadLineChart
-            timestamps={timestamps}
-            homeML={homeML}
-            workML={workML}
-          />
-        );
-    }
-  };
+  // --- Web wrapper: native div with overflow scrolling ---
+  if (Platform.OS === 'web') {
+    return (
+      <div style={{
+        height: '100dvh',
+        width: '100%',
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        backgroundColor: COLORS.white,
+        touchAction: 'pan-y',
+      }}>
+        <div style={{
+          paddingLeft: 24,
+          paddingRight: 24,
+          paddingTop: 12,
+          paddingBottom: 120,
+          minHeight: '100dvh',
+        }}>
+          {content}
+        </div>
+      </div>
+    );
+  }
 
+  // --- Native: vertical ScrollView wrapper ---
   return (
     <View style={styles.page}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          accessibilityRole="button"
-          style={styles.backHitbox}
-        >
-          <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
-        </TouchableOpacity>
-        <Text style={styles.title}> Analytics </Text>
-      </View>
-
-      {/* Pager dots */}
-      <View style={styles.dotsRow}>
-        {PAGES.map((p, i) => (
-          <TouchableOpacity
-            key={p.key}
-            style={[styles.dot, i === selectedIndex ? styles.dotActive : styles.dotInactive]}
-            onPress={() => goToIndex(i)}
-          />
-        ))}
-      </View>
-
-      {/* Horizontal ScrollView for charts */}
       <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(e) => {
-          const i = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
-          if (i !== selectedIndex) {
-            setSelectedIndex(i);
-          }
-        }}
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.pageContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator
+        alwaysBounceVertical
       >
-        {PAGES.map((p) => (
-          <View key={p.key} style={{ width: screenWidth }}>
-            <View style={styles.chartWrap}>{renderChartByKey(p.key)}</View>
-          </View>
-        ))}
+        {content}
       </ScrollView>
     </View>
   );
@@ -197,7 +235,15 @@ const View_Tab = ({ navigation }) => {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
+    ...(Platform.OS === 'web' ? { touchAction: 'pan-y' } : null),
     backgroundColor: COLORS.white,
+  },
+  pageContent: {
+    minHeight: Platform.OS === 'web' ? '100dvh' : '100%',
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 120,
   },
   header: {
     flexDirection: 'row',
@@ -241,12 +287,6 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     paddingTop: 4,
   },
-  footer: {
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-    marginTop: 4,
-  },
-
   // Empty state
   emptyState: {
     flex: 1,

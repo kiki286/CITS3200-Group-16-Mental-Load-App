@@ -1,7 +1,7 @@
-//CITS3200 project group 23 2024 2024
+//CITS3200 project group 16 2025
 //Settings tab part of the dashboard tabs
 
-import { View, Text, Alert, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, Alert, StyleSheet, TouchableOpacity, Platform, ScrollView } from 'react-native'
 import React from 'react'
 import Button from '../../../components/Buttons/Button'
 import COLORS from '../../../constants/colors'
@@ -29,26 +29,15 @@ const Settings = ({ navigation }) => {
       "Confirm",
       "Are you sure you want to wipe your mental load history? This action is IRREVERSIBLE.",
       [
-        {
-          text: "No",
-          onPress: () => console.log("Cancel clear responses"),
-          style: "cancel"
-        },
-        {
-          text: "Yes",
-          onPress: () => {
-            clearResponsesFile();
-          },
-          style: 'destructive'
-        },
+        { text: "No", onPress: () => console.log("Cancel clear responses"), style: "cancel" },
+        { text: "Yes", onPress: () => { clearResponsesFile(); }, style: 'destructive' },
       ],
       { cancelable: true }
     )
   }
 
-
-  return (
-    <View style={styles.page}>
+  const content = (
+    <>
       {/* Back Chevron */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
@@ -65,7 +54,6 @@ const Settings = ({ navigation }) => {
           variant="neutral"
           style={styles.pillSpacing}
         />
-
         <PillButton
           title="Log Out"
           onPress={handleLogout}
@@ -88,6 +76,45 @@ const Settings = ({ navigation }) => {
         <Text style={styles.footerLine}>Continued development by CITS3200 Group 16 project at University of Western Australia in 2025</Text>
         <Text style={styles.footerLine}>App idea by Emma Stephenson (UWA Business School)</Text>
       </View>
+    </>
+  );
+
+  // Web: native div with overflow
+  if (Platform.OS === 'web') {
+    return (
+      <div style={{
+        height: '100dvh',
+        width: '100%',
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        backgroundColor: COLORS.white,
+        touchAction: 'pan-y',
+      }}>
+        <div style={{
+          paddingLeft: 24,
+          paddingRight: 24,
+          paddingTop: 12,
+          paddingBottom: 120,
+          minHeight: '100dvh',
+        }}>
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  // Native: ScrollView
+  return (
+    <View style={styles.page}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.pageContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator
+        alwaysBounceVertical
+      >
+        {content}
+      </ScrollView>
     </View>
   );
 };
@@ -96,8 +123,13 @@ const styles = StyleSheet.create({
   page: {
     flex: 1,
     backgroundColor: COLORS.white,
+  },
+  pageContent: {
+    minHeight: '100%',
+    flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 12,
+    paddingBottom: 120,
   },
   backButton: {
     alignSelf: 'flex-start',

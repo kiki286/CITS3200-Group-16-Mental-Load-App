@@ -1,4 +1,4 @@
-//CITS3200 project group 23 2024 2024
+//CITS3200 project group 16 2025
 //Displays information about the project and the client
 
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native'
@@ -9,14 +9,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import COLORS from '../../../constants/colors'
 import { ChevronBackOutline } from 'react-ionicons';
 
-
 const About = ({ navigation }) => {
-  return (
-    <ScrollView 
-      style={styles.scroll} 
-      contentContainerStyle={styles.scrollContent}
-      keyboardShouldPersistTaps="handled"
-    >
+  const content = (
+    <>
       {/* Back */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
@@ -59,42 +54,74 @@ const About = ({ navigation }) => {
         </Text>
         <Text style={styles.p}>App idea by Emma Stephenson (UWA Business School)</Text>
       </View>
-    </ScrollView>
+    </>
+  );
+
+  // Web: native div with overflow
+  if (Platform.OS === 'web') {
+    return (
+      <div style={{
+        height: '100dvh',
+        width: '100%',
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        backgroundColor: COLORS.white,
+        touchAction: 'pan-y',
+      }}>
+        <div style={{
+          paddingLeft: 24,
+          paddingRight: 24,
+          paddingTop: 12,
+          paddingBottom: 80,
+          minHeight: '100dvh',
+        }}>
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  // Native: ScrollView
+  return (
+    <View style={styles.scroll}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator
+        alwaysBounceVertical
+      >
+        {content}
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-   scroll: {
+  scroll: {
     flex: 1,
     backgroundColor: COLORS.white,
-    ...(Platform.OS === 'web' ? { touchAction: 'pan-y' } : null),
   },
-
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 80,
   },
-
   backButton: { alignSelf: 'flex-start', marginBottom: 8 },
-
   title: {
     fontSize: 40,
     color: COLORS.black,
     fontFamily: FONTS.survey_font_bold,
     marginBottom: 12,
   },
-
   section: { marginBottom: 16 },
-
   h2: {
     fontSize: 18,
     color: COLORS.black,
     fontFamily: FONTS.main_font_bold,
     marginBottom: 6,
   },
-
   p: {
     fontSize: 16,
     color: COLORS.black,
