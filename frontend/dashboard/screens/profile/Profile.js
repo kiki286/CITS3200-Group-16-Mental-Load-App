@@ -227,14 +227,13 @@ const formatTime = (date) =>
         <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
       </TouchableOpacity>
 
-      {/* Title */}
-      <Text style={styles.title}>Profile</Text>
-
-      {/* Subheader */}
-      <Text style={styles.subtitle}>
-        Hi {displayName || 'User'}.
-        <Text style={styles.subtitleSecondary}> What would you like to update? </Text>
-      </Text>
+      {/* Header */}
+      <View style={styles.headerText}>
+        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.subtitle}>
+          Hey {displayName || 'User'}, what would you like to change?
+        </Text>
+      </View>
 
       {/* Section: Change display name */}
       <View style={styles.section}>
@@ -364,6 +363,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginBottom: 8,
   },
+  headerText: {
+  width: '100%',
+  marginBottom: 16,    
+  },
   title: {
     fontSize: 30,
     color: COLORS.black,
@@ -376,10 +379,6 @@ const styles = StyleSheet.create({
     color: COLORS.black,
     fontFamily: FONTS.main_font,
     marginBottom: 16,
-  },
-  subtitleSecondary: {
-    fontStyle: 'italic',
-    color: COLORS.black,
   },
   section: {
     marginBottom: 60,
