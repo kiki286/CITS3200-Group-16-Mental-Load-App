@@ -191,6 +191,22 @@ export default function App() {
     setPushEnabled(true);
   }
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if ('serviceWorker' in navigator) {
+      // register root-scoped SW to satisfy PWA installability heuristics
+      navigator.serviceWorker.getRegistration('/').then((reg) => {
+        if (!reg) {
+          navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+            .then(r => console.debug('[SW] registered', r.scope))
+            .catch(err => console.warn('[SW] registration failed', err));
+        } else {
+          console.debug('[SW] already registered', reg.scope);
+        }
+      }).catch(err => console.warn('[SW] getRegistration err', err));
+    }
+  }, []);
+
   if (typeof window !== "undefined") {
   // 1) Log what API base your built app is actually using
   //    Set this to whatever you currently export/use for requests

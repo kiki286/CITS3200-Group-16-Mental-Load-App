@@ -1,0 +1,32 @@
+{
+  "name": "Mental Load",
+  "short_name": "MentalLoad",
+  "description": "Track & visualise mental load.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/round_icon.png",
+      "sizes": "640x640",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/screenshots/screen-1080x2198.png",
+      "sizes": "1080x2198",
+      "type": "image/png",
+      "label": "Home screen"
+    }
+  ]
+}
