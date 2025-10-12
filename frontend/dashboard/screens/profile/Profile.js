@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { getAuth, updateProfile } from 'firebase/auth';
 import COLORS from '../../../constants/colors';
 import FONTS from '../../../constants/fonts';
-import Button from '../../../components/Buttons/Button';
+import Button from '../../../components/Buttons/Button_Light_Blue';
 import * as Notifications from 'expo-notifications';
 import { ChevronBackOutline } from 'react-ionicons';
 import PillButton from '../../../components/Buttons/PillButton';
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     color: COLORS.black,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 60,
   },
   sectionLabel: {
     fontSize: 16,

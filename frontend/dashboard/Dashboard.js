@@ -164,8 +164,8 @@ const styles = StyleSheet.create({
     color: COLORS.black,
     fontSize: 30,
     textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 60,
+    marginBottom: 32,
     fontFamily: FONTS.survey_font_bold,
   },
   button_container: {
