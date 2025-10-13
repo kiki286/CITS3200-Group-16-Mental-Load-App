@@ -96,6 +96,10 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(false);
+  const [currentRoute, setCurrentRoute] = useState('');
+
+  // Track if user is currently taking a survey
+  const isOnSurvey = currentRoute === 'Survey_Repeated';
 
   // Check if notifications are already enabled (web only)
   useEffect(() => {
@@ -227,6 +231,22 @@ export default function App() {
     });
   }
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if ('serviceWorker' in navigator) {
+      // register root-scoped SW to satisfy PWA installability heuristics
+      navigator.serviceWorker.getRegistration('/').then((reg) => {
+        if (!reg) {
+          navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+            .then(r => console.debug('[SW] registered', r.scope))
+            .catch(err => console.warn('[SW] registration failed', err));
+        } else {
+          console.debug('[SW] already registered', reg.scope);
+        }
+      }).catch(err => console.warn('[SW] getRegistration err', err));
+    }
+  }, []);
+
   if (typeof window !== "undefined") {
   // 1) Log what API base your built app is actually using
   //    Set this to whatever you currently export/use for requests
@@ -290,7 +310,23 @@ export default function App() {
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.black}}>
-      <NavigationContainer>
+      <NavigationContainer 
+        onStateChange={(state) => {
+          // Track current route name for hiding notification button during surveys
+          const getCurrentRoute = (navState) => {
+            if (!navState || !navState.routes) return '';
+            
+            const route = navState.routes[navState.index];
+            if (route.state) {
+              return getCurrentRoute(route.state);
+            }
+            return route.name;
+          };
+          
+          const routeName = getCurrentRoute(state);
+          setCurrentRoute(routeName);
+        }}
+      >
         <welcome_stack.Navigator
           initialRouteName={user ? 'Dashboard_Navigator' : 'Welcome'} // Navigate based on user state
         >
@@ -341,7 +377,7 @@ export default function App() {
           />
         </welcome_stack.Navigator>
       </NavigationContainer>
-      {Platform.OS === "web" && !!user && !pushEnabled && typeof Notification !== "undefined" && Notification.permission !== "granted" && (
+      {Platform.OS === "web" && !initializing && !!user && !pushEnabled && !isOnSurvey && typeof Notification !== "undefined" && Notification.permission !== "granted" &&(
         <View style={{ position: "absolute", bottom: 10, left: 0, right: 0, alignItems: 'center' }}>
           <TouchableOpacity onPress={onEnableNotifications} 
             style={{ backgroundColor: COLORS.light_green, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 999 }}>
