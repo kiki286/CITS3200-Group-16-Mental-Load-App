@@ -9,9 +9,7 @@ import COLORS from '../constants/colors';
 import FONTS from '../constants/fonts';
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient';
-import { SettingsOutline, Home, StatsChart, PersonOutline, ShieldOutline, HelpCircleOutline, LogOutOutline } from 'react-ionicons'
-import { signOut } from 'firebase/auth';
-import { auth } from '../firebase/config';
+import { SettingsOutline, Home, StatsChart, PersonOutline, ShieldOutline } from 'react-ionicons'
 import { getDemographicsSubmitted } from '../services/StorageHandler';
 
 const Dashboard = ({ navigation, isAdmin }) => {
@@ -24,15 +22,6 @@ const Dashboard = ({ navigation, isAdmin }) => {
       }
     })();
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigation.navigate('Welcome');
-    } catch (e) {
-      console.error('Error signing out:', e);
-    }
-  };
 
   const insets = useSafeAreaInsets();
 
@@ -107,7 +96,11 @@ const Dashboard = ({ navigation, isAdmin }) => {
           paddingLeft: 24,
           paddingRight: 24,
           paddingTop: 12,
-          paddingBottom: 100,
+          paddingBottom: 20,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}>
           {content}
         </div>
@@ -141,7 +134,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: 12,
-    paddingBottom: 100,
+    paddingBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dashboardTitle: {
     color: COLORS.black,
@@ -161,8 +156,10 @@ const styles = StyleSheet.create({
   row: {
     width: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginVertical: 10,
+    gap: 20,
   },
   button: {
     width: 140,

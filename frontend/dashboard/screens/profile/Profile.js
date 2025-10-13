@@ -390,6 +390,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   inlineRow: {
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,

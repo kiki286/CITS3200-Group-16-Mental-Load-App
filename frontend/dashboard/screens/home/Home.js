@@ -78,7 +78,7 @@ const Home = ({ navigation }) => {
           <Text style={styles.checkin_text}>{checkInMessage}</Text>
         </View>
 
-        <View style={styles.container}>
+        <View style={[styles.container, { marginTop: 40},]}>
           <Button
             title="Check in"
             onPress={handleCheckIn}
@@ -163,10 +163,10 @@ const styles = StyleSheet.create({
   body_container: { flex: 1, marginTop: 24 },
   hello_container: { flex: 0.2, paddingHorizontal: 26, alignItems: "center" },
   hello_text: { fontSize: 24, color: COLORS.black, fontFamily: FONTS.main_font },
-  checkin_text: { fontSize: 18, color: COLORS.black, fontFamily: FONTS.main_font, marginTop: 10 },
+  checkin_text: { fontSize: 18, color: COLORS.white, fontFamily: FONTS.main_font, marginTop: 10 },
   container: { flex: 0.1, paddingHorizontal: 26 },
   activeButton: { backgroundColor: COLORS.blue },
-  disabledButton: { backgroundColor: COLORS.dark_grey },
+  disabledButton: { backgroundColor: COLORS.dark_grey, color: COLORS.white, opacity: 0.7 },
   backButton: {
     position: "absolute",
     left: 0,
