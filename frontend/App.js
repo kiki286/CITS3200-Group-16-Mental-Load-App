@@ -95,6 +95,10 @@ export default function App() {
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState(null);
   const [pushEnabled, setPushEnabled] = useState(false);
+  const [currentRoute, setCurrentRoute] = useState('');
+
+  // Track if user is currently taking a survey
+  const isOnSurvey = currentRoute === 'Survey_Repeated';
 
   // Check if notifications are already enabled (web only)
   useEffect(() => {
@@ -235,7 +239,23 @@ export default function App() {
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.black}}>
-      <NavigationContainer>
+      <NavigationContainer 
+        onStateChange={(state) => {
+          // Track current route name for hiding notification button during surveys
+          const getCurrentRoute = (navState) => {
+            if (!navState || !navState.routes) return '';
+            
+            const route = navState.routes[navState.index];
+            if (route.state) {
+              return getCurrentRoute(route.state);
+            }
+            return route.name;
+          };
+          
+          const routeName = getCurrentRoute(state);
+          setCurrentRoute(routeName);
+        }}
+      >
         <welcome_stack.Navigator
           initialRouteName={user ? 'Dashboard_Navigator' : 'Welcome'} // Navigate based on user state
         >
@@ -283,7 +303,7 @@ export default function App() {
           />
         </welcome_stack.Navigator>
       </NavigationContainer>
-      {Platform.OS === "web" && !initializing && !!user && !pushEnabled && typeof Notification !== "undefined" && Notification.permission !== "granted" && !pushEnabled &&(
+      {Platform.OS === "web" && !initializing && !!user && !pushEnabled && !isOnSurvey && typeof Notification !== "undefined" && Notification.permission !== "granted" && !pushEnabled &&(
         <View style={{ position: "absolute", bottom: 10, left: 0, right: 0, alignItems: 'center' }}>
           <TouchableOpacity onPress={onEnableNotifications} 
             style={{ backgroundColor: COLORS.light_green, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 999 }}>
