@@ -1,5 +1,6 @@
-//CITS3200 project group 16 2025
-//Display the analytics obtained from submitting surveys
+// CITS3200 project group 16 2025
+// Display the analytics obtained from submitting surveys
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -15,7 +16,7 @@ import COLORS from "../../../constants/colors";
 import FONTS from "../../../constants/fonts";
 import { useFocusEffect } from "@react-navigation/native";
 import { Loading } from "../../../components/Messages";
-import PillButton from '../../../components/Buttons/PillButton';
+import PillButton from "../../../components/Buttons/PillButton";
 import { ChevronBackOutline } from "react-ionicons";
 
 // Chart imports
@@ -30,15 +31,15 @@ import {
 import { processResponses } from "../../../components/VisualisationPreProcessing";
 
 const PAGES = [
-  { key: 'MentalLoad', label: 'Overall line' },
-  { key: 'Burnout', label: 'Burnout line' },
-  { key: 'StackedBarHome', label: 'Home stacked' },
-  { key: 'StackedBarWork', label: 'Work stacked' },
-  { key: 'PieChartHome', label: 'Home pie' },
-  { key: 'PieChartWork', label: 'Work pie' },
+  { key: "MentalLoad", label: "Overall line" },
+  { key: "Burnout", label: "Burnout line" },
+  { key: "StackedBarHome", label: "Home stacked" },
+  { key: "StackedBarWork", label: "Work stacked" },
+  { key: "PieChartHome", label: "Home pie" },
+  { key: "PieChartWork", label: "Work pie" },
 ];
 
-const screenWidth = Dimensions.get('window').width;
+const screenWidth = Dimensions.get("window").width;
 
 const View_Tab = ({ navigation }) => {
   const [selectedIndex, setSelectedIndex] = useState(0); // Default selected chart index
@@ -78,29 +79,49 @@ const View_Tab = ({ navigation }) => {
   const renderChartByKey = (k) => {
     switch (k) {
       case "PieChartWork":
-        return <PieChartExampleWork workML={workML} />;
+        return (
+          <View style={styles.chartCenter}>
+            <PieChartExampleWork workML={workML} />
+          </View>
+        );
       case "PieChartHome":
-        return <PieChartExampleHome homeML={homeML} />;
+        return (
+          <View style={styles.chartCenter}>
+            <PieChartExampleHome homeML={homeML} />
+          </View>
+        );
       case "StackedBarWork":
-        return <StackedBarChartWorkML workML={workML} timestamps={timestamps} />;
+        return (
+          <View style={styles.chartCenter}>
+            <StackedBarChartWorkML workML={workML} timestamps={timestamps} />
+          </View>
+        );
       case "StackedBarHome":
-        return <StackedBarChartHomeML homeML={homeML} timestamps={timestamps} />;
+        return (
+          <View style={styles.chartCenter}>
+            <StackedBarChartHomeML homeML={homeML} timestamps={timestamps} />
+          </View>
+        );
       case "Burnout":
         return (
-          <BurnoutLineChart
-            burnoutValues={burnoutValues}
-            workData={workData}
-            timestamps={timestamps}
-          />
+          <View style={styles.chartCenter}>
+            <BurnoutLineChart
+              burnoutValues={burnoutValues}
+              workData={workData}
+              timestamps={timestamps}
+            />
+          </View>
         );
       case "MentalLoad":
       default:
         return (
-          <MentalLoadLineChart
-            timestamps={timestamps}
-            homeML={homeML}
-            workML={workML}
-          />
+          <View style={styles.chartCenter}>
+            <MentalLoadLineChart
+              timestamps={timestamps}
+              homeML={homeML}
+              workML={workML}
+            />
+          </View>
         );
     }
   };
@@ -109,7 +130,14 @@ const View_Tab = ({ navigation }) => {
 
   if (loading) {
     content = (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24 }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 24,
+        }}
+      >
         <ActivityIndicator size="large" color={COLORS.black} />
       </View>
     );
@@ -138,7 +166,7 @@ const View_Tab = ({ navigation }) => {
           <PillButton
             title="Back to Dashboard"
             variant="neutral"
-            onPress={() => navigation.navigate('Dashboard')}
+            onPress={() => navigation.navigate("Dashboard")}
           />
         </View>
       </>
@@ -159,15 +187,19 @@ const View_Tab = ({ navigation }) => {
         </View>
 
         {/* Pager dots */}
-        <View style={styles.dotsRow}>
-          {PAGES.map((p, i) => (
-            <TouchableOpacity
-              key={p.key}
-              style={[styles.dot, i === selectedIndex ? styles.dotActive : styles.dotInactive]}
-              onPress={() => goToIndex(i)}
-            />
-          ))}
-        </View>
+<View style={[styles.dotsRow, { justifyContent: 'center', alignItems: 'center' }]}>
+  {PAGES.map((p, i) => (
+    <TouchableOpacity
+      key={p.key}
+      style={[
+        styles.dot,
+        i === selectedIndex ? styles.dotActive : styles.dotInactive,
+      ]}
+      onPress={() => goToIndex(i)}
+    />
+  ))}
+</View>
+
 
         {/* Horizontal ScrollView for charts */}
         <ScrollView
@@ -183,8 +215,14 @@ const View_Tab = ({ navigation }) => {
           }}
         >
           {PAGES.map((p) => (
-            <View key={p.key} style={{ width: screenWidth }}>
-              <View style={styles.chartWrap}>{renderChartByKey(p.key)}</View>
+            <View key={p.key} style={styles.pageSlide}>
+              {/* Wrapper per slide agar konten center secara vertikal/horizontal */}
+              <View style={styles.slideInner}>
+                {/* Chart wrapper */}
+                <View style={styles.chartWrap}>{renderChartByKey(p.key)}</View>
+                {/* Optional label per page */}
+                <Text style={styles.pageLabel}>{p.label}</Text>
+              </View>
             </View>
           ))}
         </ScrollView>
@@ -193,23 +231,29 @@ const View_Tab = ({ navigation }) => {
   }
 
   // --- Web wrapper: native div with overflow scrolling ---
-  if (Platform.OS === 'web') {
+  if (Platform.OS === "web") {
     return (
-      <div style={{
-        height: '100dvh',
-        width: '100%',
-        overflow: 'auto',
-        WebkitOverflowScrolling: 'touch',
-        backgroundColor: COLORS.white,
-        touchAction: 'pan-y',
-      }}>
-        <div style={{
-          paddingLeft: 24,
-          paddingRight: 24,
-          paddingTop: 12,
-          paddingBottom: 120,
-          minHeight: '100dvh',
-        }}>
+      <div
+        style={{
+          height: "100dvh",
+          width: "100%",
+          overflow: "auto",
+          WebkitOverflowScrolling: "touch",
+          backgroundColor: COLORS.white,
+          touchAction: "pan-y",
+        }}
+      >
+        <div
+          style={{
+            paddingLeft: 24,
+            paddingRight: 24,
+            paddingTop: 12,
+            paddingBottom: 120,
+            minHeight: "100dvh",
+            maxWidth: 1200,            
+            margin: "0 auto",          
+          }}
+        >
           {content}
         </div>
       </div>
@@ -235,19 +279,21 @@ const View_Tab = ({ navigation }) => {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    ...(Platform.OS === 'web' ? { touchAction: 'pan-y' } : null),
+    ...(Platform.OS === "web" ? { touchAction: "pan-y" } : null),
     backgroundColor: COLORS.white,
   },
   pageContent: {
-    minHeight: Platform.OS === 'web' ? '100dvh' : '100%',
+    minHeight: Platform.OS === "web" ? "100dvh" : "100%",
     flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 120,
   },
+
+  // Header
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 24,
     paddingTop: 20,
   },
@@ -260,8 +306,8 @@ const styles = StyleSheet.create({
 
   // Dots
   dotsRow: {
-    flexDirection: 'row',
-    alignSelf: 'center',
+    flexDirection: "row",
+    alignSelf: "center",
     marginTop: 8,
     marginBottom: 8,
     gap: 8,
@@ -274,30 +320,64 @@ const styles = StyleSheet.create({
   dotInactive: { backgroundColor: COLORS.light_grey },
   dotActive: { backgroundColor: COLORS.light_blue4 },
 
+  // Horizontal pager slide
+  pageSlide: {
+    width: screenWidth,
+    paddingHorizontal: 0,
+  },
+  slideInner: {
+    width: "100%",
+    minHeight: 320,
+    paddingVertical: 8,
+    paddingHorizontal: 0,
+    alignItems: "center",       // center horizontal
+    justifyContent: "flex-start",
+  },
+
   // Main content
   content: {
     flex: 1,
     paddingHorizontal: 24,
     paddingBottom: 24,
     gap: 16,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
+
+  // Chart wrappers
   chartWrap: {
+    width: "100%",
     paddingHorizontal: 24,
     paddingBottom: 12,
     paddingTop: 4,
+    alignItems: "center", // <— CENTER chart container
   },
+
+  chartCenter: {
+    width: "100%",
+    maxWidth: 900,             
+    alignItems: "center",      
+    justifyContent: "center",
+  },
+
+  pageLabel: {
+    marginTop: 4,
+    fontSize: 12,
+    color: COLORS.grey || "#888",
+    fontFamily: FONTS.main_font,
+    textAlign: "center",
+  },
+
   // Empty state
   emptyState: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyText: {
     fontSize: 16,
     color: COLORS.black,
     fontFamily: FONTS.main_font,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 
