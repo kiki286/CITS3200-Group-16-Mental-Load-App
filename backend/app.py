@@ -12,7 +12,18 @@ import logging
 import threading
 import time
 import hashlib
-from zoneinfo import ZoneInfo
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    try:
+        from backports.zoneinfo import ZoneInfo  # backport for Python < 3.9
+    except ImportError:
+        raise RuntimeError(
+            "zoneinfo not available: upgrade to Python 3.9+ or install backports.zoneinfo "
+            "(pip install backports.zoneinfo)"
+        )
+import re
+from flask import Response, jsonify
 
 # Pull envs from .env file (must be named exactly ".env") - from the raw repo, fill in and rename the file ".env_example"
 load_dotenv()
@@ -629,6 +640,37 @@ def admin_debug_push_tokens():
     except Exception as e:
         logger.exception('Failed to list push tokens: %s', repr(e))
         return jsonify({'ok': False, 'error': str(e)}), 500
+
+
+QUALTRICS_DC_HOST = "yul1.qualtrics.com"  # keep the host you use
+
+# Simple proxy for Qualtrics images. Accepts ?im=IM_xxx&rel=0|1
+@app.route("/api/qualtrics-image")
+def qualtrics_image_proxy():
+    im = request.args.get("im", "")
+    use_rel = request.args.get("rel", "0") == "1"
+
+    # validate IM param to avoid open-proxy abuse
+    if not re.match(r"^IM_[A-Za-z0-9_-]+$", im):
+        return jsonify({"error": "invalid im parameter"}), 400
+
+    base = "WRQualtricsControlPanel_rel" if use_rel else "WRQualtricsControlPanel"
+    url = f"https://{QUALTRICS_DC_HOST}/{base}/Graphic.php?IM={im}"
+
+    try:
+        resp = requests.get(url, stream=True, timeout=10)
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        return jsonify({"error": "failed to fetch image", "detail": str(e)}), 502
+
+    content_type = resp.headers.get("Content-Type", "image/png")
+    # return the image bytes and allow cross-origin from your web client
+    headers = {
+        "Content-Type": content_type,
+        "Cache-Control": "public, max-age=3600",
+        "Access-Control-Allow-Origin": "*"
+    }
+    return Response(resp.content, headers=headers, status=resp.status_code)
 
 # Internal scheduler: periodically scan for scheduled campaigns and send when due.
 def process_due_campaigns_once():

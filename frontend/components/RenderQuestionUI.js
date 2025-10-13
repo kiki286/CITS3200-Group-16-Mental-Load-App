@@ -11,12 +11,28 @@ import {
   ScrollView,
   Image,
   useWindowDimensions,
+  Platform,
 } from "react-native";
 import TouchablePlatform from './TouchablePlatform';
 import COLORS from "../constants/colors";
 import FONTS from "../constants/fonts";
 import GroupedMatrixComponent from "./GroupedMatrixComponent";
 import { Loading } from "./Messages";
+
+const QUALTRICS_DC_HOST = "uaw.yu1.qualtrics.com";
+const buildQualtricsImageUrl = (im, useRel = false) => {
+  const safeIM = encodeURIComponent(im || "");
+  // For web use backend proxy to avoid CORS/redirect/hotlink issues
+  const cb = Date.now();
+  if (typeof window !== "undefined" && window.location && Platform.OS === "web") {
+    const backendBaseRaw = (process.env.EXPO_PUBLIC_BACKEND_URL || "").trim();
+    const backendBase = backendBaseRaw ? backendBaseRaw.replace(/\/+$/, "") : "";
+    const proxyPath = `/api/qualtrics-image?im=${safeIM}&rel=${useRel ? 1 : 0}&cb=${cb}`;
+    return backendBase ? `${backendBase}${proxyPath}` : proxyPath;
+  }
+  const base = useRel ? "WRQualtricsControlPanel_rel" : "WRQualtricsControlPanel";
+  return `https://${QUALTRICS_DC_HOST}/${base}/Graphic.php?IM=${safeIM}&cb=${cb}`;
+};
 
 // Lightweight cross-platform step slider implemented with RN primitives so it
 // works on web and native without extra native dependencies.
@@ -81,6 +97,7 @@ const RenderQuestionUI = ({
   };
   // State to track the loading status of images
   const [imageLoading, setImageLoading] = useState(true);
+  const [useRel, setUseRel] = useState(false);
   // For removing html tags from text
   const stripHtmlTags = (text) => {
     const withBreaks = text
@@ -337,6 +354,7 @@ const RenderQuestionUI = ({
             {questionDetails["Choices"].map((option, index) => {
             const requiresTextInput = option?.TextEntry === true;
             const imageLocation = option.ImageLocation !== "";
+            const imageUri = imageLocation ? buildQualtricsImageUrl(option.ImageLocation, useRel) : null;
             return (
               <View key={index}>
                 {requiresTextInput ? (
@@ -384,23 +402,45 @@ const RenderQuestionUI = ({
                   >
                     {imageLocation && (
                       <View>
-                      {imageLoading && (
-                        <Loading />
+                        {imageLoading && <Loading />}
+                         {Platform.OS === "web" ? (
+                           // Use native <img> to be able to set crossOrigin on web
+                           <img
+                             src={imageUri || ""}
+                             crossOrigin="anonymous"
+                             style={{
+                               width: "100%",
+                               maxWidth: 100,
+                               maxHeight: 500,
+                               objectFit: "contain",
+                               aspectRatio: "0.5",
+                             }}
+                             onLoad={handleImageLoad}
+                             onError={() => {
+                               if (!useRel) setUseRel(true);
+                               else setImageLoading(false);
+                             }}
+                           />
+                         ) : (
+                           <Image
+                             source={imageUri ? { uri: imageUri } : undefined}
+                             style={{
+                               width: "100%",
+                               maxWidth: 100,
+                               maxHeight: 500,
+                               height: undefined,
+                               aspectRatio: 0.5,
+                             }}
+                             resizeMode="contain"
+                             onLoad={handleImageLoad}
+                             onError={() => {
+                               if (!useRel) setUseRel(true);
+                               else setImageLoading(false);
+                             }}
+                           />
+                         )}
+                        </View>
                       )}
-                      <Image
-                        source={{ uri: `https://yul1.qualtrics.com/API/v3/ControlPanel/Graphic.php?IM=${option.ImageLocation}` }}
-                        style={{
-                          width: '100%',
-                          maxWidth: 100,
-                          maxHeight: 500,
-                          height: undefined,
-                          aspectRatio: 0.5,
-                        }}
-                        resizeMode="contain"
-                        onLoad={handleImageLoad}
-                      />
-                    </View>
-                    )}
                     <Text
                       style={[
                         styles.optionText,
