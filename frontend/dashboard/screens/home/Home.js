@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, Alert, TouchableOpacity, Platform, ScrollView }
 import React, { useEffect, useState } from "react";
 import COLORS from "../../../constants/colors";
 import FONTS from "../../../constants/fonts";
-import Button from "../../../components/Buttons/Button";
+import Button from "../../../components/Buttons/Button_Light_Blue";
 import { LinearGradient } from "expo-linear-gradient";
 import { getAuth } from "firebase/auth";
 import { getLastResponse } from "../../../services/StorageHandler";
@@ -65,12 +65,15 @@ const Home = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const content = (
     <>
-      <View style={styles.header_container}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ChevronBackOutline color={COLORS.black} height="30px" width="30px" />
-        </TouchableOpacity>
-        <Text style={styles.title_text}>Check-in</Text>
-      </View>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+        accessibilityLabel="Back"
+      >
+        <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+      </TouchableOpacity>
+
+      <Text style={styles.title}>Check-in</Text>
 
       <View style={styles.body_container}>
         <View style={styles.hello_container}>
@@ -80,10 +83,10 @@ const Home = ({ navigation }) => {
 
         <View style={[styles.container, { marginTop: 40},]}>
           <Button
-            title="Check in"
+            title="Proceed to Check in"
             onPress={handleCheckIn}
             disabled={!canCheckIn && !debug}
-            style={canCheckIn || debug ? styles.activeButton : styles.disabledButton}
+            style={!canCheckIn && !debug ? styles.disabledButton : null}
           />
         </View>
         <View style={{ height: 40 }} />
@@ -145,37 +148,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 12,
   },
-  header_container: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-    position: "relative",
-    height: 60,
-  },
-  title_text: {
-    fontSize: 50,
+  title: {
+    fontSize: 30,
     color: COLORS.black,
-    fontFamily: FONTS.main_font_bold,
-    textAlign: "center",
-    flex: 1,
+    fontFamily: FONTS.survey_font_bold,
+    marginBottom: 16,
   },
   body_container: { flex: 1, marginTop: 24 },
   hello_container: { flex: 0.2, paddingHorizontal: 26, alignItems: "center" },
   hello_text: { fontSize: 24, color: COLORS.black, fontFamily: FONTS.main_font },
-  checkin_text: { fontSize: 18, color: COLORS.white, fontFamily: FONTS.main_font, marginTop: 10 },
+  checkin_text: { fontSize: 18, color: COLORS.black, fontFamily: FONTS.main_font, marginTop: 10 },
   container: { flex: 0.1, paddingHorizontal: 26 },
-  activeButton: { backgroundColor: COLORS.blue },
   disabledButton: { backgroundColor: COLORS.dark_grey, color: COLORS.white, opacity: 0.7 },
   backButton: {
-    position: "absolute",
-    left: 0,
-    top: 15,
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
   },
 });
 
