@@ -12,13 +12,14 @@ import {
   Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { Eye, EyeOff } from 'react-ionicons';
 import Checkbox from "expo-checkbox";
 import COLORS from "../constants/colors";
-import Button_Green from "../components/Buttons/Button_Green";
+import Button_Light_Blue from "../components/Buttons/Button_Light_Blue";
 import { useSignUp } from "../hooks/useAuth";
 import TermsConditions from "./TermsConditions";
 import FONTS from "../constants/fonts";
+import TouchablePlatform from '../components/TouchablePlatform';
 
 const SignUp = ({ navigation }) => {
   const {
@@ -59,58 +60,51 @@ const SignUp = ({ navigation }) => {
   }, [errorMessage]);
   
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20, backgroundColor: COLORS.black, }}>
+    <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20, backgroundColor: COLORS.white, }}>
       <View style={{ flex: 1, marginHorizontal: 26 }}>
         <View style={{ marginVertical: 22 }}>
           <Text
             style={{
               fontSize: 30,
-              marginVertical: 10,
-              color: COLORS.white,
               fontFamily: FONTS.main_font,
-            }}
-          >
-            Create Account
-          </Text>
-
-          <Text style={{ fontSize: 20, color: COLORS.white, fontFamily: FONTS.main_font, }}>
-            Record your demographics
-          </Text>
+              marginVertical: 10,
+              marginTop: 40,
+              color: COLORS.black,}}>
+            Create Account</Text>
+          <Text
+            style={{
+              fontSize: 14,
+              color: COLORS.black,
+              fontFamily: FONTS.main_font,}}>
+            Welcome! Fill out your details to get started</Text>
         </View>
 
         <View style={{ marginBottom: 12 }}>
           <Text
             style={{
               fontSize: 17,
-              fontWeight: "400",
+              fontWeight: 400,
               marginVertical: 8,
-              color: COLORS.white,
-            }}
-          >
-            Email
-          </Text>
-
+              marginTop: 10,
+              color: COLORS.black,}}>
+            Email</Text>
           <View
             style={{
               width: "100%",
               height: 48,
-              borderColor: COLORS.white,
+              borderColor: COLORS.black,
               borderWidth: 1,
               borderRadius: 8,
               alignItems: "center",
               flexDirection: "row",
-              paddingLeft: 20,
-            }}
-          >
+              paddingLeft: 20,}}>
             <TextInput
-              placeholder="Enter your email"
-              placeholderTextColor={COLORS.white}
-              color={COLORS.white}
+              placeholder="Enter your email address"
+              placeholderTextColor={COLORS.dark_grey}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
-              style={{ width: "80%" , color: COLORS.white}}
-            />
+              style={{ width: "80%", color: COLORS.black}}/>
           </View>
 
           <Text
@@ -118,33 +112,27 @@ const SignUp = ({ navigation }) => {
               fontSize: 17,
               fontWeight: "400",
               marginVertical: 8,
-              marginTop: 10,
-              color: COLORS.white,
-            }}
-          >
-            Display Name
-          </Text>
+              marginTop: 30,
+              color: COLORS.black,}}>
+            Display Name</Text>
 
           <View
             style={{
               width: "100%",
               height: 48,
-              borderColor: COLORS.white,
+              borderColor: COLORS.black,
               borderWidth: 1,
               borderRadius: 8,
               alignItems: "center",
               flexDirection: "row",
-              paddingLeft: 20,
-            }}
-          >
+              paddingLeft: 20,}}>
             <TextInput
-              placeholder="Enter your display name"
-              placeholderTextColor={COLORS.white}
+              placeholder="Enter a display name"
+              placeholderTextColor={COLORS.dark_grey}
               color={COLORS.white}
               value={displayName}
               onChangeText={setDisplayName}
-              style={{ width: "80%", color: COLORS.white }}
-            />
+              style={{ width: "80%", color: COLORS.black }}/>
           </View>
 
           <Text
@@ -152,43 +140,36 @@ const SignUp = ({ navigation }) => {
               fontSize: 17,
               fontWeight: "400",
               marginVertical: 8,
-              marginTop: 10,
-              color: COLORS.white,
-            }}
-          >
-            Password
-          </Text>
+              marginTop: 30,
+              color: COLORS.black,}}>
+            Password</Text>
 
           <View
             style={{
               width: "100%",
               height: 48,
-              borderColor: COLORS.white,
+              borderColor: COLORS.black,
               borderWidth: 1,
               borderRadius: 8,
               alignItems: "center",
               flexDirection: "row",
-              paddingLeft: 20,
-            }}
-          >
+              paddingLeft: 20,}}>
             <TextInput
-              placeholder="Enter your password"
-              placeholderTextColor={COLORS.white}
+              placeholder="Enter a password"
+              placeholderTextColor={COLORS.dark_grey}
               color={COLORS.white}
               value={password}
               onChangeText={setPassword}
               secureTextEntry={hidePassword}
-              style={{ width: "80%", color: COLORS.white }}
-            />
+              style={{ width: "80%", color: COLORS.black }}/>
             <TouchableOpacity
               onPress={() => setHidePassword(!hidePassword)}
-              style={{ position: "absolute", right: 12 }}
-            >
-              <Ionicons
-                name={hidePassword ? "eye-off" : "eye"}
-                size={24}
-                color={COLORS.white}
-              />
+              style={{ position: "absolute", right: 12 }}>
+              {hidePassword ? (
+                <EyeOff color={COLORS.black} height="24px" width="24px" />
+              ) : (
+                <Eye color={COLORS.black} height="24px" width="24px" />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -198,34 +179,44 @@ const SignUp = ({ navigation }) => {
             style={{ marginRight: 8 }}
             value={TandC}
             onValueChange={setTandC}
-            color={TandC ? COLORS.dark_grey : COLORS.almost_white}
-          />
-          <Text style={{ color: COLORS.white }}>
-            I agree to the
-          </Text>
+            color={TandC ? COLORS.dark_grey : COLORS.light_grey}/>
+          
+          <Text style={{
+            color: COLORS.black }}>
+          I agree to the</Text>
+          
           <TouchableOpacity onPress={() => navigation.navigate("TermsConditions", { onAgree: handleAgreePress })}>
-            <Text style={{ color: COLORS.white, fontWeight: "bold", textDecorationLine: 'underline', marginHorizontal: 4 }}>
-              Terms and Conditions
-            </Text>
+            <Text style={{
+              color: COLORS.black,
+              fontWeight: "bold",
+              textDecorationLine: 'underline',
+              marginHorizontal: 4 }}>
+            Terms and Conditions</Text>
           </TouchableOpacity>
         </View>
 
-        <Button_Green
+        <Button_Light_Blue
           title="Sign Up"
-          filled
           style={{ marginTop: 28, marginBottom: 4 }}
-          onPress={() => handleSignUpPress()}
-        />
+          onPress={() => handleSignUpPress()}/>
+          
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 40 }}>
+          <Text style={{
+            fontSize: 14,
+            color: COLORS.black,
+            fontFamily: FONTS.main_font,}}>
+          Already have an account?{' '}</Text>
 
-        <Button_Green
-          title="Login"
-          filled
-          style={{
-            marginTop: 18,
-            marginBottom: 4,
-          }}
-          onPress={()=>navigation.navigate("Login")}
-        />
+          <TouchablePlatform onPress={() => navigation.navigate("Login")}>
+            <Text style={{
+              fontSize: 14,
+              color: COLORS.light_blue3,
+              fontFamily: FONTS.main_font,
+              textDecorationLine: 'underline',}}>
+            Login here!</Text>
+          </TouchablePlatform>
+        </View>
+
       </View>
     </ScrollView>
   );

@@ -6,71 +6,70 @@ import React from 'react'
 import { LinearGradient } from 'expo-linear-gradient';
 import COLORS from '../constants/colors';
 import Button from '../components/Buttons/Button'
-import { Ionicons } from '@expo/vector-icons'
 import FONTS from '../constants/fonts';
+import PWAInstallPrompt from '../components/PWAInstallPrompt';
 
 
 const Welcome = ({ navigation }) => {
   return (
-    <View style={{
-      paddingHorizontal: 26,
-      justifyContent: 'center',
-      alignItems: 'center',
-      flex: 1, 
-      backgroundColor: COLORS.black,
-    }}>
-      <Text style={{
-        fontSize: 30,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font,
-        marginTop: -60,
-      }}>TAKE A MOMENT TO</Text>
-      <Text style={{
-        fontSize: 30,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font
-      }}>REFLECT ON YOUR</Text>
-      <Text style={{
-        fontSize: 30,
-        color: COLORS.light_green,
-        fontFamily: FONTS.main_font
-      }}>MENTAL LABOUR</Text>
-      <Image
-        source={require('./../assets/mental_labour_venn.png')}
-        style={{
-          height: 400,
-          width: 400,
-          marginTop: -30,
-        }}
-      />
-      <Text style={{
-        fontSize: 35,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font,
-        marginTop: -60,
-      }}>MENTAL LOAD</Text>
-      <Text style={{
-        fontSize: 35,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font,
-      }}>TRACKER</Text>
-      <Button
-        title="Login"
-        onPress={()=>navigation.navigate("Login")}
-        style={{
-          width: "100%",
-          marginTop: 10,
-        }}
-      />
-      <Button
-        title="Sign Up"
-        onPress={()=>navigation.navigate("Signup")}
-        style={{
-          marginTop: 16,
-          width: "100%",
-        }}
-      />
-    </View>
+    <>
+      <View style={{
+        paddingHorizontal: 26,
+        justifyContent: 'center',
+        alignItems: 'center',
+        flex: 1, 
+        backgroundColor: COLORS.white,
+      }}>
+        <Image
+          source={require('./../assets/mental_labour_venn.png')}
+          style={{
+            height: 400,
+            width: 400,
+            marginTop: -30,
+            marginBottom: 20
+          }}
+        />
+        
+        <Text style={{
+          fontSize: 35,
+          color: COLORS.black,
+          fontFamily: FONTS.main_font,
+          marginTop: -60,
+        }}>MENTAL LOAD</Text>
+
+        <Text style={{
+          fontSize: 35,
+          color: COLORS.black,
+          fontFamily: FONTS.main_font,
+        }}>TRACKER</Text>
+
+        <Text style={{
+          fontSize: 16,
+          color: COLORS.light_blue3,
+          fontFamily: FONTS.main_font,
+          fontStyle: 'italic',
+          marginBottom: 40,
+        }}>take a moment to reflect</Text>
+
+        <Button
+          title="Login"
+          onPress={()=>navigation.navigate("Login")}
+          style={{
+            width: "100%",
+            marginBottom: 20,
+          }}/>
+
+        <Button
+          title="Sign Up"
+          onPress={()=>navigation.navigate("Signup")}
+          style={{
+            width: "100%",
+            marginBottom: 32,
+          }}/>
+      </View>
+      {/* PWA install prompt (web-only) */}
+      <PWAInstallPrompt />
+    </>
   )
 }
 

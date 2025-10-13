@@ -1,4 +1,4 @@
-# CITS3200-Mental-Load-App  
+
 
 An app to measure and view mental load  
 
@@ -8,6 +8,14 @@ The package.json file contains the packages used.
 1. Clone the repo and cd into the frontend directory  
 2. Install libraries by running `npm install`  
 3. Build and run the app by running `npx expo start`  
+
+## How to set up firebase hosting for the first time
+1. Cd into the frontend directory and install firebase with `npm install -g firebase-tools`
+2. Login with your account using `firebase login`
+3. When updating frontend, export build with `npx expo export --platform web`
+4. Then redeploy with `firebase deploy --only hosting` 
+
+
 
 ## To run the webserver locally instead of globally:
 Before doing anything, you need to set the .env_example file to contain your keys, and rename it to .env. **NEVER COMMIT THIS FILE ONCE YOU HAVE FILLED IT IN!**
@@ -20,8 +28,6 @@ To set up the flask server, you need to create a pyenv:
 4. Place your firebase credentials into the "secrets" folder
 5. Run `flask run` to run the app. You should get a Hello World message on http://localhost:5000/
 6. If you want to test on a phone (i.e. server can't be on localhost), run `flask run --host 0.0.0.0` to run it on your local network.
-
-      To connect to the server from the app itself, you will need to set the URLs in frontend/services/ResponseSender.js and frontend/services/SurveyFetcher.js to align with your running flask server.
 
 Setting up firebase:
 

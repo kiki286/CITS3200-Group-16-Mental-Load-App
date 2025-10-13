@@ -2,6 +2,7 @@
 //Function that sends responses to Flask Server
 
 import { getAuth } from "firebase/auth";
+import { fetchWithAuth } from "./api";
 //import { ResponseData } from #TBA#
 
 //Placeholder data
@@ -11,7 +12,6 @@ export const ResponseSender = async (surveyResponseData, surveyType) => {
   const user = auth.currentUser;
   if (user) {
     try {
-      const idToken = await user.getIdToken();
       const date = new Date().toISOString().split('.')[0] + 'Z'; // Remove milliseconds and keep the 'Z' for UTC;
       const values = {
         endDate: date,
@@ -23,28 +23,18 @@ export const ResponseSender = async (surveyResponseData, surveyType) => {
       //http://192.168.0.127 or use
       //http://10.0.2.2:5000 for emulators
       //Use https://jameb.pythonanywhere.com if not running flask
-      const response = await fetch("https://kiki286.pythonanywhere.com/submit-survey", {
+      
+      //Get backend URL from .env instead of hardcoding
+      //Makes it easier to switch between localhost, emulator, and production environment
+
+      console.log("Submitting survey:", { surveyType });
+      const data = await fetchWithAuth("/submit-survey", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json",
-          "Survey-Type": surveyType,
-        },
-        body: JSON.stringify(surveyResponseData),
+        headers: { "Survey-Type": surveyType },
+        body: surveyResponseData,
       });
-      console.log("Pure sent: ", JSON.stringify(surveyResponseData));
-      if (response.ok) {
-        const data = await response.json();
-        data["success"] = true;
-        return data;
-      } else {
-        console.error(
-          "Error",
-          "Failed to submit survey responses. Status is: ",
-          response.statusText 
-        );
-        throw new Error(response.statusText);
-      }
+      // helper returns parsed JSON; add a success flag if you want
+      return { ...data, success: true };
     } catch (error) {
       console.error("Error submitting survey responses:", error);
       throw error;

@@ -26,7 +26,7 @@ idna==3.7
 itsdangerous==2.2.0
 Jinja2==3.1.4
 MarkupSafe==2.1.5
-msgpack==1.0.8
+msgpack==1.1.1 #version changed from 1.0.8 to 1.1.1 to run python 3.13
 proto-plus==1.24.0
 protobuf==5.27.3
 pyasn1==0.6.0

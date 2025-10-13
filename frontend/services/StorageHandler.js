@@ -2,6 +2,7 @@
 //Functions to handle creating response object and submitting to Qualtrics
 
 import * as FileSystem from 'expo-file-system';
+import { Platform } from 'react-native';
 import { ResponseSender } from "./ResponseSender";
 
 //Sample file:
@@ -22,8 +23,17 @@ const defaultData = {
 
 // Function to check if the file exists, and if not, create it with default values
 const ensureFileExists = async () => {
+  // On web use localStorage, otherwise use expo-file-system
+  if (Platform.OS === 'web') {
+    const existing = localStorage.getItem('userData');
+    if (!existing) {
+      localStorage.setItem('userData', JSON.stringify(defaultData, null, 2));
+      console.log('localStorage: userData created with default values');
+    }
+    return;
+  }
+
   const fileInfo = await FileSystem.getInfoAsync(fileUri);
-  
   if (!fileInfo.exists) {
     // File doesn't exist, so create it with default data
     await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(defaultData, null, 2), {
@@ -33,20 +43,37 @@ const ensureFileExists = async () => {
   }
 };
 
+// Read user data abstracted for web/native
+const readUserData = async () => {
+  if (Platform.OS === 'web') {
+    const raw = localStorage.getItem('userData');
+    return raw ? JSON.parse(raw) : null;
+  }
+  const fileContent = await FileSystem.readAsStringAsync(fileUri, {
+    encoding: FileSystem.EncodingType.UTF8,
+  });
+  return JSON.parse(fileContent);
+};
+
+// Write user data abstracted for web/native
+const writeUserData = async (data) => {
+  if (Platform.OS === 'web') {
+    localStorage.setItem('userData', JSON.stringify(data, null, 2));
+    return;
+  }
+  await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(data, null, 2), {
+    encoding: FileSystem.EncodingType.UTF8,
+  });
+};
+
 export const setDemographicsSubmit = async () => {
   try {
     await ensureFileExists();
 
-    let userData = await FileSystem.readAsStringAsync(fileUri, {
-      encoding: FileSystem.EncodingType.UTF8,
-    }); 
-    userData = JSON.parse(userData);
-
-    userData.demographics.demographicsSubmitted = true;
-
-    await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(userData, null, 2), {
-      encoding: FileSystem.EncodingType.UTF8,
-    });
+  const userData = await readUserData();
+  if (!userData) return;
+  userData.demographics.demographicsSubmitted = true;
+  await writeUserData(userData);
   } catch (error) {
     console.error('Error setting demo flag:', error);
   }
@@ -57,14 +84,11 @@ export const appendResponseToFile = async (newResponse, qualSurvey) => {
   try {
     await ensureFileExists();
     // Read the existing data from the file (if it exists)
-    let fileContent = await FileSystem.readAsStringAsync(fileUri, {
-      encoding: FileSystem.EncodingType.UTF8,
-    }); 
+  let userData = await readUserData();
+  if (!userData) userData = JSON.parse(JSON.stringify(defaultData));
 
-    let userData = JSON.parse(fileContent);
-
-    // Initialize processedResponse with default values
-    processedResponse = {
+  // Initialize processedResponse with default values
+  const processedResponse = {
       "Home_ML": {
         "Deciding": 0,
         "Planning": 0,
@@ -128,10 +152,8 @@ export const appendResponseToFile = async (newResponse, qualSurvey) => {
       response: processedResponse
     };
 
-    // Save the updated data back to the file
-    await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(userData, null, 2), {
-      encoding: FileSystem.EncodingType.UTF8,
-    });
+  // Save the updated data back to storage
+  await writeUserData(userData);
 
     console.log('Response appended to file:', fileUri);
   } catch (error) {
@@ -146,15 +168,9 @@ export const getQuestionData = (questionID, qualSurvey) => {
 // Function to read the responses from the local file
 export const getStoredData = async () => {
   try {
-    await ensureFileExists();
-    const fileContent = await FileSystem.readAsStringAsync(fileUri, {
-      encoding: FileSystem.EncodingType.UTF8,
-    });
-
-    // Parse the content into a JSON object
-    const responses = JSON.parse(fileContent);
-    //console.log('Running getStoredData. Responses read from file:', JSON.stringify(responses));
-    return responses;
+  await ensureFileExists();
+  const responses = await readUserData();
+  return responses;
   } catch (error) {
     console.error('Error reading responses:', error);
     return null;
@@ -164,13 +180,8 @@ export const getStoredData = async () => {
 export const getDemographicsSubmitted = async () => {
   try {
     await ensureFileExists();
-    const fileContent = await FileSystem.readAsStringAsync(fileUri, {
-      encoding: FileSystem.EncodingType.UTF8,
-    });
-
-    // Parse the content into a JSON object
-    const userData = JSON.parse(fileContent);
-    return userData.demographics.demographicsSubmitted ?? false;
+  const userData = await readUserData();
+  return userData?.demographics?.demographicsSubmitted ?? false;
   } catch (error) {
     console.error('Error reading demographicsSubmitted:', error);
     return false; // Return false if an error occurs
@@ -181,19 +192,10 @@ export const getDemographicsSubmitted = async () => {
 export const getLastResponse = async () => {
   try {
     await ensureFileExists();
-    const fileContent = await FileSystem.readAsStringAsync(fileUri, {
-      encoding: FileSystem.EncodingType.UTF8,
-    });
-
-    // Parse the content into a JSON object
-    const responses = JSON.parse(fileContent);
-    //console.log('Running getLastResponse. Responses read from file:', JSON.stringify(responses));
-    // Get the keys (timestamps) and sort them to find the latest one
-    const responseKeys = Object.keys(responses.responses);
-    const latestResponseKey = responseKeys.sort().pop();
-    const latestResponse = responses.responses[latestResponseKey];
-
-    return latestResponse;
+  const responses = await readUserData();
+  const responseKeys = Object.keys(responses.responses || {});
+  const latestResponseKey = responseKeys.sort().pop();
+  return responses.responses?.[latestResponseKey] ?? null;
   } catch (error) {
     console.error('Error reading responses:', error);
     return null;
@@ -204,14 +206,8 @@ export const getLastResponse = async () => {
 export const getResponses = async () => {
   try {
     await ensureFileExists();
-    const fileContent = await FileSystem.readAsStringAsync(fileUri, {
-      encoding: FileSystem.EncodingType.UTF8,
-    });
-
-    // Parse the content into a JSON object
-    const responses = JSON.parse(fileContent);
-    //console.log('Running getResponses. Responses read from file:', JSON.stringify(responses));
-    return responses.responses;
+  const responses = await readUserData();
+  return responses.responses;
   } catch (error) {
     console.error('Error reading responses:', error);
     return null;
@@ -222,13 +218,10 @@ export const getResponses = async () => {
 export const clearResponsesFile = async () => {
   try {
     await ensureFileExists();
-    const clearedFileData = defaultData;
-    clearedFileData.demographics.demographicsSubmitted = true;
-    await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(clearedFileData, null, 2), {
-      encoding: FileSystem.EncodingType.UTF8,
-    });
-
-    console.log('Responses file cleared.');
+  const clearedFileData = JSON.parse(JSON.stringify(defaultData));
+  clearedFileData.demographics.demographicsSubmitted = true;
+  await writeUserData(clearedFileData);
+  console.log('Responses cleared from storage.');
   } catch (error) {
     console.error('Error clearing responses:', error);
   }

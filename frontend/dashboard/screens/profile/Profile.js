@@ -1,15 +1,34 @@
-//CITS3200 project group 23 2024 2024
-//Profile tab part of the dashboard tabs
+//CITS3200 project group 16 2025
+// //Profile tab part of the dashboard tabs
 
-import { View, Text, TextInput, Alert, Switch, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Alert, Switch, StyleSheet, Platform, TouchableOpacity, ScrollView } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { getAuth, updateProfile } from 'firebase/auth';
 import COLORS from '../../../constants/colors';
 import FONTS from '../../../constants/fonts';
-import Button from '../../../components/Buttons/Button';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import Button from '../../../components/Buttons/Button_Light_Blue';
 import * as Notifications from 'expo-notifications';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ChevronBackOutline } from 'react-ionicons';
+import PillButton from '../../../components/Buttons/PillButton';
+import { requestNotificationPermission } from '../../../firebase/config';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { API_BASE, fetchWithAuth } from '../../../services/api'
+import { getMessaging, deleteToken, isSupported } from "firebase/messaging";
+
+const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY;
+
+const STORAGE_KEYS = {
+    enabled: 'notificationsEnabled',
+    time: 'notificationTime',
+    fcmToken: 'fcmToken',
+};
+
+const formatHHMM = (date) => {
+  const d = new Date(date);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+};
 
 const Profile = ({ navigation }) => {
     // State management
@@ -19,41 +38,96 @@ const Profile = ({ navigation }) => {
     const [showPicker, setShowPicker] = useState(false);
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
-    const logCurrentTime = () => {
-        const currentTime = new Date();
-        console.log(`Current Time: ${currentTime.toLocaleTimeString()}`);
+    const saveItem = async (key, value) => {
+        if (Platform.OS === 'web') {
+            localStorage.setItem(key, value);
+        } else {
+            const AsyncStorage = require('@react-native-async-storage/async-storage');
+            await AsyncStorage.setItem(key, value);
+        }
     };
 
-    const onTimeChange = async (event, selectedDate) => {
-        const currentDate = selectedDate || notificationTime;
-        setShowPicker(false);
-        setNotificationTime(currentDate);
-        logCurrentTime();
+    const loadItem = async (key) => {
+        if (Platform.OS === 'web') return localStorage.getItem(key);
+            const AsyncStorage = require('@react-native-async-storage/async-storage');
+            return await AsyncStorage.getItem(key);
+    };
 
-        // Schedule notification immediately after picking a time
-        await scheduleNotification(currentDate);
+const formatTime = (date) =>
+  new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const onTimeChange = async (event, selectedDate) => {
+        const picked = selectedDate || notificationTime;
+        setShowPicker(false);
+        const when = new Date(picked);
+        setNotificationTime(when);
+        await saveItem(STORAGE_KEYS.time, when.toISOString());
+        if (notificationsEnabled && Platform.OS !== 'web') {
+            await scheduleNotification(when);
+        } 
     };
 
     const toggleNotifications = async () => {
         const newValue = !notificationsEnabled;
-        setNotificationsEnabled(newValue);
-        logCurrentTime();
-
-        // If notifications are being enabled, schedule them
-        if (newValue) {
-            await scheduleNotification(notificationTime);
-        } else {
-            await cancelNotification();
+        
+        // Web push notifications
+        if (Platform.OS === 'web') {
+            console.log('[toggle] web->', newValue ? 'enable' : 'disable');
+            if (newValue) {
+                const ok = await enableWebPush();
+                if (!ok) return;
+                // also persist prefs to backend on enable
+                const hhmm = formatHHMM(notificationTime);
+                await fetchWithAuth("/api/user/prefs", {
+                  method: "POST",
+                  body: {
+                    notificationsEnabled: true,
+                    reminderTime: hhmm,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  },
+                });
+            } else {
+                await disableWebPush();
+                await fetchWithAuth("/api/user/prefs", {
+                  method: "POST",
+                  body: { notificationsEnabled: false },
+                });
+            }
+            await saveItem(STORAGE_KEYS.enabled, JSON.stringify(newValue));
+            setNotificationsEnabled(newValue);
+            return;
         }
 
-        await AsyncStorage.setItem('notificationsEnabled', JSON.stringify(newValue));
+        // Local notifications for iOS/Android
+        setNotificationsEnabled(newValue);
+        if (newValue) {
+          await scheduleNotification(notificationTime);
+          await fetchWithAuth("/api/user/prefs", {
+            method: "POST",
+            body: {
+              notificationsEnabled: true,
+              reminderTime: formatHHMM(notificationTime),
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            },
+          });
+        } else {
+          await cancelNotification();
+          await fetchWithAuth("/api/user/prefs", {
+            method: "POST",
+            body: { notificationsEnabled: false },
+          });
+        }
+        await saveItem(STORAGE_KEYS.enabled, JSON.stringify(newValue));
     };
 
     const scheduleNotification = async (time) => {
-        const trigger = new Date(time);
-        trigger.setSeconds(0); // Trigger at the start of the minute
+        if (Platform.OS === 'web') return; // not supported on web
+        await cancelNotification(); // Cancel existing notifications to avoid duplicates
 
-        console.log(`Scheduling notification for: ${trigger.toLocaleTimeString()}`); // Log scheduled time
+        const t = new Date(time);
+        t.setSeconds(0); // Trigger at the start of the minute
+
+        console.log(`Scheduling notification for: ${t.toLocaleTimeString()}`); // Log scheduled time
 
         await Notifications.scheduleNotificationAsync({
             content: {
@@ -61,39 +135,115 @@ const Profile = ({ navigation }) => {
                 body: "This is a reminder to Do your Mental Load Check.",
             },
             trigger: {
-                hour: trigger.getHours(),
-                minute: trigger.getMinutes(),
+                hour: t.getHours(),
+                minute: t.getMinutes(),
                 repeats: true,
+                channelId: Platform.OS === 'android' ? 'default' : undefined,
             },
         });
     };
 
 
     const cancelNotification = async () => {
-        const allScheduled = await Notifications.getAllScheduledNotificationsAsync();
-        for (const notification of allScheduled) {
-            if (notification.id) {
-                await Notifications.cancelScheduledNotificationAsync(notification.id);
-            }
+        if (Platform.OS === 'web') return; // not supported on web
+        const all = await Notifications.getAllScheduledNotificationsAsync();
+        await Promise.all(
+            all.map((n)=>
+                Notifications.cancelScheduledNotificationAsync(n.identifier)
+            )
+        );
+        console.log('All scheduled notifications cancelled');
+    };
+
+    const enableWebPush = async () => {
+        const user = getAuth().currentUser;
+        if (!user) {
+            Alert.alert('Notifications', 'Please sign in first.');
+            return false;
         }
+        console.log('[webpush] requesting permission & token', { hasVapid: !!VAPID_PUBLIC_KEY, API_BASE });
+        const { ok, token, reason } = await requestNotificationPermission(VAPID_PUBLIC_KEY);
+        console.log('[webpush] permission result', { ok, token, reason });
+
+        if (!ok || !token) {
+            Alert.alert('Notifications', `Could not enable notifications: ${reason || 'permission denied'}`);
+            return false;
+        }
+
+        await fetchWithAuth("/api/push/subscribe", {
+            method: "POST",
+            body: { token, platform: "web" },
+        });
+        await saveItem(STORAGE_KEYS.fcmToken, token);
+        console.log('[webpush] subscribed & stored token');
+        return true;
+    };
+
+    const disableWebPush = async () => {
+        const user = getAuth().currentUser;
+        const token = await loadItem(STORAGE_KEYS.fcmToken);
+        if (!user || !token) return;
+
+        const resp = await fetchWithAuth("/api/push/unsubscribe", {
+            method: "POST",
+            body: { token },
+        });
+        if (!resp || !resp.ok) {
+            const text = await resp.text().catch(() => '');
+            console.warn('[webpush] unsubscribe failed:', resp?.status, text);
+        }
+
+        if (Platform.OS === 'web') {
+          const supported = await isSupported().catch(() => false);
+          if (supported) {
+             try {
+              const messaging = getMessaging();
+              await deleteToken(messaging);
+            } catch (e) {
+              console.warn("[webpush] deleteToken failed", e);
+            }
+          }
+          localStorage.removeItem(STORAGE_KEYS.fcmToken);
+        } else{
+            const AsyncStorage = require('@react-native-async-storage/async-storage');
+            await AsyncStorage.removeItem(STORAGE_KEYS.fcmToken);
+        }
+        console.log('[webpush] unsubscribed & removed token');
+        return true;
     };
 
     useEffect(() => {
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (user) {
-            setDisplayName(user.displayName);
-        }
+        const init = async () => {
+            const auth = getAuth();
+            if (auth.currentUser?.displayName) setDisplayName(auth.currentUser.displayName);
 
-        const loadNotificationSettings = async () => {
-            const notificationsStatus = await AsyncStorage.getItem('notificationsEnabled');
-            if (notificationsStatus !== null) {
-                setNotificationsEnabled(JSON.parse(notificationsStatus));
+            //Native permission + channel setup
+            if (Platform.OS !== 'web') {
+                const { status } = await Notifications.getPermissionsAsync();
+                if (status !== 'granted') {
+                    setNotificationsEnabled(false);
+                    return
+                }
+                if (Platform.OS === 'android') {
+                    await Notifications.setNotificationChannelAsync('default', {
+                        name: 'Default',
+                        importance: Notifications.AndroidImportance.DEFAULT,
+                    });
+                }
+            }
+
+            //restore settings
+            const savedEnabled = await loadItem(STORAGE_KEYS.enabled);
+            const savedTime = await loadItem(STORAGE_KEYS.time);
+
+            if (savedEnabled !== null) setNotificationsEnabled(JSON.parse(savedEnabled));
+            if (savedTime) {
+                const t = new Date(savedTime);
+                if (!isNaN(t.getTime())) setNotificationTime(t);
             }
         };
-
-        loadNotificationSettings();
-    }, []);
+        init();
+    }, []);  
 
     const handleUpdateDisplayName = () => {
         const auth = getAuth();
@@ -114,130 +264,240 @@ const Profile = ({ navigation }) => {
         }
     };
 
-    return (
-        <View style={styles.main_container}>
-            <View style={styles.title_container}>
-                <Text style={styles.title_text}>
-                    Profile
-                </Text>
-            </View>
-            <View style={styles.body_container}>
-                <View style={styles.container}>
-                    <Text style={styles.display_text}>
-                        Hi {displayName || 'User'}. What would you like to update?
-                    </Text>
-                </View>
+  const content = (
+    <>
+      {/* Back button */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.navigate("Dashboard")}
+        accessibilityLabel="Back"
+      >
+        <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+      </TouchableOpacity>
 
-                <View style={styles.container}>
-                    <TextInput
-                        placeholder='Enter new display name'
-                        placeholderTextColor={COLORS.light_grey}
-                        value={newDisplayName}
-                        onChangeText={setNewDisplayName}
-                        style={styles.text_input}
-                    />
-                </View>
-                <View style={styles.container}>
-                    <Button
-                        title="Update Name"
-                        onPress={handleUpdateDisplayName}
-                    />
-                </View>
-                <View style={styles.container}>
-                    <Button
-                        title="Set Notification Time"
-                        onPress={() => setShowPicker(true)}
-                    />
-                </View>
-                <View style={styles.notification_container}>
-                    <Text style={styles.notification}>Notifications: </Text>
-                    <Switch
-                        value={notificationsEnabled}
-                        onValueChange={toggleNotifications}
-                        trackColor={{ false: "#767577", true: "#81b0ff" }}
-                        thumbColor={notificationsEnabled ? "#f5dd4b" : "#f4f3f4"}
-                    />
-                </View>
+      {/* Header */}
+      <View style={styles.headerText}>
+        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.subtitle}>
+          Hey {displayName || 'User'}, what would you like to change?
+        </Text>
+      </View>
 
-                {showPicker && (
-                    <DateTimePicker
-                        testID="dateTimePicker"
-                        value={notificationTime}
-                        mode="time"
-                        is24Hour={true}
-                        onChange={onTimeChange}
-                    />
-                )}
-                <View style={styles.container}>
-                    <Button
-                        title="Update Demographics"
-                        onPress={() => navigation.navigate("Survey_Demographics")}
-                    />
-                </View>
-                <View style={styles.container}>
-                    <Button
-                        title="Back"
-                        onPress={() => navigation.navigate("Dashboard")}
-                    />
-                </View>
-            </View>
+      {/* Section: Change display name */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Change your display name:</Text>
+        <View style={styles.inlineRow}>
+          <TextInput
+            placeholder='Enter new display name'
+            placeholderTextColor={COLORS.light_grey}
+            value={newDisplayName}
+            onChangeText={setNewDisplayName}
+            style={styles.input}
+          />
+          <PillButton
+            title="Update"
+            onPress={handleUpdateDisplayName}
+            variant="primary"
+            size="md"
+            fullWidth={false}
+          />
         </View>
+      </View>
+
+      {/* Section: Notification settings */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Set Notifications and time:</Text>
+
+        <View style={styles.inlineRow}>
+          <Text style={styles.inlineLabel}>Notifications</Text>
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={toggleNotifications}
+            trackColor={{ false: COLORS.light_grey, true: COLORS.light_blue2 }}
+            thumbColor={notificationsEnabled ? COLORS.yellow : COLORS.almost_white}
+          />
+        </View>
+
+        <View style={styles.inlineRow}>
+          <TextInput
+            editable={false}
+            value={formatTime(notificationTime)}
+            style={styles.timePill}
+          />
+          <PillButton
+            title="Update"
+            onPress={() => setShowPicker(true)}
+            variant="primary"
+            size="md"
+            fullWidth={false}
+          />
+        </View>
+
+        {showPicker && Platform.OS !== 'web' && (
+          <DateTimePicker
+            value={notificationTime}
+            mode="time"
+            is24Hour={true}
+            onChange={onTimeChange}
+          />
+        )}
+
+        {Platform.OS === 'web' && showPicker && (
+          <input
+            type="time"
+            value={formatHHMM(notificationTime)}
+            onChange={async (e) => {
+              const [h, m] = e.target.value.split(':').map(Number);
+              const t = new Date(notificationTime);
+              t.setHours(h); t.setMinutes(m); t.setSeconds(0); t.setMilliseconds(0);
+              setNotificationTime(t);
+              await saveItem(STORAGE_KEYS.time, t.toISOString());
+              // tell backend immediately on web
+              await fetchWithAuth("/api/user/prefs", {
+                method: "POST",
+                body: {
+                  reminderTime: e.target.value,
+                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                },
+              });
+              setShowPicker(false);
+            }}
+           style={{ height: 44, borderRadius: 10, border: '1px solid #ddd', padding: '0 12px' }}
+          />
+       )}
+      </View>
+
+      {/* Section: Update demographics */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Update your demographics survey:</Text>
+        <Button
+          title="Update Demographics"
+          onPress={() => navigation.navigate("Survey_Demographics")}
+        />
+      </View>
+    </>
+  );
+
+  // Web: native div with overflow scrolling
+  if (Platform.OS === 'web') {
+    return (
+      <div style={{
+        height: '100dvh',
+        width: '100%',
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        backgroundColor: COLORS.white,
+        touchAction: 'pan-y',
+      }}>
+        <div style={{
+          paddingLeft: 24,
+          paddingRight: 24,
+          paddingTop: 12,
+          paddingBottom: 120,
+          minHeight: '100dvh',
+        }}>
+          {content}
+        </div>
+      </div>
     );
+  }
+
+  // Native: ScrollView
+  return (
+    <View style={styles.page}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.pageContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator
+        alwaysBounceVertical
+      >
+        {content}
+      </ScrollView>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
-    main_container: {
-        flex: 1,
-        backgroundColor: COLORS.black,
-    },
-    title_container: {
-        position: 'absolute',
-        top: 20,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    title_text: {
-        fontSize: 50,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font_bold,
-    },
-    body_container: {
-        flex: 1,
-        marginTop: 100,
-    },
-    display_text: {
-        fontSize: 24,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font,
-    },
-    container: {
-        flex: 0.1,
-        paddingHorizontal: 26,
-    },
-    text_input: {
-        width: '100%',
-        height: 40,
-        borderColor: COLORS.almost_white,
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font,
-    },
-    notification_container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 26,
-        flex: 0.1,
-    },
-    notification: {
-        fontSize: 24,
-        color: COLORS.almost_white,
-        fontFamily: FONTS.main_font,
-    }
+  page: {
+    flex: 1,
+    ...(Platform.OS === 'web' ? { touchAction: 'pan-y' } : null),
+    backgroundColor: COLORS.white,
+  },
+  pageContent: {
+    minHeight: Platform.OS === 'web' ? '100dvh' : '100%',
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 120,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  headerText: {
+  width: '100%',
+  marginBottom: 16,    
+  },
+  title: {
+    fontSize: 30,
+    color: COLORS.black,
+    fontFamily: FONTS.survey_font_bold,
+    textAlign: 'left',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: COLORS.black,
+    fontFamily: FONTS.main_font,
+    marginBottom: 16,
+  },
+  section: {
+    marginBottom: 60,
+  },
+  sectionLabel: {
+    fontSize: 16,
+    color: COLORS.black,
+    fontFamily: FONTS.main_font_bold,
+    marginBottom: 8,
+  },
+  inlineRow: {
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  inlineLabel: {
+    fontSize: 16,
+    color: COLORS.black,
+    fontFamily: FONTS.main_font,
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    height: 44,
+    borderWidth: 1,
+    borderColor: COLORS.light_grey,
+    backgroundColor: COLORS.white,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    color: COLORS.black,
+    fontFamily: FONTS.main_font,
+  },
+  timePill: {
+    flexGrow: 0,
+    width: 120,
+    height: 44,
+    borderWidth: 1,
+    borderColor: COLORS.light_grey,
+    backgroundColor: COLORS.white,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    textAlignVertical: 'center',
+    textAlign: 'center',
+    color: COLORS.black,
+    fontFamily: FONTS.main_font,
+  },
 });
 
 export default Profile;

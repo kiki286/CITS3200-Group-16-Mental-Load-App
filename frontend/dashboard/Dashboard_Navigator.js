@@ -4,29 +4,30 @@
 import { View, Text } from 'react-native';
 import { createStackNavigator } from "@react-navigation/stack";
 import React from 'react';
-import { Profile_Navigator, View_Navigator, Settings_Navigator, Home_Navigator } from './screens';
+import { Profile_Navigator, View_Navigator, Settings_Navigator, Home_Navigator, Admin_Navigator } from './screens';
 import Dashboard from './Dashboard';
 import Welcome from "../screens/Welcome";
 import About from './screens/settings/About';
 import COLORS from '../constants/colors';
 import FONTS from '../constants/fonts';
-import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient';
 
 const dashboard_stack = createStackNavigator();
 
-const Dashboard_Navigator = () => {
+const Dashboard_Navigator = (props) => {
+  const { isAdmin } = props;
   return (
     <dashboard_stack.Navigator 
       initialRouteName={"Dashboard"}
     >
       <dashboard_stack.Screen 
         name="Dashboard" 
-        component={Dashboard}
         options={{
           headerShown:false
         }}
-      />
+      >
+        {(screenProps) => <Dashboard {...screenProps} isAdmin={isAdmin} />}
+      </dashboard_stack.Screen>
       <dashboard_stack.Screen 
         name="Home_Navigator" 
         component={Home_Navigator}
@@ -55,6 +56,15 @@ const Dashboard_Navigator = () => {
           headerShown:false
         }}
       />
+      {isAdmin && (
+        <dashboard_stack.Screen 
+          name="Admin_Navigator" 
+          component={Admin_Navigator}
+          options={{
+            headerShown:false
+          }}
+        />
+      )}
       <dashboard_stack.Screen 
         name="About" 
         component={About}

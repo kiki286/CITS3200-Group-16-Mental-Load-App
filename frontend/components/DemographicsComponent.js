@@ -1,4 +1,4 @@
-//CITS3200 project group 23 2024
+//CITS3200 project group 16 2025
 //Component that shows and handles demographics survey
 
 //Imports
@@ -6,18 +6,21 @@ import React, { useContext, useState, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
+  Animated,
+  Text,
 } from "react-native";
+import TouchablePlatform from './TouchablePlatform';
 import { SurveyContext } from "../context/SurveyContext";
 import { Loading, Error } from "./Messages";
 import { setDemographicsSubmit, readResponsesFromFile, clearResponsesFile } from "../services/StorageHandler";
 import Button from "./Buttons/Button_Light_Blue";
 import COLORS from "../constants/colors";
-import { Ionicons } from '@expo/vector-icons';
+import FONTS from "../constants/fonts";
 import RenderQuestionUI from './RenderQuestionUI';
 import { useNavigation } from "@react-navigation/native";
-
+import PillButton from './Buttons/PillButton';
+import { ArrowForwardCircleOutline, ChevronBackOutline } from 'react-ionicons';
 
 // Component which displays each question from demographics survey
 const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
@@ -49,6 +52,8 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
   
   // Ref to the scrollview component
   const scrollViewRef = useRef();
+  // Navigation hook must be called at top level of component (hooks rule)
+  const navigation = useNavigation();
   
   // List of colours to loop through for each question
   const colors_list = [COLORS.yellow, COLORS.pink, COLORS.blue,];
@@ -67,8 +72,7 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
   }
 
   const noConsent = () => {
-    const navigation = useNavigation();
-    navigation.navigate("Login")
+    navigation.navigate("Login");
   }
   
   // Reset selectedOptions when allQuestionDetails changes
@@ -318,8 +322,29 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
     getNextQuestion();
     // Calls function to change the color value for next question
     ColorButtonInc();
-    // Sets the scroll back to the top
-    scrollViewRef.current.scrollTo({ y: 0, animated: false });
+    // Sets the scroll back to the top (cross-platform fallback)
+    try {
+      // React Native ScrollView (mobile / web through react-native-web)
+      if (scrollViewRef.current && typeof scrollViewRef.current.scrollTo === 'function') {
+        // try object signature first
+        try {
+          scrollViewRef.current.scrollTo({ y: 0, animated: false });
+        } catch (e) {
+          // try numeric signature
+          try {
+            scrollViewRef.current.scrollTo(0);
+          } catch (e) {
+            // noop
+          }
+        }
+      } else if (scrollViewRef.current && scrollViewRef.current.scrollTop !== undefined) {
+        // DOM element (web) fallback
+        scrollViewRef.current.scrollTop = 0;
+      }
+    } catch (e) {
+      // ignore any scroll errors
+      console.warn('scrollTo fallback failed', e);
+    }
   };
   
   // Handles the submit survey button
@@ -329,7 +354,8 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
     if (submitQualResponse.success) {
       setIsSubmitted(true);
     }
-    backNavigate()
+    if (backNavigate) backNavigate();
+    else navigation.goBack();
   }
   
   //let choiceComponents = null;
@@ -337,63 +363,106 @@ const DemographicsComponent = ({ demoSubmit, backNavigate }) => {
 
   // Render the questionsUI in your return block
   return (
-    <View style={{flex: 1, padding: 10, paddingTop: 30, paddingBottom: 60, backgroundColor: COLORS.black, }}>
+    <View style={styles.page}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchablePlatform
+          onPress={() => (backNavigate ? backNavigate() : navigation.goBack())}
+          accessibilityRole="button"
+          style={styles.backButtonHitbox}
+        >
+          <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+        </TouchablePlatform>
+        <Text style={styles.title}>Demographics</Text>
+      </View>
+
+      {/* Content */}
       {loading ? (
         <Loading />
       ) : error ? (
         <Error message={error} />
       ) : (
-        <ScrollView ref={scrollViewRef} contentContainerStyle={styles.container}>
-          <RenderQuestionUI 
-            questionDetails={questionDetails} 
-            questionsID={questionsID}
-            sliderValues={sliderValues}
-            setSliderValues={setSliderValues}
-            handleTextInputChange={handleTextInputChange}
-            selectedOptions={selectedOptions}
-            handleOptionPress={handleOptionPress}
-            wordColorMap={wordColorMap}
-            colorIndex={colorIndex}
-            colors_list={colors_list}
-            inputValues={inputValues}
-            AllornotAll={allOrNotAll}
-          />
-          {questionDetails ? (
-            <View style={{paddingBottom: 20, paddingTop: 10, alignItems: 'center'}}>
-              <TouchableOpacity onPress={handleNextQuestion}>
-                <Ionicons 
-                  name="arrow-forward-circle-outline" 
-                  size={80} 
-                  color={COLORS.white} 
-                  style={{
-                    backgroundColor: COLORS.black,
-                }}/>
-              </TouchableOpacity>
+        <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.content}>
+            <RenderQuestionUI
+              questionDetails={questionDetails}
+              questionsID={questionsID}
+              sliderValues={sliderValues}
+              setSliderValues={setSliderValues}
+              handleTextInputChange={handleTextInputChange}
+              selectedOptions={selectedOptions}
+              handleOptionPress={handleOptionPress}
+              wordColorMap={wordColorMap}
+              colorIndex={colorIndex}
+              colors_list={colors_list}
+              inputValues={inputValues}
+              AllornotAll={allOrNotAll}
+            />
+
+            {/* Action area */}
+            {questionDetails ? (
+              <View style={styles.actions}>
+                <PillButton
+                  title="Next"
+                  variant="primary"
+                  onPress={handleNextQuestion}
+                  fullWidth
+                />
+              </View>
+            ) : (
+              <View style={styles.actions}>
+                <PillButton
+                  title="Submit"
+                  variant="primary"
+                  onPress={() => {
+                    if (demoSubmit) demoSubmit();
+                    else handleSubmitSurvey();
+                  }}
+                  fullWidth
+                />
+              </View>
+            )}
             </View>
-          ) : (
-            <View style={{paddingBottom: 20, paddingTop: 10,}}>
-            <Button title="Submit" 
-            onPress={() => {
-              if (demoSubmit) {
-                demoSubmit();
-              } else {
-                handleSubmitSurvey();
-              }
-            }}/>
-            </View>
-          )}
-          {/* Button to clear responses */}
-          {/*<Button title="Clear Responses" onPress={handleClearResponses} />*/}
         </ScrollView>
       )}
     </View>
   );
 };
 
-//Styling for the component
 const styles = StyleSheet.create({
-  container: {
+  page: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    marginBottom: 8,
+  },
+  backButtonHitbox: {
+    padding: 4,
+    marginRight: 8,
+  },
+  title: {
+    fontSize: 30,
+    color: COLORS.black,
+    fontFamily: FONTS.survey_font_bold,
+  },
+  scrollContainer: {
+    paddingHorizontal: 24,
     paddingBottom: 40,
+    alignItems: 'center',
+  },
+  content: {
+    width: '100%',
+    maxWidth: 540,
+    alignself: 'center',
+  },
+  actions: {
+    marginTop: 16,
+    marginBottom: 8,
   },
 });
 
