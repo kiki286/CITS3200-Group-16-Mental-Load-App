@@ -128,6 +128,19 @@ def verify_firebase_token(f):
     
     return decorated_function
 
+def require_admin(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        user = getattr(request, "user", None)
+
+        if not user:
+            return jsonify({"message": "Unauthorized"}), 401
+        if not user.get("admin", False):
+            return jsonify({"message": "Forbidden"}), 403
+        return f(*args, **kwargs)
+    
+    return wrapper
+
 def get_survey_id():
     """Retrieve the survey ID based on the request header."""
     survey_type = request.headers.get('Survey-Type')
@@ -324,6 +337,7 @@ def hello():
 # Admin endpoints to view/update survey IDs persisted in Firestore
 @app.route('/admin/surveys', methods=['GET'])
 @verify_firebase_token
+@require_admin
 def admin_get_surveys():
     """Return the currently-configured survey IDs."""
     try:
@@ -342,6 +356,7 @@ def admin_get_surveys():
 
 @app.route('/admin/surveys', methods=['POST'])
 @verify_firebase_token
+@require_admin
 def admin_set_surveys():
     """Update survey IDs in Firestore and refresh in-memory values."""
     body = request.get_json(force=True) or {}
@@ -368,6 +383,7 @@ def admin_set_surveys():
 
 @app.route('/admin/campaigns', methods=['POST'])
 @verify_firebase_token
+@require_admin
 def admin_create_campaign():
     """Create a campaign. Body: { message, scheduledAtUtc, timezone, target }
     target: { type: 'all' } or { type: 'emails', emails: [...] }
@@ -475,6 +491,7 @@ def push_unsubscribe():
 # Send notification to user (can add feature to call from admin tools)
 @app.route("/api/notify", methods=["POST"])
 @verify_firebase_token
+@require_admin
 def notify_user():
     """
     Body: {userId (optional), title, body, link}
@@ -522,6 +539,7 @@ def notify_user():
 
 @app.route('/admin/debug/push-tokens', methods=['GET'])
 @verify_firebase_token
+@require_admin
 def admin_debug_push_tokens():
     """Return a list of stored web push tokens with minimal metadata for debugging.
     This helps determine whether tokens are FCM registration tokens (short strings)

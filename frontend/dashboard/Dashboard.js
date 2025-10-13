@@ -12,7 +12,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SettingsOutline, Home, StatsChart, PersonOutline, ShieldOutline } from 'react-ionicons'
 import { getDemographicsSubmitted } from '../services/StorageHandler';
 
-const Dashboard = ({ navigation }) => {
+const Dashboard = ({ navigation, isAdmin }) => {
+  
   useEffect(() => {
     (async () => {
       const isSubmitted = await getDemographicsSubmitted();
@@ -65,15 +66,18 @@ const Dashboard = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={[styles.button, styles.neutralButton]}
-            onPress={() => navigation.navigate('Admin_Navigator')}
-          >
-            <ShieldOutline color="black" height="60px" width="60px" />
-            <Text style={styles.buttonText}>Admin</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Row 3: neutral (grey) */}
+        {isAdmin && (
+          <View style={styles.row}>
+            <TouchableOpacity 
+              style={[styles.button, styles.neutralButton]}
+              onPress={()=>navigation.navigate("Admin_Navigator")}
+            >
+              <ShieldOutline color="black" height="60px" width="60px" />
+              <Text style={styles.buttonText}>Admin</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </>
   );
