@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { use } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LineChart, PieChart, BarChart } from 'react-native-gifted-charts';
 // Importing mock data arrays
@@ -6,6 +6,34 @@ import { LineChart, PieChart, BarChart } from 'react-native-gifted-charts';
 import { getResponses } from '../services/StorageHandler';
 import COLORS from '../constants/colors';
 import FONTS from '../constants/fonts';
+import { useWindowDimensions, Platform } from 'react-native';
+ 
+const useChartDims = () => {
+  const { width: winW } = useWindowDimensions();
+ 
+  const contentPad = 24 * 2;
+  const yAxisBox = 28 + 8;
+  const chartWidth = Math.max(220, Math.min(600, winW - contentPad - yAxisBox));
+ 
+  // compact layout threshold for phones
+  const compact = winW < 420;
+ 
+  // pie sizes relative to screen; capped to avoid overflow
+  const pieRadius = Math.min(140, Math.floor((winW - contentPad) * 0.38));
+  const pieInnerRadius = Math.floor(pieRadius * 0.58);
+ 
+  // sensible bar sizes for up to 7 bars
+  const barMetrics = (n = 7) => {
+    const nBars = Math.max(1, n);
+    const ideal = chartWidth / (nBars * 2); 
+    const barWidth = Math.max(12, Math.min(28, Math.floor(ideal)));
+    const remaining = Math.max(0, chartWidth - barWidth * nBars);
+    const spacing = Math.max(8, Math.floor(remaining / Math.max(1, nBars - 1)));
+    return { barWidth, spacing };
+  };
+ 
+  return { chartWidth, compact, pieRadius, pieInnerRadius, barMetrics };
+};
 
 const dimensionColors = {
     Deciding: COLORS.red, // Color for Deciding
@@ -56,7 +84,10 @@ const prepareStackedBarData = (data = [], timestamps = []) =>
 /* ---------- components ---------- */
 // Stacked Bar Chart: mental load per dimension at home over last 7 days
 export const StackedBarChartWorkML = ({workML = [], timestamps = []}) => {
+    const { chartWidth, barMetrics } = useChartDims();
     const stackData = prepareStackedBarData(workML, timestamps); 
+    const { barWidth, spacing } = barMetrics(stackData.length)
+    
 
     return (
         <View style={styles.section}>
@@ -64,13 +95,13 @@ export const StackedBarChartWorkML = ({workML = [], timestamps = []}) => {
             {/* Stacked Bar Chart */}
             <View style={styles.chartRow}>
                 <View style={[styles.yAxisBox, {height: 250}]}><Text style={styles.axisTitle}>Mental Load</Text></View>
-                <View>
+                <View style={{ width: chartWidth }}>
                     <BarChart
-                        width={300}
+                        width={chartWidth}
                         height={250}
                         stackData={stackData}
-                        barWidth={40}
-                        spacing={20}
+                        barWidth={barWidth}
+                        spacing={spacing}
                         noOfSections={4}
                         yAxisTextStyle={styles.axisTick}
                         xAxisLabelTextStyle={styles.axisTick}
@@ -99,7 +130,8 @@ export const StackedBarChartWorkML = ({workML = [], timestamps = []}) => {
 // Stacked Bar Chart: mental load per dimension at work over last 7 days
 export const StackedBarChartHomeML = ({homeML = [], timestamps = []}) => {
     const stackData = prepareStackedBarData(homeML, timestamps); // Prepare the stack data
-
+    const { chartWidth, barMetrics } = useChartDims();
+    const { barWidth, spacing } = barMetrics(stackData.length)
     return (
         <View style={styles.section}>
             <Text style={styles.chartTitle}>Mental Load per Dimension at Home</Text>
@@ -110,13 +142,13 @@ export const StackedBarChartHomeML = ({homeML = [], timestamps = []}) => {
                 <View style={[styles.yAxisBox, {height: 250}]}>
                     <Text style={styles.axisTitle}>Mental Load</Text>
                 </View>
-                <View>
+                <View style={{ width: chartWidth}}>
                     <BarChart
-                        width={300}
+                        width={chartWidth}
                         height={250}
                         stackData={stackData}
-                        barWidth={40}
-                        spacing={20}
+                        barWidth={barWidth}
+                        spacing={spacing}
                         noOfSections={4}
                         yAxisTextStyle={styles.axisTick}
                         xAxisLabelTextStyle={styles.axisTick}
@@ -146,7 +178,7 @@ export const StackedBarChartHomeML = ({homeML = [], timestamps = []}) => {
 // PieChart for Home ML (average % per dimension all time)
 export const PieChartExampleHome = ({homeML = []}) => {
     const averages = calculateAverages(homeML);
-
+    const { compact, pieRadius, pieInnerRadius } = useChartDims();
     const pieData = Object.keys(dimensionColors).map((k) => ({
         value: averages[k],
         color: dimensionColors[k],
@@ -158,12 +190,12 @@ export const PieChartExampleHome = ({homeML = []}) => {
 
     return (
         <View style={styles.section}>
-            <View style={styles.pieRow}>
+            <View style={[styles.pieRow, compact && {flexDirection: 'coloumn', alignItems: 'center' }]}>
                 <PieChart
                     data={pieData}
                     donut={true}
-                    radius={170}
-                    innerRadius={95}
+                    radius={pieRadius}
+                    innerRadius={pieInnerRadius}
                     focusOnPress
                     isAnimated={true}
                     innerCircleColor={COLORS.white}
@@ -174,7 +206,7 @@ export const PieChartExampleHome = ({homeML = []}) => {
                         </Text>
                     )}
                 />
-                <View style = {styles.pieLegendCol}>
+                <View style = {[styles.pieLegendCol, compact && {marginLeft: 0, marginTop: 12, alignItems: 'center' }]}>
                     {pieData.map((item, i)=> (
                         <View key={i} style={styles.legendItem}>
                             <View style={[styles.legendSwatch, { backgroundColor: item.color }]} />
@@ -198,6 +230,7 @@ export const PieChartExampleHome = ({homeML = []}) => {
 // PieChart for Home ML (average % per dimension all time)
 export const PieChartExampleWork = ({workML = []}) => {
     const averages = calculateAverages(workML);
+    const { compact, pieRadius, pieInnerRadius } = useChartDims();
 
     const pieData =  Object.keys(dimensionColors).map((k) => ({
         value: averages[k],
@@ -210,12 +243,12 @@ export const PieChartExampleWork = ({workML = []}) => {
 
     return (
         <View style={styles.section}>
-            <View style={styles.pieRow}>
+            <View style={[styles.pieRow, compact && {flexDirection: 'coloumn', alignItems: 'center' }]}>
                 <PieChart
                     data={pieData}
                     donut={true}
-                    radius={170}
-                    innerRadius={95}
+                    radius={pieRadius}
+                    innerRadius={pieInnerRadius}
                     focusOnPress
                     isAnimated={true}
                     innerCircleColor={COLORS.white}
@@ -227,7 +260,7 @@ export const PieChartExampleWork = ({workML = []}) => {
                         </Text>
                     )}
                 />
-                <View style={styles.pieLegendCol}>
+                <View style={[styles.pieLegendCol, compact && {marginLeft: 0, marginTop: 12, alignItems: 'center' }]}>
                     {pieData.map((item, i) => (
                         <View key={i} style={styles.legendItem}>
                             <View
@@ -251,7 +284,7 @@ export const PieChartExampleWork = ({workML = []}) => {
 
 
 export const BurnoutLineChart = ({burnoutValues, workData, timestamps}) => {
-    
+    const { chartWidth } = useChartDims();
     const lastSevenDays = burnoutValues.slice(-7);
     const lastSevenWorkData = workData.slice(-7);
 
@@ -278,7 +311,7 @@ export const BurnoutLineChart = ({burnoutValues, workData, timestamps}) => {
               <View style={[styles.yAxisBox, {height: 280}]}>
                 <Text style={styles.axisTitle}>Burnout Level</Text>
               </View>
-              <View>
+              <View style={{ width: chartWidth }}>
                   <LineChart
                       areaChart 
                       startFillColor={COLORS.red}
@@ -286,7 +319,7 @@ export const BurnoutLineChart = ({burnoutValues, workData, timestamps}) => {
                       endFillColor="rgb(203, 241, 250)"
                       endOpacity={0.3}
                       data={lineData}
-                      width={300}
+                      width={chartWidth}
                       height={280}
                       thickness={3}
                       color={COLORS.red}
@@ -316,6 +349,7 @@ const totalML = (e) => (e.Deciding + e.Planning + e.Monitoring + e.Knowing);
 
 // Work vs Home Mental Load Line Chart (Last 7 days)
 export const MentalLoadLineChart = ({timestamps = [], homeML = [], workML = []}) => {
+    const { chartWidth } = useChartDims();
     const lastSevenEntries = timestamps.slice(-7); 
     const homeLastSeven = homeML.slice(-7); 
     const workLastSeven = workML.slice(-7); 
@@ -345,11 +379,11 @@ export const MentalLoadLineChart = ({timestamps = [], homeML = [], workML = []})
                 <View style={[styles.yAxisBox, {height: 250}]}>
                   <Text style={styles.axisTitle}>Mental Load</Text>
                 </View>
-                <View>
+                <View style={{ width: chartWidth }}>
                 <LineChart
                     data={homeData} // Home mental load data
                     data2={workData} // Work mental load data
-                    width={300} 
+                    width={chartWidth} 
                     height={250} 
                     thickness={3.5} 
                     thickness2={3.5} 
@@ -403,6 +437,7 @@ const styles = StyleSheet.create({
   chartRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    ...(Platform.OS == 'web' ? { touchACtion: 'pan-y' } : null),
   },
   yAxisBox: {
     width: 28,
@@ -457,6 +492,7 @@ const styles = StyleSheet.create({
   pieRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'nowrap'
   },
   pieLegendCol: {
     marginLeft: 16,
