@@ -44,7 +44,17 @@ post_headers = { #Used by POST requests
     }
 
 app = Flask(__name__)
-CORS(app)
+ALLOWED_ORIGINS = [
+    "https://mental-load-app-production.web.app",
+]
+ 
+CORS(
+    app,
+    resources={r"/*": {"origins": ALLOWED_ORIGINS}},  # apply to all endpoints you serve
+    methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Survey-Type"],
+    max_age=86400,  # cache the preflight
+)
 
 """ I believe all this can be removed as is hard coded for linux environments
 # List all files in the directory

@@ -1,4 +1,11 @@
-export const API_BASE = process.env.EXPO_PUBLIC_BACKEND_URL;
+const baked = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(/\/+$/, "");
+const override =
+  new URLSearchParams(location.search).get("api") ||
+  localStorage.getItem("API_BASE_OVERRIDE");
+ 
+export const API_BASE = (override || baked).replace(/\/+$/, "");
+if (typeof window !== "undefined") console.log("[API_BASE]", API_BASE);
+
 if (!API_BASE) {
   throw new Error("EXPO_PUBLIC_BACKEND_URL is missing. Set it in .env before building.");
 }
