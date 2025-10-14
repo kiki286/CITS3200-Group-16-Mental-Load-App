@@ -26,7 +26,7 @@ const buildQualtricsImageUrl = (im, useRel = false) => {
   const cb = Date.now();
   if (typeof window !== "undefined" && window.location && Platform.OS === "web") {
     const backendBaseRaw = (process.env.EXPO_PUBLIC_BACKEND_URL || "").trim();
-    const backendBase = backendBaseRaw ? backendBaseRaw.replace(/\/+$/, "") : "";
+    let backendBase = backendBaseRaw ? backendBaseRaw.replace(/\/+$/, "") : "";
     console.log("backendBase:", backendBase);
     if (!backendBase) {
       backendBase = "https://mental-load-app.onrender.com";
@@ -346,6 +346,9 @@ const RenderQuestionUI = ({
     // Checks if question is Choices type
   } else if (questionDetails["Choices"] && QuestionType !== "Matrix") {
     const allowMultipleSelection = questionDetails["Selector"] == "MACOL";
+    const isLikert7 = Array.isArray(questionDetails["Choices"]) && questionDetails["Choices"].length === 7;
+    const likertOptionWidth = 30; // adjust to taste; smaller => more will fit without scrolling
+
     questionsUI = (
       <View key={questionID} style={styles.questionContainer}>
         <Text style={[styles.questionText, textOffsetStyle]}>
@@ -354,119 +357,139 @@ const RenderQuestionUI = ({
             wordColorMap
           )}
         </Text>
-        <View style={styles.optionsContainer}>
-            {questionDetails["Choices"].map((option, index) => {
-            const requiresTextInput = option?.TextEntry === true;
-            const imageLocation = option.ImageLocation !== "";
-            const imageUri = imageLocation ? buildQualtricsImageUrl(option.ImageLocation, useRel) : null;
-            return (
-              <View key={index}>
-                {requiresTextInput ? (
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder={option["Display"]}
-                    placeholderTextColor={COLORS.light_grey}
-                    onChangeText={(text) =>{
-                      if (!allowMultipleSelection) {
-                        handleTextInputChange(questionID, index, text, "RESET");
-                      } else {
-                        handleTextInputChange(questionID, index, text, "SINGLE");
-                      }
-                    }}
-                  />
-                ) : (
-                  <TouchablePlatform
-                    key={index}
-                    style={[
-                      styles.optionButton,
-                      imageLocation ? { backgroundColor: COLORS.white } : {}, // Set background to white if imageLocation exists
-                      allowMultipleSelection &&
-                      Array.isArray(selectedOptions[0]) &&
-                      selectedOptions[0].length > 0
-                        ? selectedOptions[0].includes(`${index}`) && {
-                            borderColor: colors_list[colorIndex],
-                          }
-                        : selectedOptions[0] === index && {
-                            borderColor: colors_list[colorIndex],
-                          },
 
-                      allowMultipleSelection &&
-                      Array.isArray(selectedOptions[0]) &&
-                      selectedOptions[0].length > 0
-                        ? selectedOptions[0].includes(`${index}`) && {
-                            borderColor: colors_list[colorIndex],
+        {isLikert7 ? (
+          // Force a single horizontal row for 7-option Likert. Scroll horizontally on narrow screens.
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ alignItems: "center", paddingHorizontal: 8 }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {questionDetails["Choices"].map((option, index) => {
+                const requiresTextInput = option?.TextEntry === true;
+                const imageLocation = option.ImageLocation !== "";
+                const imageUri = imageLocation ? buildQualtricsImageUrl(option.ImageLocation, useRel) : null;
+                return (
+                  <View key={index} style={{ width: likertOptionWidth, paddingHorizontal: 6, paddingVertical: 6 }}>
+                    {requiresTextInput ? (
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder={option["Display"]}
+                        placeholderTextColor={COLORS.light_grey}
+                        onChangeText={(text) =>{
+                          if (!allowMultipleSelection) {
+                            handleTextInputChange(questionID, index, text, "RESET");
+                          } else {
+                            handleTextInputChange(questionID, index, text, "SINGLE");
                           }
-                        : selectedOptions[0] === index && {
-                            borderColor: colors_list[colorIndex],
-                          },
-                    ]}
-                    onPress={() =>
-                      handleOptionPress(0, index, allowMultipleSelection)
-                    }
-                  >
-                    {imageLocation && (
-                      <View>
-                        {imageLoading && <Loading />}
-                         {Platform.OS === "web" ? (
-                           // Use native <img> to be able to set crossOrigin on web
-                           <img
-                             src={imageUri || ""}
-                             crossOrigin="anonymous"
-                             style={{
-                               width: "100%",
-                               maxWidth: 100,
-                               maxHeight: 500,
-                               objectFit: "contain",
-                               aspectRatio: "0.5",
-                             }}
-                             onLoad={handleImageLoad}
-                             onError={() => {
-                               if (!useRel) setUseRel(true);
-                               else setImageLoading(false);
-                             }}
-                           />
-                         ) : (
-                           <Image
-                             source={imageUri ? { uri: imageUri } : undefined}
-                             style={{
-                               width: "100%",
-                               maxWidth: 100,
-                               maxHeight: 500,
-                               height: undefined,
-                               aspectRatio: 0.5,
-                             }}
-                             resizeMode="contain"
-                             onLoad={handleImageLoad}
-                             onError={() => {
-                               if (!useRel) setUseRel(true);
-                               else setImageLoading(false);
-                             }}
-                           />
-                         )}
-                        </View>
-                      )}
-                    <Text
+                        }}
+                      />
+                    ) : (
+                      <TouchablePlatform
+                        style={[
+                          styles.optionButton,
+                          { width: "100%" },
+                          imageLocation ? { backgroundColor: COLORS.white } : {},
+                          allowMultipleSelection &&
+                          Array.isArray(selectedOptions[0]) &&
+                          selectedOptions[0].length > 0
+                            ? selectedOptions[0].includes(`${index}`) && { borderColor: colors_list[colorIndex] }
+                            : selectedOptions[0] === index && { borderColor: colors_list[colorIndex] },
+                        ]}
+                        onPress={() => handleOptionPress(0, index, allowMultipleSelection)}
+                      >
+                        <Text
+                          style={[
+                            styles.optionText,
+                            allowMultipleSelection &&
+                            Array.isArray(selectedOptions[0]) &&
+                            selectedOptions[0].length > 0
+                              ? selectedOptions[0].includes(`${index}`) && styles.selectedText
+                              : selectedOptions[0] === index && styles.selectedText,
+                          ]}
+                        >
+                          {option["Display"]}
+                        </Text>
+                      </TouchablePlatform>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          </ScrollView>
+        ) : (
+          <View style={styles.optionsContainer}>
+            {questionDetails["Choices"].map((option, index) => {
+              const requiresTextInput = option?.TextEntry === true;
+              const imageLocation = option.ImageLocation !== "";
+              const imageUri = imageLocation ? buildQualtricsImageUrl(option.ImageLocation, useRel) : null;
+              return (
+                <View
+                  key={index}
+                  style={{
+                    width: colWidth,
+                    paddingHorizontal: 8,
+                    paddingVertical: 6,
+                    alignItems: "center",
+                  }}
+                >
+                  {requiresTextInput ? (
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder={option["Display"]}
+                      placeholderTextColor={COLORS.light_grey}
+                      onChangeText={(text) =>{
+                        if (!allowMultipleSelection) {
+                          handleTextInputChange(questionID, index, text, "RESET");
+                        } else {
+                          handleTextInputChange(questionID, index, text, "SINGLE");
+                        }
+                      }}
+                    />
+                  ) : (
+                    <TouchablePlatform
                       style={[
-                        styles.optionText,
+                        styles.optionButton,
+                        { width: "100%" },
+                        imageLocation ? { backgroundColor: COLORS.white } : {},
                         allowMultipleSelection &&
                         Array.isArray(selectedOptions[0]) &&
                         selectedOptions[0].length > 0
-                          ? selectedOptions[0].includes(`${index}`) &&
-                            styles.selectedText
-                          : selectedOptions[0] === index && styles.selectedText,
+                          ? selectedOptions[0].includes(`${index}`) && {
+                              borderColor: colors_list[colorIndex],
+                            }
+                          : selectedOptions[0] === index && {
+                              borderColor: colors_list[colorIndex],
+                            },
                       ]}
+                      onPress={() =>
+                        handleOptionPress(0, index, allowMultipleSelection)
+                      }
                     >
-                      {option["Display"]}
-                    </Text>
-                  </TouchablePlatform>
-                )}
-              </View>
-            );
-          })}
-        </View>
+                      <Text
+                        style={[
+                          styles.optionText,
+                          allowMultipleSelection &&
+                          Array.isArray(selectedOptions[0]) &&
+                          selectedOptions[0].length > 0
+                            ? selectedOptions[0].includes(`${index}`) &&
+                              styles.selectedText
+                            : selectedOptions[0] === index && styles.selectedText,
+                        ]}
+                      >
+                        {option["Display"]}
+                      </Text>
+                    </TouchablePlatform>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        )}
       </View>
     );
-  } else if (QuestionType === "DB") {
+   } else if (QuestionType === "DB") {
     questionsUI = (
       <View>
         <Text style={[styles.questionText, textOffsetStyle]}>
@@ -511,6 +534,11 @@ const styles = StyleSheet.create({
   optionsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  likertRowContainer: {
+    flexWrap: "nowrap",
     alignItems: "center",
     justifyContent: "center",
   },
