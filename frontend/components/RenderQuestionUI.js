@@ -27,6 +27,10 @@ const buildQualtricsImageUrl = (im, useRel = false) => {
   if (typeof window !== "undefined" && window.location && Platform.OS === "web") {
     const backendBaseRaw = (process.env.EXPO_PUBLIC_BACKEND_URL || "").trim();
     const backendBase = backendBaseRaw ? backendBaseRaw.replace(/\/+$/, "") : "";
+    console.log("backendBase:", backendBase);
+    if (!backendBase) {
+      backendBase = "https://mental-load-app.onrender.com";
+    }
     const proxyPath = `/api/qualtrics-image?im=${safeIM}&rel=${useRel ? 1 : 0}&cb=${cb}`;
     return backendBase ? `${backendBase}${proxyPath}` : proxyPath;
   }

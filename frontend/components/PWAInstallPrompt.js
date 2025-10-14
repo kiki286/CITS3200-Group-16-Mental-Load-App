@@ -30,7 +30,7 @@ export default function PWAInstallPrompt() {
     else if (isAndroid) setPlatformType('android');
     else setPlatformType('desktop');
 
-    // Android: capture beforeinstallprompt
+    // Only show when the browser fires beforeinstallprompt.
     const onBeforeInstall = (e) => {
       // Prevent the mini-infobar from appearing on mobile
       try { e.preventDefault(); } catch (err) { }
@@ -39,45 +39,37 @@ export default function PWAInstallPrompt() {
     };
 
     if (window && window.addEventListener) {
-      window.addEventListener('beforeinstallprompt', (e) => {
-        console.debug('[PWA] beforeinstallprompt fired');
-        onBeforeInstall(e);
-      });
+      // register with a stable reference so cleanup can remove it
+      window.addEventListener('beforeinstallprompt', onBeforeInstall);
     }
 
-    // For iOS / desktop just show instructions once (small delay avoids jank)
-    if (!isAndroid) {
-      setTimeout(() => setVisible(true), 500);
-    } else {
-      // Android fallback: some browsers may not fire beforeinstallprompt.
-      // If we don't get the event within a short time, show manual instructions
-      const fallbackTimer = setTimeout(() => {
-        if (!deferredPromptRef.current) {
-          console.debug('[PWA] beforeinstallprompt did not fire; showing manual fallback');
-          // show a modal with manual instructions (browser menu -> Add to home screen)
-          setVisible(true);
-        }
-      }, 1500);
-      // clear timer on cleanup
-      return () => {
-        clearTimeout(fallbackTimer);
-        if (window && window.removeEventListener) {
-          window.removeEventListener('beforeinstallprompt', onBeforeInstall);
-        }
-      };
-    }
+    // Do NOT auto-show on iOS/desktop and remove the Android fallback timer.
+    return () => {
+      if (window && window.removeEventListener) {
+        window.removeEventListener('beforeinstallprompt', onBeforeInstall);
+      }
+    };
   }, []);
 
   const handleInstall = async () => {
     const promptEvent = deferredPromptRef.current;
     if (promptEvent && promptEvent.prompt) {
-      promptEvent.prompt();
-      const choice = await promptEvent.userChoice;
-      // hide regardless of choice
-      setVisible(false);
-      deferredPromptRef.current = null;
+      try {
+        promptEvent.prompt();
+        // wait for the user choice (optional)
+        await promptEvent.userChoice;
+      } catch (err) {
+        // ignore prompt errors
+      } finally {
+        setVisible(false);
+        deferredPromptRef.current = null;
+      }
     } else {
-      // On iOS/show instructions: do nothing special but hide if user chooses
+      // No browser prompt available — show explicit manual instructions
+      const msg = platformType === 'ios'
+        ? 'To install: open Safari share menu and choose "Add to Home Screen".'
+        : 'To install: open Chrome menu (⋮) and choose "Add to Home screen".';
+      try { window.alert(msg); } catch (e) { /* noop */ }
       setVisible(false);
     }
   };
