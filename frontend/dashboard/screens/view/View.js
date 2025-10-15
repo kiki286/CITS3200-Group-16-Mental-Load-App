@@ -255,8 +255,8 @@ const View_Tab = ({ navigation }) => {
       >
         <div
           style={{
-            // paddingLeft: 24,
-            // paddingRight: 24,
+            paddingLeft: 24,
+            paddingRight: 24,
             paddingTop: 12,
             paddingBottom: 24,       // slightly smaller bottom padding to fit
             minHeight: "100dvh",
