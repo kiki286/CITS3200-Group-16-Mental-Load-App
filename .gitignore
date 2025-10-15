@@ -5,7 +5,7 @@ backend/.env
 backend/secrets/credentials.json
 
 /backend/.venv
-
+/backend/venv
 
 /frontend/node_modules
 /frontend/android

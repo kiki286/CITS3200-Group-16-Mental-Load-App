@@ -4,6 +4,34 @@ import { LineChart, PieChart, BarChart } from 'react-native-gifted-charts';
 import { getResponses } from '../services/StorageHandler';
 import COLORS from '../constants/colors';
 import FONTS from '../constants/fonts';
+import { useWindowDimensions, Platform } from 'react-native';
+ 
+const useChartDims = () => {
+  const { width: winW } = useWindowDimensions();
+ 
+  const contentPad = 24 * 2;
+  const yAxisBox = 28 + 8;
+  const chartWidth = Math.max(220, Math.min(600, winW - contentPad - yAxisBox));
+ 
+  // compact layout threshold for phones
+  const compact = winW < 420;
+ 
+  // pie sizes relative to screen; capped to avoid overflow
+  const pieRadius = Math.min(140, Math.floor((winW - contentPad) * 0.38));
+  const pieInnerRadius = Math.floor(pieRadius * 0.58);
+ 
+  // sensible bar sizes for up to 7 bars
+  const barMetrics = (n = 7) => {
+    const nBars = Math.max(1, n);
+    const ideal = chartWidth / (nBars * 2); 
+    const barWidth = Math.max(12, Math.min(28, Math.floor(ideal)));
+    const remaining = Math.max(0, chartWidth - barWidth * nBars);
+    const spacing = Math.max(8, Math.floor(remaining / Math.max(1, nBars - 1)));
+    return { barWidth, spacing };
+  };
+ 
+  return { chartWidth, compact, pieRadius, pieInnerRadius, barMetrics };
+};
 
 const { width: screenWidth } = Dimensions.get('window');
 const CHART_MAX_WIDTH = 340;

@@ -34,23 +34,26 @@ const SignUp = ({ navigation }) => {
     handleSignUp,
   } = useSignUp();
 
-  //states to store checkbox state and hidepassword state
+  // states to store checkbox state, terms acceptance, and hide password state
   const [hidePassword, setHidePassword] = useState(true);
   const [TandC, setTandC] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
   const handleAgreePress = () => {
+    setTermsAccepted(true);
     setTandC(true);
     navigation.goBack(); // Set the checkbox to true when user agrees
   };
-  
-  //if terms and conditions not checked, show an error pop up
+
+  // if terms and conditions not checked, show an error pop up
   const handleSignUpPress = async () => {
-    if(TandC) {
-      await handleSignUp(navigation)
+    if (TandC) {
+      await handleSignUp(navigation);
     } else {
       Alert.alert('Please accept Terms and Conditions');
     }
-  }
-  
+  };
+
   //checks if there is an error message and shows it as pop up then sets error to null
   useEffect(() => {
     if (errorMessage) {
@@ -178,42 +181,56 @@ const SignUp = ({ navigation }) => {
           <Checkbox
             style={{ marginRight: 8 }}
             value={TandC}
-            onValueChange={setTandC}
-            color={TandC ? COLORS.dark_grey : COLORS.light_grey}/>
-          
-          <Text style={{
-            color: COLORS.black }}>
-          I agree to the</Text>
-          
+            onValueChange={(newValue) => {
+              if (!termsAccepted) {
+                Alert.alert('Please read the Terms and Conditions first');
+              } else {
+                setTandC(newValue);
+              }
+            }}
+            color={termsAccepted ? COLORS.dark_grey : COLORS.light_grey}
+          />
+
+          <Text style={{ color: COLORS.black }}>
+            I agree to the
+          </Text>
+
           <TouchableOpacity onPress={() => navigation.navigate("TermsConditions", { onAgree: handleAgreePress })}>
             <Text style={{
               color: COLORS.black,
               fontWeight: "bold",
               textDecorationLine: 'underline',
-              marginHorizontal: 4 }}>
-            Terms and Conditions</Text>
+              marginHorizontal: 4
+            }}>
+              Terms and Conditions
+            </Text>
           </TouchableOpacity>
         </View>
 
         <Button_Light_Blue
           title="Sign Up"
           style={{ marginTop: 28, marginBottom: 4 }}
-          onPress={() => handleSignUpPress()}/>
+          onPress={handleSignUpPress}
+        />
           
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 40 }}>
           <Text style={{
             fontSize: 14,
             color: COLORS.black,
-            fontFamily: FONTS.main_font,}}>
-          Already have an account?{' '}</Text>
+            fontFamily: FONTS.main_font,
+          }}>
+            Already have an account?{' '}
+          </Text>
 
           <TouchablePlatform onPress={() => navigation.navigate("Login")}>
             <Text style={{
               fontSize: 14,
               color: COLORS.light_blue3,
               fontFamily: FONTS.main_font,
-              textDecorationLine: 'underline',}}>
-            Login here!</Text>
+              textDecorationLine: 'underline',
+            }}>
+              Login here!
+            </Text>
           </TouchablePlatform>
         </View>
 
