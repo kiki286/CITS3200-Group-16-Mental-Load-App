@@ -1,8 +1,6 @@
-import React, { use } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart, PieChart, BarChart } from 'react-native-gifted-charts';
-// Importing mock data arrays
-//import { homeML, workML, timestamps, burnoutValues, workData } from './exampledata';
 import { getResponses } from '../services/StorageHandler';
 import COLORS from '../constants/colors';
 import FONTS from '../constants/fonts';
@@ -35,390 +33,403 @@ const useChartDims = () => {
   return { chartWidth, compact, pieRadius, pieInnerRadius, barMetrics };
 };
 
+const { width: screenWidth } = Dimensions.get('window');
+const CHART_MAX_WIDTH = 340;
+const CHART_WIDTH = Math.min(CHART_MAX_WIDTH, screenWidth - 64); 
+
 const dimensionColors = {
-    Deciding: COLORS.red, // Color for Deciding
-    Planning: COLORS.blue, // Color for Planning
-    Monitoring: COLORS.yellow, // Color for Monitoring
-    Knowing: COLORS.green, // Color for Knowing
+  Deciding: COLORS.red,     // Color for Deciding
+  Planning: COLORS.blue,    // Color for Planning
+  Monitoring: COLORS.yellow,// Color for Monitoring
+  Knowing: COLORS.green,    // Color for Knowing
 };
 
 const formatLabel = (ts) => {
   const d = new Date(ts);
-  const mm = d.getMonth() + 1;     // months are 0-based
-  const dd = d.getDate();          // NO +1 here
+  const mm = d.getMonth() + 1; // months 0-based
+  const dd = d.getDate();
   return `${mm}/${dd}`;
 };
 
 // Calculating average mental load across all data
 const calculateAverages = (data) => {
-    if (!data?.length) return { Deciding: 0, Planning: 0, Monitoring: 0, Knowing: 0 };
-    const totals = { Deciding: 0, Planning: 0, Monitoring: 0, Knowing: 0 };
+  if (!data?.length) return { Deciding: 0, Planning: 0, Monitoring: 0, Knowing: 0 };
+  const totals = { Deciding: 0, Planning: 0, Monitoring: 0, Knowing: 0 };
 
-    data.forEach(entry => {
-        totals.Deciding += entry.Deciding || 0;
-        totals.Planning += entry.Planning || 0;
-        totals.Monitoring += entry.Monitoring || 0;
-        totals.Knowing += entry.Knowing || 0;
-    });
+  data.forEach(entry => {
+    totals.Deciding += entry.Deciding || 0;
+    totals.Planning += entry.Planning || 0;
+    totals.Monitoring += entry.Monitoring || 0;
+    totals.Knowing += entry.Knowing || 0;
+  });
 
-    return {
-        Deciding: totals.Deciding / data.length,
-        Planning: totals.Planning / data.length,
-        Monitoring: totals.Monitoring / data.length,
-        Knowing: totals.Knowing / data.length,
-    };
+  return {
+    Deciding: totals.Deciding / data.length,
+    Planning: totals.Planning / data.length,
+    Monitoring: totals.Monitoring / data.length,
+    Knowing: totals.Knowing / data.length,
+  };
 };
 
 // Preparing stack data for the chart
-const prepareStackedBarData = (data = [], timestamps = []) => 
-    data.slice(-7).map((entry, index) => ({
+const prepareStackedBarData = (data = [], timestamps = []) =>
+  data.slice(-7).map((entry, index) => ({
     stacks: [
-        { value: entry.Deciding, color: dimensionColors.Deciding, marginBottom: 2 },
-        { value: entry.Planning, color: dimensionColors.Planning, marginBottom: 2 },
-        { value: entry.Monitoring, color: dimensionColors.Monitoring, marginBottom: 2 },
-        { value: entry.Knowing, color: dimensionColors.Knowing, marginBottom: 2 },
+      { value: entry.Deciding,   color: dimensionColors.Deciding,   marginBottom: 2 },
+      { value: entry.Planning,   color: dimensionColors.Planning,   marginBottom: 2 },
+      { value: entry.Monitoring, color: dimensionColors.Monitoring, marginBottom: 2 },
+      { value: entry.Knowing,    color: dimensionColors.Knowing,    marginBottom: 2 },
     ],
     label: formatLabel(timestamps.slice(-7)[index]),
-}));
+  }));
 
 /* ---------- components ---------- */
-// Stacked Bar Chart: mental load per dimension at home over last 7 days
-export const StackedBarChartWorkML = ({workML = [], timestamps = []}) => {
-    const { chartWidth, barMetrics } = useChartDims();
-    const stackData = prepareStackedBarData(workML, timestamps); 
-    const { barWidth, spacing } = barMetrics(stackData.length)
-    
-
-    return (
-        <View style={styles.section}>
-            <Text style={styles.chartTitle}>Mental Load per Dimension at Work</Text>
-            {/* Stacked Bar Chart */}
-            <View style={styles.chartRow}>
-                <View style={[styles.yAxisBox, {height: 250}]}><Text style={styles.axisTitle}>Mental Load</Text></View>
-                <View style={{ width: chartWidth }}>
-                    <BarChart
-                        width={chartWidth}
-                        height={250}
-                        stackData={stackData}
-                        barWidth={barWidth}
-                        spacing={spacing}
-                        noOfSections={4}
-                        yAxisTextStyle={styles.axisTick}
-                        xAxisLabelTextStyle={styles.axisTick}
-                        xAxisColor={COLORS.light_grey}
-                        yAxisColor={COLORS.light_grey}
-                        barBorderRadius={2}
-                        isAnimated
-                        animationDuration={500}
-                    />
-                    <Text style={styles.axisTitleX}>Time</Text>
-                </View>
-            </View>
-            {/* Legend */}
-            <View style={styles.legendRow}>
-                {Object.entries(dimensionColors).map(([k, c]) => (
-                    <View style={styles.legendItem} key={k}>
-                        <View style={[styles.legendSwatch, { backgroundColor: c }]} />
-                        <Text style={styles.legendText}>{k}</Text>
-                    </View>
-               ))}
-            </View>
-        </View>
-    );
-};
 
 // Stacked Bar Chart: mental load per dimension at work over last 7 days
-export const StackedBarChartHomeML = ({homeML = [], timestamps = []}) => {
-    const stackData = prepareStackedBarData(homeML, timestamps); // Prepare the stack data
-    const { chartWidth, barMetrics } = useChartDims();
-    const { barWidth, spacing } = barMetrics(stackData.length)
-    return (
-        <View style={styles.section}>
-            <Text style={styles.chartTitle}>Mental Load per Dimension at Home</Text>
-            
-            
-            {/* Stacked Bar Chart */}
-            <View style={styles.chartRow}>
-                <View style={[styles.yAxisBox, {height: 250}]}>
-                    <Text style={styles.axisTitle}>Mental Load</Text>
-                </View>
-                <View style={{ width: chartWidth}}>
-                    <BarChart
-                        width={chartWidth}
-                        height={250}
-                        stackData={stackData}
-                        barWidth={barWidth}
-                        spacing={spacing}
-                        noOfSections={4}
-                        yAxisTextStyle={styles.axisTick}
-                        xAxisLabelTextStyle={styles.axisTick}
-                        xAxisColor={COLORS.light_grey}
-                        yAxisColor={COLORS.light_grey}
-                        barBorderRadius={2}
-                        isAnimated
-                        animationDuration={500}
+export const StackedBarChartWorkML = ({ workML = [], timestamps = [] }) => {
+  const stackData = prepareStackedBarData(workML, timestamps);
 
-                    />
-                    <Text style={styles.axisTitleX}>Time</Text>
-                </View>
-            </View>
-            {/* Legend */}
-            <View style={styles.legendRow}>
-                {Object.entries(dimensionColors).map(([k, c]) => (
-                    <View style={styles.legendItem} key={k}>
-                        <View style={[styles.legendSwatch, { backgroundColor: c }]} />
-                        <Text style={styles.legendText}>{k}</Text>
-                    </View>
-                ))}
-            </View>
+  return (
+    <View style={styles.section}>
+      <Text style={styles.chartTitle}>Mental Load per Dimension at Work</Text>
+      <View style={styles.chartCenter}>
+        <View style={styles.chartRow}>
+          <View style={[styles.yAxisBox, { height: 250 }]}>
+            <Text style={styles.axisTitle}>Mental Load</Text>
+          </View>
+
+          <View style={styles.chartCanvas}>
+            <BarChart
+              width={CHART_WIDTH}
+              height={250}
+              stackData={stackData}
+              barWidth={32}
+              spacing={16}
+              noOfSections={4}
+              yAxisTextStyle={styles.axisTick}
+              xAxisLabelTextStyle={styles.axisTick}
+              xAxisColor={COLORS.light_grey}
+              yAxisColor={COLORS.light_grey}
+              barBorderRadius={2}
+              isAnimated
+              animationDuration={500}
+            />
+            <Text style={styles.axisTitleX}>Time</Text>
+          </View>
         </View>
-    );
+      </View>
+
+      {/* Legend (center) */}
+      <View style={[styles.legendRow, styles.legendCenter]}>
+        {Object.entries(dimensionColors).map(([k, c]) => (
+          <View style={styles.legendItem} key={k}>
+            <View style={[styles.legendSwatch, { backgroundColor: c }]} />
+            <Text style={styles.legendText}>{k}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+// Stacked Bar Chart: mental load per dimension at home over last 7 days
+export const StackedBarChartHomeML = ({ homeML = [], timestamps = [] }) => {
+  const stackData = prepareStackedBarData(homeML, timestamps);
+
+  return (
+    <View style={styles.section}>
+      <Text style={styles.chartTitle}>Mental Load per Dimension at Home</Text>
+
+      <View style={styles.chartCenter}>
+        <View style={styles.chartRow}>
+          <View style={[styles.yAxisBox, { height: 250 }]}>
+            <Text style={styles.axisTitle}>Mental Load</Text>
+          </View>
+
+          <View style={styles.chartCanvas}>
+            <BarChart
+              width={CHART_WIDTH}
+              height={250}
+              stackData={stackData}
+              barWidth={32}
+              spacing={16}
+              noOfSections={4}
+              yAxisTextStyle={styles.axisTick}
+              xAxisLabelTextStyle={styles.axisTick}
+              xAxisColor={COLORS.light_grey}
+              yAxisColor={COLORS.light_grey}
+              barBorderRadius={2}
+              isAnimated
+              animationDuration={500}
+            />
+            <Text style={styles.axisTitleX}>Time</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Legend (center) */}
+      <View style={[styles.legendRow, styles.legendCenter]}>
+        {Object.entries(dimensionColors).map(([k, c]) => (
+          <View style={styles.legendItem} key={k}>
+            <View style={[styles.legendSwatch, { backgroundColor: c }]} />
+            <Text style={styles.legendText}>{k}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
 };
 
 // PieChart for Home ML (average % per dimension all time)
-export const PieChartExampleHome = ({homeML = []}) => {
-    const averages = calculateAverages(homeML);
-    const { compact, pieRadius, pieInnerRadius } = useChartDims();
-    const pieData = Object.keys(dimensionColors).map((k) => ({
-        value: averages[k],
-        color: dimensionColors[k],
-        text: k,
-    }));
+export const PieChartExampleHome = ({ homeML = [] }) => {
+  const averages = calculateAverages(homeML);
+  const pieData = Object.keys(dimensionColors).map((k) => ({
+    value: averages[k],
+    color: dimensionColors[k],
+    text: k,
+  }));
+  const maxDimension = Object.keys(averages).reduce((a, b) => (averages[a] > averages[b] ? a : b));
 
-    // Determine which dimension has the highest average
-    const maxDimension = Object.keys(averages).reduce((a, b) => (averages[a] > averages[b] ? a : b));
-
-    return (
-        <View style={styles.section}>
-            <View style={[styles.pieRow, compact && {flexDirection: 'coloumn', alignItems: 'center' }]}>
-                <PieChart
-                    data={pieData}
-                    donut={true}
-                    radius={pieRadius}
-                    innerRadius={pieInnerRadius}
-                    focusOnPress
-                    isAnimated={true}
-                    innerCircleColor={COLORS.white}
-                    innerCircleBorderWidth={1}
-                    centerLabelComponent={() => (
-                        <Text style={styles.pieCenter}>
-                            Home Mental Load Averages
-                        </Text>
-                    )}
-                />
-                <View style = {[styles.pieLegendCol, compact && {marginLeft: 0, marginTop: 12, alignItems: 'center' }]}>
-                    {pieData.map((item, i)=> (
-                        <View key={i} style={styles.legendItem}>
-                            <View style={[styles.legendSwatch, { backgroundColor: item.color }]} />
-                            <Text style={styles.legendText}>{item.text}</Text>
-                        </View>
-                    ))}
-                </View>
-            </View>
-            <Text style={styles.insight}>
-                On average, your mental load is the highest when{' '}
-                <Text style={{ color: dimensionColors[maxDimension], fontFamily: FONTS.main_font_bold }}>
-                    {maxDimension}
-                </Text>
-                .
-            </Text>
+  return (
+    <View style={styles.section}>
+      <View style={styles.chartCenter}>
+        <View style={styles.pieRow}>
+          <PieChart
+            data={pieData}
+            donut
+            radius={150}
+            innerRadius={85}
+            focusOnPress
+            isAnimated
+            innerCircleColor={COLORS.white}
+            innerCircleBorderWidth={1}
+            centerLabelComponent={() => (
+              <Text style={styles.pieCenter}>
+                Home Mental Load{'\n'}Averages
+              </Text>
+            )}
+          />
+          <View style={styles.pieLegendCol}>
+            {pieData.map((item, i) => (
+              <View key={i} style={styles.legendItem}>
+                <View style={[styles.legendSwatch, { backgroundColor: item.color }]} />
+                <Text style={styles.legendText}>{item.text}</Text>
+              </View>
+            ))}
+          </View>
         </View>
+      </View>
 
-    );
+      {/* Insight center */}
+      <Text style={[styles.insight, styles.centerText]}>
+        On average, your mental load is the highest when{' '}
+        <Text style={{ color: dimensionColors[maxDimension], fontFamily: FONTS.main_font_bold }}>
+          {maxDimension}
+        </Text>
+        .
+      </Text>
+    </View>
+  );
 };
 
-// PieChart for Home ML (average % per dimension all time)
-export const PieChartExampleWork = ({workML = []}) => {
-    const averages = calculateAverages(workML);
-    const { compact, pieRadius, pieInnerRadius } = useChartDims();
+// PieChart for Work ML (average % per dimension all time)
+export const PieChartExampleWork = ({ workML = [] }) => {
+  const averages = calculateAverages(workML);
+  const pieData = Object.keys(dimensionColors).map((k) => ({
+    value: averages[k],
+    color: dimensionColors[k],
+    text: k,
+  }));
+  const maxDimension = Object.keys(averages).reduce((a, b) => (averages[a] > averages[b] ? a : b));
 
-    const pieData =  Object.keys(dimensionColors).map((k) => ({
-        value: averages[k],
-        color: dimensionColors[k],
-        text: k,
-    }));
-    // Determines dimension with highest average for insight
-    const maxDimension = Object.keys(averages).reduce((a, b) => (averages[a] > averages[b] ? a : b));
-    const maxValue = averages[maxDimension];
-
-    return (
-        <View style={styles.section}>
-            <View style={[styles.pieRow, compact && {flexDirection: 'coloumn', alignItems: 'center' }]}>
-                <PieChart
-                    data={pieData}
-                    donut={true}
-                    radius={pieRadius}
-                    innerRadius={pieInnerRadius}
-                    focusOnPress
-                    isAnimated={true}
-                    innerCircleColor={COLORS.white}
-                    innerCircleBorderWidth={1}
-                    showTextBackground
-                    centerLabelComponent={() => (
-                        <Text style={styles.pieCenter}>
-                            Work Mental Load Averages
-                        </Text>
-                    )}
-                />
-                <View style={[styles.pieLegendCol, compact && {marginLeft: 0, marginTop: 12, alignItems: 'center' }]}>
-                    {pieData.map((item, i) => (
-                        <View key={i} style={styles.legendItem}>
-                            <View
-                                style={[styles.legendSwatch, { backgroundColor: item.color }]}
-                            />
-                            <Text style={styles.legendText}>{item.text}</Text>
-                        </View>
-                ))}
-                </View>
-            </View>
-            <Text style={styles.insight}>
-                On average, your mental load is the highest when{' '}
-                <Text style={{ color: dimensionColors[maxDimension], fontFamily: FONTS.main_font_bold }}>
-                    {maxDimension}
-                </Text>
-                .
-            </Text>
+  return (
+    <View style={styles.section}>
+      <View style={styles.chartCenter}>
+        <View style={styles.pieRow}>
+          <PieChart
+            data={pieData}
+            donut
+            radius={150}
+            innerRadius={85}
+            focusOnPress
+            isAnimated
+            innerCircleColor={COLORS.white}
+            innerCircleBorderWidth={1}
+            showTextBackground
+            centerLabelComponent={() => (
+              <Text style={styles.pieCenter}>
+                Work Mental Load{'\n'}Averages
+              </Text>
+            )}
+          />
+          <View style={styles.pieLegendCol}>
+            {pieData.map((item, i) => (
+              <View key={i} style={styles.legendItem}>
+                <View style={[styles.legendSwatch, { backgroundColor: item.color }]} />
+                <Text style={styles.legendText}>{item.text}</Text>
+              </View>
+            ))}
+          </View>
         </View>
-    );
+      </View>
+
+      <Text style={[styles.insight, styles.centerText]}>
+        On average, your mental load is the highest when{' '}
+        <Text style={{ color: dimensionColors[maxDimension], fontFamily: FONTS.main_font_bold }}>
+          {maxDimension}
+        </Text>
+        .
+      </Text>
+    </View>
+  );
 };
 
+export const BurnoutLineChart = ({ burnoutValues = [], workData = [], timestamps = [] }) => {
+  const lastSevenDays = burnoutValues.slice(-7);
+  const lastSevenWorkData = workData.slice(-7);
 
-export const BurnoutLineChart = ({burnoutValues, workData, timestamps}) => {
-    const { chartWidth } = useChartDims();
-    const lastSevenDays = burnoutValues.slice(-7);
-    const lastSevenWorkData = workData.slice(-7);
+  const lineData = lastSevenDays.map((value, index) => ({
+    value,
+    label: formatLabel(timestamps.slice(-7)[index]),
+    didWork: lastSevenWorkData[index]?.DidWork,
+  }));
 
-    const lineData = lastSevenDays.map((value, index) => ({
-        value,
-        label: formatLabel(timestamps.slice(-7)[index]), // Format the last 7 timestamps
-        didWork: lastSevenWorkData[index]?.DidWork, // Check if the user worked that day
-    }));
+  const workedDays = lineData.filter(item => item.didWork === 1).map(item => item.value);
+  const notWorkedDays = lineData.filter(item => item.didWork === 0).map(item => item.value);
 
-    // Calculate averages for worked and not worked days
-    const workedDays = lineData.filter(item => item.didWork === 1).map(item => item.value);
-    const notWorkedDays = lineData.filter(item => item.didWork === 0).map(item => item.value);
+  const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+  const averageWorked = avg(workedDays);
+  const averageNotWorked = avg(notWorkedDays);
 
-    const averageWorked = workedDays.length ? (workedDays.reduce((a, b) => a + b) / workedDays.length) : 0;
-    const averageNotWorked = notWorkedDays.length ? (notWorkedDays.reduce((a, b) => a + b) / notWorkedDays.length) : 0;
+  const percentageDifference = averageNotWorked > 0
+    ? ((averageWorked - averageNotWorked) / averageNotWorked) * 100
+    : 0;
 
-    // Calculate percentage difference
-    const percentageDifference = averageNotWorked > 0 ? ((averageWorked - averageNotWorked) / averageNotWorked) * 100 : 0;
-    return (
-        <View style={styles.section}>
-            <Text style={styles.chartTitle}>Burnout Over Time</Text>
-            <View style={styles.chartRow}>
-              {/* Y-axis Label */}
-              <View style={[styles.yAxisBox, {height: 280}]}>
-                <Text style={styles.axisTitle}>Burnout Level</Text>
-              </View>
-              <View style={{ width: chartWidth }}>
-                  <LineChart
-                      areaChart 
-                      startFillColor={COLORS.red}
-                      startOpacity={0.8}
-                      endFillColor="rgb(203, 241, 250)"
-                      endOpacity={0.3}
-                      data={lineData}
-                      width={chartWidth}
-                      height={280}
-                      thickness={3}
-                      color={COLORS.red}
-                      xAxisColor={COLORS.light_grey}
-                      yAxisColor={COLORS.light_grey}
-                      xAxisLabelTextStyle={styles.axisTick}
-                      yAxisLabelTextStyle={styles.axisTick}
-                      dataPointsColor={COLORS.red}
-                      isAnimated={true}
-                      adjustToWidth={true}
-                      hideDataPoints={false}
-                  />
-                  {/* X-axis Label */}
-                  <Text style={styles.axisTitleX}>Time</Text>
-              </View>
-            </View>
+  return (
+    <View style={styles.section}>
+      <Text style={styles.chartTitle}>Burnout Over Time</Text>
+      <View style={styles.chartCenter}>
+        <View style={styles.chartRow}>
+          <View style={[styles.yAxisBox, { height: 280 }]}>
+            <Text style={styles.axisTitle}>Burnout Level</Text>
+          </View>
 
-            <Text style={styles.insight}>
-                On average, burnout is <Text style={{ color: COLORS.red, fontFamily: FONTS.main_font_bold }}>{percentageDifference.toFixed(2)}%</Text>{' '}
-                {averageWorked > averageNotWorked ? ' higher' : ' lower'} on days worked compared to days not worked.
-            </Text>
+          <View style={styles.chartCanvas}>
+            <LineChart
+              areaChart
+              startFillColor={COLORS.red}
+              startOpacity={0.8}
+              endFillColor="rgb(203, 241, 250)"
+              endOpacity={0.3}
+              data={lineData}
+              width={CHART_WIDTH}
+              height={280}
+              thickness={3}
+              color={COLORS.red}
+              xAxisColor={COLORS.light_grey}
+              yAxisColor={COLORS.light_grey}
+              xAxisLabelTextStyle={styles.axisTick}
+              yAxisLabelTextStyle={styles.axisTick}
+              dataPointsColor={COLORS.red}
+              isAnimated
+              adjustToWidth
+              hideDataPoints={false}
+            />
+            <Text style={styles.axisTitleX}>Time</Text>
+          </View>
         </View>
-    );
+      </View>
+
+      <Text style={[styles.insight, styles.centerText]}>
+        On average, burnout is{' '}
+        <Text style={{ color: COLORS.red, fontFamily: FONTS.main_font_bold }}>
+          {percentageDifference.toFixed(2)}%
+        </Text>{' '}
+        {averageWorked > averageNotWorked ? 'higher' : 'lower'} on days worked compared to days not worked.
+      </Text>
+    </View>
+  );
 };
 
 const totalML = (e) => (e.Deciding + e.Planning + e.Monitoring + e.Knowing);
 
 // Work vs Home Mental Load Line Chart (Last 7 days)
-export const MentalLoadLineChart = ({timestamps = [], homeML = [], workML = []}) => {
-    const { chartWidth } = useChartDims();
-    const lastSevenEntries = timestamps.slice(-7); 
-    const homeLastSeven = homeML.slice(-7); 
-    const workLastSeven = workML.slice(-7); 
-    const homeData = homeLastSeven.map((e, i) => ({ value: totalML(e), label: formatLabel(lastSevenEntries[i]) }));
-    const workData = workLastSeven.map((e, i) => ({ value: totalML(e), label: formatLabel(lastSevenEntries[i]) }));
+export const MentalLoadLineChart = ({ timestamps = [], homeML = [], workML = [] }) => {
+  const lastSevenEntries = timestamps.slice(-7);
+  const homeLastSeven = homeML.slice(-7);
+  const workLastSeven = workML.slice(-7);
 
-    // Calculate averages for work and home
-    const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
-    const avgHome = avg(homeLastSeven.map(totalML));
-    const avgWork = avg(workLastSeven.map(totalML));
-    const higher = avgHome > avgWork ? 'Home' : 'Work';
+  const homeData = homeLastSeven.map((e, i) => ({ value: totalML(e), label: formatLabel(lastSevenEntries[i]) }));
+  const workData = workLastSeven.map((e, i) => ({ value: totalML(e), label: formatLabel(lastSevenEntries[i]) }));
 
-    return (
-        <View style={styles.section}>
-            <Text style={styles.chartTitle}>Mental Load Over Time (Work vs Home)</Text>
-            <View style={styles.legendRow}>
-                <View style={styles.legendItem}>
-                    <View style={[styles.legendSwatch, { backgroundColor: COLORS.orange }]} />
-                    <Text style={styles.legendText}>Home</Text>
-                </View>
-                <View style={styles.legendItem}>
-                    <View style={[styles.legendSwatch, { backgroundColor: COLORS.purple }]} />
-                    <Text style={styles.legendText}>Work</Text>
-                </View>
-            </View>
-            <View style={styles.chartRow}>
-                <View style={[styles.yAxisBox, {height: 250}]}>
-                  <Text style={styles.axisTitle}>Mental Load</Text>
-                </View>
-                <View style={{ width: chartWidth }}>
-                <LineChart
-                    data={homeData} // Home mental load data
-                    data2={workData} // Work mental load data
-                    width={chartWidth} 
-                    height={250} 
-                    thickness={3.5} 
-                    thickness2={3.5} 
-                    color={COLORS.orange}
-                    color2={COLORS.purple}
-                    dataPointsColor={COLORS.orange}
-                    dataPointsColor2={COLORS.purple}
-                    xAxisColor={COLORS.light_grey} 
-                    yAxisColor={COLORS.light_grey}
-                    xAxisLabelTextStyle={styles.axisTick} 
-                    yAxisLabelTextStyle={styles.axisTick} 
-                    isAnimated={true} 
-                    adjustToWidth={true} 
-                    hideDataPoints={false} 
-                    showSecondaryLine={true} 
-                    hideRules={false} 
-                    showVerticalLines={false} 
-                    yAxisThickness={1} 
-                    xAxisThickness={1} 
-                    showShadow={false} 
-                />
-                <Text style={styles.axisTitleX}>Time</Text>
-                </View>
-            </View>
-            <Text style={styles.insight}>
-                On average, your mental load is higher at{' '}
-                <Text style={{ color: higher === 'Home' ? COLORS.orange : COLORS.purple, fontFamily: FONTS.main_font_bold }}>
-                    {higher}
-                </Text>
-                .
-            </Text>
+  const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+  const avgHome = avg(homeLastSeven.map(totalML));
+  const avgWork = avg(workLastSeven.map(totalML));
+  const higher = avgHome > avgWork ? 'Home' : 'Work';
+
+  return (
+    <View style={styles.section}>
+      <Text style={styles.chartTitle}>Mental Load Over Time (Work vs Home)</Text>
+
+      {/* Legend (center) */}
+      <View style={[styles.legendRow, styles.legendCenter]}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendSwatch, { backgroundColor: COLORS.orange }]} />
+          <Text style={styles.legendText}>Home</Text>
         </View>
-    );
-};
+        <View style={styles.legendItem}>
+          <View style={[styles.legendSwatch, { backgroundColor: COLORS.purple }]} />
+          <Text style={styles.legendText}>Work</Text>
+        </View>
+      </View>
 
+      <View style={styles.chartCenter}>
+        <View style={styles.chartRow}>
+          <View style={[styles.yAxisBox, { height: 250 }]}>
+            <Text style={styles.axisTitle}>Mental Load</Text>
+          </View>
+
+          <View style={styles.chartCanvas}>
+            <LineChart
+              data={homeData}
+              data2={workData}
+              width={CHART_WIDTH}
+              height={250}
+              thickness={3.5}
+              thickness2={3.5}
+              color={COLORS.orange}
+              color2={COLORS.purple}
+              dataPointsColor={COLORS.orange}
+              dataPointsColor2={COLORS.purple}
+              xAxisColor={COLORS.light_grey}
+              yAxisColor={COLORS.light_grey}
+              xAxisLabelTextStyle={styles.axisTick}
+              yAxisLabelTextStyle={styles.axisTick}
+              isAnimated
+              adjustToWidth
+              hideDataPoints={false}
+              showSecondaryLine
+              hideRules={false}
+              showVerticalLines={false}
+              yAxisThickness={1}
+              xAxisThickness={1}
+              showShadow={false}
+            />
+            <Text style={styles.axisTitleX}>Time</Text>
+          </View>
+        </View>
+      </View>
+
+      <Text style={[styles.insight, styles.centerText]}>
+        On average, your mental load is higher at{' '}
+        <Text style={{ color: higher === 'Home' ? COLORS.orange : COLORS.purple, fontFamily: FONTS.main_font_bold }}>
+          {higher}
+        </Text>
+        .
+      </Text>
+    </View>
+  );
+};
 
 /* ---------- styles (light theme) ---------- */
 const styles = StyleSheet.create({
@@ -428,23 +439,41 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 16,
   },
+  chartCenter: {
+    width: '100%',
+    alignItems: 'center',   
+    justifyContent: 'center', 
+    alignSelf: 'center',
+    maxWidth: 900,
+  },
+
   chartTitle: {
     fontSize: 18,
     color: COLORS.black,
     fontFamily: FONTS.survey_font_bold,
     marginBottom: 8,
+    textAlign: 'center',       
   },
+
   chartRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    ...(Platform.OS == 'web' ? { touchACtion: 'pan-y' } : null),
+    alignItems: 'center',      // center vertikal
+    justifyContent: 'center',  
+    width: '100%',
   },
+
+  chartCanvas: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   yAxisBox: {
     width: 28,
     marginRight: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   axisTitle: {
     transform: [{ rotate: '-90deg' }],
     fontSize: 12,
@@ -465,12 +494,16 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: FONTS.main_font,
   },
+
   legendRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
     marginTop: 8,
     marginBottom: 6,
+  },
+  legendCenter: {
+    justifyContent: 'center',
   },
   legendItem: {
     flexDirection: 'row',
@@ -489,13 +522,17 @@ const styles = StyleSheet.create({
     color: COLORS.black,
     fontFamily: FONTS.main_font,
   },
+
   pieRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'nowrap'
+    justifyContent: 'center', 
+    flexWrap: 'wrap',     
+    gap: 12,
   },
   pieLegendCol: {
-    marginLeft: 16,
+    marginLeft: 8,
+    alignItems: 'flex-start',
   },
   pieCenter: {
     fontSize: 14,
@@ -504,10 +541,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     width: 120,
   },
+
   insight: {
     marginTop: 8,
     fontSize: 12,
     color: COLORS.black,
     fontFamily: FONTS.main_font,
+  },
+  centerText: {
+    textAlign: 'center',
   },
 });
