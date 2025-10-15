@@ -260,6 +260,8 @@ const styles = StyleSheet.create({
 
   // Dots
   dotsRow: {
+    display: "flex",
+    justifySelf: "center",
     flexDirection: 'row',
     alignSelf: 'center',
     marginTop: 8,
@@ -283,9 +285,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   chartWrap: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 10,
     paddingBottom: 12,
-    paddingTop: 4,
+    paddingTop: 4,
   },
   // Empty state
   emptyState: {
