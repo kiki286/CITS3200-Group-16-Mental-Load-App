@@ -2,8 +2,8 @@
 //Component that displays terms and conditions
 
 // TermsConditions.js
-import React from "react";
-import { View, ScrollView, Text , TouchableOpacity} from "react-native";
+import React, { useState } from "react";
+import { View, ScrollView, Text , TouchableOpacity, StyleSheet} from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import COLORS from "../constants/colors";
 import Button from "../components/Buttons/Button_Green";
@@ -16,12 +16,23 @@ const TermsConditions = () => {
   const navigation = useNavigation();
   const { onAgree } = route.params || {};
   const { back } = route.params || {};
+  const [isScrolledToEnd, setIsScrolledToEnd] = useState(false);
+
+  const handleScroll = (event) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 20) {
+      setIsScrolledToEnd(true);
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white}}>
       <ScrollView
         style={{ padding: 10 }}
         contentContainerStyle={{ paddingBottom: 120 }}
         keyboardShouldPersistTaps="handled"
+        onScroll={handleScroll} 
+        scrollEventThrottle={16}
       >
           <TouchableOpacity
                 style={{ alignSelf: 'flex-start', marginBottom: 8 }}
@@ -154,7 +165,8 @@ const TermsConditions = () => {
         <View style={{ marginVertical: 20, gap: 10 }}>
           <Button
             title="Agree"
-            style={{ marginBottom: 4 }}
+            style={{ marginBottom: 4, backgroundColor: "rgb(121, 174, 253)" }}
+            disabled={!isScrolledToEnd}
             onPress={() => {
               if (onAgree) {
                 onAgree(); // Call the onAgree function if defined
@@ -168,5 +180,6 @@ const TermsConditions = () => {
     </View>
   );
 };
+
 
 export default TermsConditions;
