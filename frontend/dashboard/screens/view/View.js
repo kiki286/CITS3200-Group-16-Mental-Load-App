@@ -33,12 +33,12 @@ import { processResponses } from "../../../components/VisualisationPreProcessing
 
 // Order of pages displayed in the horizontal pager
 const PAGES = [
-  { key: "MentalLoad", label: "Overall line" },
-  { key: "Burnout", label: "Burnout line" },
-  { key: "StackedBarHome", label: "Home stacked" },
-  { key: "StackedBarWork", label: "Work stacked" },
-  { key: "PieChartHome", label: "Home pie" },
-  { key: "PieChartWork", label: "Work pie" },
+  { key: "MentalLoad" },
+  { key: "Burnout" },
+  { key: "StackedBarHome" },
+  { key: "StackedBarWork" },
+  { key: "PieChartHome" },
+  { key: "PieChartWork" },
 ];
 
 // Used to calculate the x-offset when programmatically scrolling pages
@@ -153,17 +153,15 @@ const View_Tab = ({ navigation }) => {
   else if (!timestamps || timestamps.length === 0) {
     content = (
       <>
-        {/* Header with back button and title */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            accessibilityRole="button"
-            style={styles.backHitbox}
-          >
-            <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
-          </TouchableOpacity>
-          <Text style={styles.title}> Analytics </Text>
-        </View>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          accessibilityLabel="Back"
+        >
+          <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+        </TouchableOpacity>
+
+        <Text style={styles.title}>Analytics</Text>
 
         {/* Empty state body (non-scroll) */}
         <View style={styles.contentNoScroll}>
@@ -185,17 +183,15 @@ const View_Tab = ({ navigation }) => {
   else {
     content = (
       <>
-        {/* Header with back button and title */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            accessibilityRole="button"
-            style={styles.backHitbox}
-          >
-            <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
-          </TouchableOpacity>
-          <Text style={styles.title}> Analytics </Text>
-        </View>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          accessibilityLabel="Back"
+        >
+          <ChevronBackOutline color={COLORS.black} height="28px" width="28px" />
+        </TouchableOpacity>
+
+        <Text style={styles.title}>Analytics</Text>
 
         {/* Pager dots — centered; used to navigate between pages (no user scrolling) */}
         <View style={[styles.dotsRow, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -234,8 +230,6 @@ const View_Tab = ({ navigation }) => {
               <View style={styles.slideInner}>
                 {/* Chart wrapper (adds padding and centers the chart block) */}
                 <View style={styles.chartWrap}>{renderChartByKey(p.key)}</View>
-                {/* Optional page label under each chart */}
-                <Text style={styles.pageLabel}>{p.label}</Text>
               </View>
             </View>
           ))}
@@ -312,18 +306,15 @@ const styles = StyleSheet.create({
     padding: 24,
   },
 
-  // Header (back button + title)
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingTop: 20,
-  },
-  backHitbox: { padding: 4, marginRight: 8 },
   title: {
-    fontSize: 24,
+    fontSize: 30,
     color: COLORS.black,
     fontFamily: FONTS.survey_font_bold,
+    marginBottom: 16,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    marginBottom: 8,
   },
 
   // Pager dots row (full width so we can center it on all screen sizes)
@@ -384,14 +375,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  // Optional small label under each chart page
-  pageLabel: {
-    marginTop: 4,
-    fontSize: 12,
-    color: COLORS.grey || "#888",
-    fontFamily: FONTS.main_font,
-    textAlign: "center",
-  },
+
 
   // Empty state text
   emptyState: {
