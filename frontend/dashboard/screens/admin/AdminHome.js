@@ -19,22 +19,29 @@ const AdminHome = ({ navigation }) => {
       </TouchableOpacity>
 
       {/* Title */}
-      <Text style={styles.title}>Admin Board</Text>
+      <Text style={styles.title}>Admin Dashboard</Text>
 
       {/* Actions */}
       <View style={styles.buttons}>
-        <PillButton
-          title="Create Campaign"
-          onPress={() => navigation.navigate('Campaign_Create')}
-          variant='neutral'
-          style={styles.pillSpacing}
-        />
-        <PillButton
-          title="Survey Settings"
-          onPress={() => navigation.navigate('Survey_Settings')}
-          variant='neutral'
-          style={styles.pillSpacing}
-        />
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Send notifications to users</Text>
+          <PillButton
+            title="Create Campaign"
+            onPress={() => navigation.navigate('Campaign_Create')}
+            variant='neutral'
+            style={styles.pillSpacing}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Change survey links</Text>
+          <PillButton
+            title="Survey Settings"
+            onPress={() => navigation.navigate('Survey_Settings')}
+            variant='neutral'
+            style={styles.pillSpacing}
+          />
+        </View>
       </View>
     </>
   );
@@ -110,8 +117,17 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 8,
   },
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    color: COLORS.black,
+    fontFamily: FONTS.survey_font_bold,
+    marginBottom: 4,
+  },
   pillSpacing: {
-    marginBottom: 20,
+    marginBottom: 8,
   },
 });
 
