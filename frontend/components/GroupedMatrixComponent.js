@@ -56,6 +56,7 @@ export default function GroupedMatrixComponent({
   wordColorMap,
   stripHtmlTags,
   colors_list,
+  paletteBase,
   styles,
   sliderValues,
   setSliderValues
@@ -103,6 +104,44 @@ export default function GroupedMatrixComponent({
   }, [questionDetails]);
 
   // Creating an array of sub question components
+  // --- helpers to create color gradients for matrix choices ---
+  const shadeHex = (hex, percent) => {
+    let h = (hex || "#007AFF").replace("#", "");
+    if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+    const num = parseInt(h, 16);
+    let r = (num >> 16) & 0xff;
+    let g = (num >> 8) & 0xff;
+    let b = num & 0xff;
+    const apply = (c) => Math.round(Math.min(255, Math.max(0, c * (1 + percent))));
+    r = apply(r); g = apply(g); b = apply(b);
+    return "#" + (1 << 24 | (r << 16) | (g << 8) | b).toString(16).slice(1).toUpperCase();
+  };
+
+  const generateLikertColors = (baseHex, count = 7) => {
+    const colors = [];
+    const start = 0.6; const end = -0.35;
+    for (let i = 0; i < count; i++) {
+      const t = start + (i / ((count - 1) || 1)) * (end - start);
+      colors.push(shadeHex(baseHex, t));
+    }
+    return colors;
+  };
+
+  // compute a palette sized to the number of choices for this question
+  const totalOptions = questionDetails && questionDetails["Choices"] ? questionDetails["Choices"].length : 0;
+  const baseHex = paletteBase || (colors_list && colors_list[0]) || "#007AFF";
+  const questionLikertColors = totalOptions > 0 ? generateLikertColors(baseHex, totalOptions) : null;
+  // Debug logs
+  try {
+    console.log('[GroupedMatrix] questionID=', questionDetails && questionDetails.QuestionID);
+    console.log('[GroupedMatrix] totalOptions=', totalOptions);
+    console.log('[GroupedMatrix] colors_list prop=', colors_list);
+    console.log('[GroupedMatrix] baseHex=', baseHex);
+    console.log('[GroupedMatrix] questionLikertColors=', questionLikertColors);
+    console.warn('[GroupedMatrix:WARN] baseHex, totalOptions, firstColors', baseHex, totalOptions, questionLikertColors && questionLikertColors.slice(0,3));
+  } catch (e) {
+    // ignore logging problems
+  }
   const subQuestionsComponents = questionDetails["SubQuestions"].map((subquestion, subIndex) => {
     const qid = questionDetails["QuestionID"];
     const currentValue = sliderValues[`${qid}_${subIndex}`] ?? getInitialSliderValue();
@@ -144,6 +183,44 @@ export default function GroupedMatrixComponent({
             {questionDetails["Choices"][questionDetails["Choices"].length - 1]["Display"]}
           </Text>
         </View>
+        {/* Render selectable choice buttons (also colored per-choice) */}
+        {/* On-screen debug box */}
+        <View style={{ padding: 6, borderWidth: 1, borderColor: '#ccc', marginBottom: 8 }}>
+          <Text style={{ fontSize: 12, color: '#333' }}>Debug palette: base={baseHex}, total={totalOptions}</Text>
+          <View style={{ flexDirection: 'row', marginTop: 6 }}>
+            {questionLikertColors && questionLikertColors.map((c, i) => (
+              <View key={i} style={{ width: 18, height: 18, backgroundColor: c, marginRight: 4, borderRadius: 2 }} />
+            ))}
+          </View>
+        </View>
+        <View style={matrixStyles.optionsContainer}>
+          {questionDetails["Choices"].map((option, optionIndex) => {
+            const displayRound =
+              optionIndex === 0 ||
+              optionIndex === Math.floor(questionDetails.Choices.length / 2) ||
+              optionIndex === questionDetails.Choices.length - 1;
+            const isSelected = selectedOptions[subIndex] === optionIndex;
+            const bgColor = questionLikertColors ? questionLikertColors[optionIndex] : null;
+            // Debug per-choice
+            try {
+              console.log('[GroupedMatrix] subIndex=', subIndex, 'optionIndex=', optionIndex, 'bgColor=', bgColor, 'isSelected=', isSelected, 'selectedOptions=', selectedOptions);
+            } catch (e) {}
+            return (
+              <TouchablePlatform
+                key={`opt_${subIndex}_${optionIndex}`}
+                accessibilityRole="button"
+                style={[
+                  displayRound ? matrixStyles.roundOptionButton : matrixStyles.rectOptionButton,
+                  isSelected && matrixStyles.optionSelected,
+                  bgColor ? { backgroundColor: bgColor } : null,
+                ]}
+                onPress={() => handleOptionPress(subIndex, optionIndex)}
+              >
+                {displayRound ? <Text style={matrixStyles.optionText}>{option.Display}</Text> : null}
+              </TouchablePlatform>
+            );
+          })}
+        </View>
       </View>
     );
   });
@@ -154,8 +231,6 @@ export default function GroupedMatrixComponent({
         const group = questionDetails["ChoiceGroups"][groupKey];
         const subQuestions = group["ChoiceGroupOrder"].map((index) => subQuestionsComponents[index - 1]);
 
-        // Group color array
-        const groupColor = colorsArray[index % colorsArray.length];
         return (
           <View key={groupKey} style={matrixStyles.groupBox}>
             <View style={matrixStyles.groupHeaderContainer}>
