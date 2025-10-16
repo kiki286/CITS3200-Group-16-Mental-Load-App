@@ -119,7 +119,7 @@ export default function GroupedMatrixComponent({
 
   const generateLikertColors = (baseHex, count = 7) => {
     const colors = [];
-    const start = 0.6; const end = -0.35;
+    const start = 0.6; const end = -0.15; // reduce darkness at the end
     for (let i = 0; i < count; i++) {
       const t = start + (i / ((count - 1) || 1)) * (end - start);
       colors.push(shadeHex(baseHex, t));
@@ -129,7 +129,7 @@ export default function GroupedMatrixComponent({
 
   // compute a palette sized to the number of choices for this question
   const totalOptions = questionDetails && questionDetails["Choices"] ? questionDetails["Choices"].length : 0;
-  const baseHex = paletteBase || (colors_list && colors_list[0]) || "#007AFF";
+  const baseHex = '#9CD1FF';
   const questionLikertColors = totalOptions > 0 ? generateLikertColors(baseHex, totalOptions) : null;
   // Debug logs
   try {

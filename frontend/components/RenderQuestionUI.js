@@ -156,7 +156,7 @@ const RenderQuestionUI = ({
 
   const generateLikertColors = (baseHex, count = 7) => {
     const colors = [];
-    const start = 0.6; const end = -0.35;
+    const start = 0.6; const end = -0.15; // less dark at the end to avoid too-deep blues
     for (let i = 0; i < count; i++) {
       const t = start + (i / ((count - 1) || 1)) * (end - start);
       colors.push(shadeHex(baseHex, t));
@@ -320,9 +320,9 @@ const RenderQuestionUI = ({
       console.warn('[RenderQuestionUI] Matrix question detected', { questionID, hasChoiceGroups: !!questionDetails['ChoiceGroups'], questionDetails });
     } catch (e) {}
 
-    // determine a palette base color: prefer the app colors_list[colorIndex], fallback to a blue
-    const paletteBase = (colors_list && typeof colorIndex === 'number' && colors_list[colorIndex]) || '#36d0ff';
-  try { console.warn('[RenderQuestionUI] paletteBase=', paletteBase, 'colorIndex=', colorIndex, 'colors_list=', colors_list); } catch (e) {}
+    // Use a single fixed blue as the palette base for all questions (do not vary per-question)
+    const paletteBase = '#9CD1FF';
+    try { console.warn('[RenderQuestionUI] paletteBase (fixed) =', paletteBase); } catch (e) {}
 
     questionsUI = questionDetails["ChoiceGroups"] ? (
       <GroupedMatrixComponent
@@ -360,9 +360,9 @@ const RenderQuestionUI = ({
               {(() => {
                 const numChoices = questionDetails["Choices"].length;
                 let likertColors = null;
-                if (numChoices === 7) {
+                if (numChoices === 7 || numChoices === 5) {
                   // use paletteBase calculated above
-                  likertColors = generateLikertColors(paletteBase, 7);
+                  likertColors = generateLikertColors(paletteBase, numChoices);
                 }
                 return questionDetails["Choices"].map((option, optionIndex) => {
                   const isSelected = selectedOptions[subIndex] === optionIndex;
