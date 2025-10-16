@@ -39,6 +39,26 @@ const SignUp = ({ navigation }) => {
   const [TandC, setTandC] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
+  // cross-platform alert helper: prefer window.alert on web, fall back to React Native Alert
+  const showAlert = (message, title) => {
+    // Use the browser alert when available (works reliably on desktop/web)
+    if (typeof window !== "undefined" && typeof window.alert === "function") {
+      if (title) window.alert(`${title}\n\n${message}`);
+      else window.alert(String(message));
+      return;
+    }
+
+    // Fallback to React Native Alert for native platforms
+    try {
+      if (Alert && typeof Alert.alert === "function") {
+        if (title) Alert.alert(title, String(message));
+        else Alert.alert(String(message));
+      }
+    } catch (e) {
+      // noop
+    }
+  };
+
   const handleAgreePress = () => {
     setTermsAccepted(true);
     setTandC(true);
@@ -50,14 +70,14 @@ const SignUp = ({ navigation }) => {
     if (TandC) {
       await handleSignUp(navigation);
     } else {
-      Alert.alert('Please accept Terms and Conditions');
+      showAlert('Please accept Terms and Conditions');
     }
   };
 
   //checks if there is an error message and shows it as pop up then sets error to null
   useEffect(() => {
     if (errorMessage) {
-      Alert.alert(errorMessage);
+      showAlert(errorMessage);
       setErrorMessage(null);
     }
   }, [errorMessage]);
@@ -183,7 +203,7 @@ const SignUp = ({ navigation }) => {
             value={TandC}
             onValueChange={(newValue) => {
               if (!termsAccepted) {
-                Alert.alert('Please read the Terms and Conditions first');
+                showAlert('Please read the Terms and Conditions first');
               } else {
                 setTandC(newValue);
               }
