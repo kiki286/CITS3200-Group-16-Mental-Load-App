@@ -73,8 +73,11 @@ const QuestionComponent = ({ demoSubmit, backNavigate }) => {
 
   // Function to increment the color index
   const ColorButtonInc = () => {
+    console.warn('[QuestionComponent] ColorButtonInc before:', { colorIndex, colors_list });
     setColorIndex((prevIndex) => (prevIndex + 1) % colors_list.length);
-    return colors_list[colorIndex];
+    const ret = colors_list[colorIndex];
+    console.warn('[QuestionComponent] ColorButtonInc returning:', ret);
+    return ret;
   };
 
   ///UNCOMMENT THIS WHEN DEPLOYING
@@ -299,7 +302,8 @@ const QuestionComponent = ({ demoSubmit, backNavigate }) => {
     // Function to get next question
     getNextQuestion();
     // Calls function to increment the color value
-    ColorButtonInc();
+  console.log('[QuestionComponent] calling ColorButtonInc from handleNextQuestion');
+  ColorButtonInc();
     // Sets the scroll location to the top
     scrollViewRef.current.scrollTo({ y: 0, animated: false });
   };

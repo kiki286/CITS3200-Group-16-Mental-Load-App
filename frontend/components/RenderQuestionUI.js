@@ -141,6 +141,29 @@ const RenderQuestionUI = ({
     });
   };
 
+  // --- helpers to create a gradient of blue shades (used for inline matrix rendering) ---
+  const shadeHex = (hex, percent) => {
+    let h = (hex || "#36d0ff").replace("#", "");
+    if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+    const num = parseInt(h, 16);
+    let r = (num >> 16) & 0xff;
+    let g = (num >> 8) & 0xff;
+    let b = num & 0xff;
+    const apply = (c) => Math.round(Math.min(255, Math.max(0, c * (1 + percent))));
+    r = apply(r); g = apply(g); b = apply(b);
+    return "#" + (1 << 24 | (r << 16) | (g << 8) | b).toString(16).slice(1).toUpperCase();
+  };
+
+  const generateLikertColors = (baseHex, count = 7) => {
+    const colors = [];
+    const start = 0.6; const end = -0.15; // less dark at the end to avoid too-deep blues
+    for (let i = 0; i < count; i++) {
+      const t = start + (i / ((count - 1) || 1)) * (end - start);
+      colors.push(shadeHex(baseHex, t));
+    }
+    return colors;
+  };
+
   // Function to handle image load completion
   const handleImageLoad = () => {
     setImageLoading(false);
@@ -292,6 +315,15 @@ const RenderQuestionUI = ({
       );
     }
   } else if (QuestionType === "Matrix" && questionDetails["SubQuestions"]) {
+    // Debug which Matrix rendering path we're taking
+    try {
+      console.warn('[RenderQuestionUI] Matrix question detected', { questionID, hasChoiceGroups: !!questionDetails['ChoiceGroups'], questionDetails });
+    } catch (e) {}
+
+    // Use a single fixed blue as the palette base for all questions (do not vary per-question)
+    const paletteBase = '#9CD1FF';
+    try { console.warn('[RenderQuestionUI] paletteBase (fixed) =', paletteBase); } catch (e) {}
+
     questionsUI = questionDetails["ChoiceGroups"] ? (
       <GroupedMatrixComponent
         questionDetails={questionDetails}
@@ -301,12 +333,15 @@ const RenderQuestionUI = ({
         stripHtmlTags={stripHtmlTags}
         highlightTextWithColors={highlightTextWithColors}
         colors_list={colors_list}
+        paletteBase={paletteBase}
         styles={styles}
         sliderValues={sliderValues}
         setSliderValues={setSliderValues}
       />
     ) : (
-      <View>
+  <>
+  {(() => { try { console.log('[RenderQuestionUI] rendering inline Matrix (no ChoiceGroups)', { questionID, choicesLen: questionDetails['Choices']?.length }); } catch (e) {} return null; })()}
+  <View>
         <Text style={[styles.questionText, textOffsetStyle]}>
           {highlightTextWithColors(
             stripHtmlTags(questionDetails["QuestionText"]),
@@ -322,25 +357,36 @@ const RenderQuestionUI = ({
               )}
             </Text>
             <View style={styles.optionsContainer}>
-              {questionDetails["Choices"].map((option, optionIndex) => {
-                const isSelected = selectedOptions[subIndex] === optionIndex;
-                return (
-                  <TouchablePlatform
-                    key={optionIndex}
-                    style={[
-                      styles.optionButton,
-                      isSelected && { borderColor: COLORS.light_blue4 },
-                    ]}
-                    onPress={() => handleOptionPress(subIndex, optionIndex)}
-                  >
-                    <Text style={styles.optionText}>{option["Display"]}</Text>
-                  </TouchablePlatform>
-                );
-              })}
+              {(() => {
+                const numChoices = questionDetails["Choices"].length;
+                let likertColors = null;
+                if (numChoices === 7 || numChoices === 5) {
+                  // use paletteBase calculated above
+                  likertColors = generateLikertColors(paletteBase, numChoices);
+                }
+                return questionDetails["Choices"].map((option, optionIndex) => {
+                  const isSelected = selectedOptions[subIndex] === optionIndex;
+                  const bg = likertColors ? likertColors[optionIndex] : null;
+                  return (
+                    <TouchablePlatform
+                      key={optionIndex}
+                      style={[
+                        styles.optionButton,
+                        bg ? { backgroundColor: bg } : {},
+                        isSelected && { borderColor: COLORS.light_blue4 },
+                      ]}
+                      onPress={() => handleOptionPress(subIndex, optionIndex)}
+                    >
+                      <Text style={styles.optionText}>{option["Display"]}</Text>
+                    </TouchablePlatform>
+                  );
+                });
+              })()}
             </View>
           </View>
         ))}
       </View>
+      </>
     );
 
     // Checks if question is Choices type
