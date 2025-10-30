@@ -108,6 +108,7 @@ export const StackedBarChartWorkML = ({ workML = [], timestamps = [] }) => {
               noOfSections={4}
               yAxisTextStyle={styles.axisTick}
               xAxisLabelTextStyle={styles.axisTick}
+              hideYAxisText
               xAxisColor={COLORS.light_grey}
               yAxisColor={COLORS.light_grey}
               barBorderRadius={2}
@@ -158,6 +159,7 @@ export const StackedBarChartHomeML = ({ homeML = [], timestamps = [] }) => {
               xAxisLabelTextStyle={styles.axisTick}
               xAxisColor={COLORS.light_grey}
               yAxisColor={COLORS.light_grey}
+              hideYAxisText
               barBorderRadius={2}
               isAnimated
               animationDuration={500}
@@ -330,6 +332,7 @@ export const BurnoutLineChart = ({ burnoutValues = [], workData = [], timestamps
               yAxisColor={COLORS.light_grey}
               xAxisLabelTextStyle={styles.axisTick}
               yAxisLabelTextStyle={styles.axisTick}
+              hideYAxisText
               dataPointsColor={COLORS.red}
               isAnimated
               adjustToWidth
@@ -406,6 +409,7 @@ export const MentalLoadLineChart = ({ timestamps = [], homeML = [], workML = [] 
               xAxisLabelTextStyle={styles.axisTick}
               yAxisLabelTextStyle={styles.axisTick}
               isAnimated
+              hideYAxisText
               adjustToWidth
               hideDataPoints={false}
               showSecondaryLine
